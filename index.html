@@ -506,11 +506,14 @@
     .cuenta-regresiva {
       display: inline-block;
       margin-left: 12px;
-      padding: 3px 10px;
+      padding: 3px 11px;
+      border: 1px solid var(--metal-borde);
       border-radius: 999px;
-      background: #000;
-      color: #fff;
+      background: var(--metal);
+      box-shadow: var(--metal-glow);
+      color: var(--heading);
       font-size: 0.7rem;
+      font-weight: 600;
       letter-spacing: 0.04em;
       vertical-align: 1px;
       white-space: nowrap;
@@ -1087,17 +1090,15 @@
       if (!proxima) return null;
       const d = dias(proxima);
       if (proxima.semana) {
-        if (d > 0) return [proxima.nombre + ' la próxima semana', proxima.nombre + ': próxima semana', 'Próxima semana', 'Próx. semana'];
-        return [proxima.nombre + ' es esta semana', proxima.nombre + ': esta semana', 'Esta semana', 'Esta semana'];
+        if (d > 0) return [proxima.nombre + ' próxima semana', 'Próxima semana'];
+        return [proxima.nombre + ' esta semana', 'Esta semana'];
       }
       if (d === 0) return ['Hoy es el ' + proxima.nombre, 'Hoy: ' + proxima.nombre, 'Hoy', 'Hoy'];
       if (d === 1) return ['Mañana es el ' + proxima.nombre, 'Mañana: ' + proxima.nombre, 'Mañana', 'Mañana'];
       return ['Faltan ' + d + ' días para el ' + proxima.nombre, d + ' días para ' + proxima.nombre, 'Faltan ' + d + ' días', d + ' días'];
     }
 
-    // Todas las etiquetas usan siempre la misma version (larga, media, corta o minima): la mas
-    // larga con la que todas caben en la misma linea que el titulo de su ramo. Si ni la minima
-    // cabe, las que no caben van en su propia linea debajo del titulo.
+    // Cada cartel de cuenta regresiva usa la version mas larga que quepa en la linea del titulo de su ramo.
     // Cada etiqueta de archivo se ajusta al espacio: al lado del nombre si el nombre no se parte en
     // mas lineas; si no, sola en una linea arriba; y solo si ni asi cabe, un circulo del mismo color.
     function ajustarMarcas() {
@@ -1134,17 +1135,26 @@
         const ultima = lineas[lineas.length - 1];
         return !ultima || aviso.getBoundingClientRect().top < ultima.bottom - 1;
       };
-      const ponerNivel = (n) => avisos.forEach((x) => { x.aviso.textContent = x.textos[Math.min(n, x.textos.length - 1)]; });
-      const niveles = Math.max(0, ...avisos.map((x) => x.textos.length));
-      let nivel = 0;
-      for (; nivel < niveles; nivel++) {
-        ponerNivel(nivel);
-        if (avisos.every(cabe)) break;
-      }
-      if (nivel === niveles) {
-        ponerNivel(niveles - 1);
-        avisos.filter((x) => !cabe(x)).forEach((x) => x.aviso.classList.add('sola'));
-      }
+      // Cada cartel usa su version mas larga que quepa en la linea del titulo de su ramo.
+      // Si ninguna cabe al lado, va sola en su propia linea debajo del titulo (con la mas larga que quepa).
+      avisos.forEach((x) => {
+        let n = 0;
+        for (; n < x.textos.length; n++) {
+          x.aviso.textContent = x.textos[n];
+          if (cabe(x)) break;
+        }
+        if (n === x.textos.length) {
+          // Sola en su linea hay mas espacio: la version mas larga que quepa a lo ancho
+          x.aviso.classList.add('sola');
+          const ancho = x.aviso.parentNode.clientWidth;
+          let k = 0;
+          for (; k < x.textos.length - 1; k++) {
+            x.aviso.textContent = x.textos[k];
+            if (x.aviso.getBoundingClientRect().width <= ancho) break;
+          }
+          x.aviso.textContent = x.textos[k];
+        }
+      });
     }
 
     // Se vuelve a ajustar cuando cambia el ancho de la lista (giro del celular, ventana) y cuando
