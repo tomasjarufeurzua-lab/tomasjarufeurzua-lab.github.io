@@ -4,42 +4,78 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
-  <title>Cifrar contenido privado</title>
+  <title>Panel privado</title>
   <style>
     :root { color-scheme: dark; }
     body { margin: 0; padding: 24px; background: #34383c; color: #c3c8cd; font-family: system-ui, sans-serif; line-height: 1.6; }
-    main { max-width: 560px; margin: 0 auto; }
-    h1 { color: #f1f3f5; font-size: 1.3rem; }
-    label { display: block; margin: 16px 0 4px; color: #f1f3f5; font-weight: 600; }
+    main { max-width: 620px; margin: 0 auto; }
+    h1 { color: #f1f3f5; font-size: 1.3rem; margin-bottom: 4px; }
+    h2 { color: #f1f3f5; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; margin: 28px 0 8px; }
+    label { display: block; margin: 12px 0 4px; color: #f1f3f5; font-weight: 600; }
     input, textarea, button { font: inherit; width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: #f1f3f5; }
-    textarea { min-height: 110px; }
-    button { margin-top: 20px; cursor: pointer; font-weight: 600; background: linear-gradient(135deg, #5d6268, #30343a); }
+    textarea { min-height: 120px; }
+    button { cursor: pointer; font-weight: 600; background: linear-gradient(135deg, #5d6268, #30343a); box-shadow: 0 0 9px rgba(212, 175, 55, 0.35); }
     button:disabled { opacity: 0.5; cursor: wait; }
-    small, #estado { display: block; margin-top: 6px; color: #a3a9af; }
-    #estado.mal { color: #f87171; }
-    #estado.ok { color: #5eead4; }
+    button.chico { width: auto; padding: 4px 12px; font-size: 0.85rem; }
+    button.peligro { background: rgba(239, 68, 68, 0.25); box-shadow: none; }
+    .fila { display: flex; gap: 8px; align-items: center; }
+    .fila + .fila { margin-top: 8px; }
+    .dos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    @media (max-width: 480px) { .dos { grid-template-columns: 1fr; } }
+    small, .estado { display: block; margin-top: 6px; color: #a3a9af; }
+    .estado.mal { color: #f87171; }
+    .estado.ok { color: #5eead4; }
+    .archivo { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; background: rgba(255, 255, 255, 0.04); }
+    .archivo + .archivo { margin-top: 6px; }
+    .archivo .nombre { flex: 1; min-width: 0; overflow-wrap: anywhere; color: #f1f3f5; }
+    .archivo .peso { color: #a3a9af; font-size: 0.8rem; white-space: nowrap; }
+    .archivo.quitado .nombre { text-decoration: line-through; opacity: 0.5; }
+    .vacio { color: #a3a9af; }
+    [hidden] { display: none !important; }
   </style>
 </head>
 <body>
 <main>
-  <h1>Cifrar contenido privado</h1>
-  <p>Todo se cifra en tu navegador: ni la clave ni los archivos se envian a ningun lado. Se genera un archivo <b>privado.enc.json</b> que subes a la raiz del repositorio (reemplazando el anterior).</p>
+  <h1>Panel privado</h1>
+  <p>Todo ocurre en tu navegador: ni la clave ni los archivos se envian a ningun lado. Cada cambio genera un <b>privado.enc.json</b> nuevo, que subes a la raiz del repositorio reemplazando el anterior.</p>
 
-  <label for="archivos">Archivos (opcional)</label>
-  <input id="archivos" type="file" multiple>
+  <!-- Paso 1: abrir lo que ya hay (o empezar de cero) -->
+  <section id="paso1">
+    <h2>1. Abrir tu contenido</h2>
+    <label for="clave-actual">Clave actual</label>
+    <input id="clave-actual" type="password" autocomplete="off">
+    <div class="fila">
+      <button id="abrir" type="button">Abrir lo que ya esta publicado</button>
+    </div>
+    <label for="archivo-local">...o abrir un privado.enc.json de tu computador</label>
+    <input id="archivo-local" type="file" accept=".json,application/json">
+    <small>Si acabas de descargar un archivo nuevo y aun no se publica, abrelo desde aqui para seguir editando.</small>
+    <div class="fila"><button id="cero" type="button" class="peligro">Empezar de cero (sin nada guardado)</button></div>
+    <span id="estado1" class="estado" role="status"></span>
+  </section>
 
-  <label for="notas">Notas de texto (opcional)</label>
-  <textarea id="notas" placeholder="Lo que quieras poder leer en cualquier computador"></textarea>
+  <!-- Paso 2: panel -->
+  <section id="panel" hidden>
+    <h2>Archivos</h2>
+    <div id="lista"></div>
+    <label for="nuevos">Agregar archivos</label>
+    <input id="nuevos" type="file" multiple>
 
-  <label for="clave">Clave</label>
-  <input id="clave" type="password" autocomplete="new-password">
-  <small>Usa una clave larga (12 caracteres o mas) y que no uses en ningun otro lado. Si la olvidas no hay forma de recuperar el contenido.</small>
+    <h2>Notas</h2>
+    <textarea id="notas" placeholder="Texto que quieras poder leer en cualquier computador"></textarea>
 
-  <label for="clave2">Repite la clave</label>
-  <input id="clave2" type="password" autocomplete="new-password">
+    <h2>Clave</h2>
+    <small>Deja estos campos vacios para mantener la clave actual. Si escribes una nueva, el contenido se cifra con ella y la anterior deja de servir.</small>
+    <div class="dos">
+      <div><label for="clave-nueva">Clave nueva</label><input id="clave-nueva" type="password" autocomplete="new-password"></div>
+      <div><label for="clave-nueva2">Repite la nueva</label><input id="clave-nueva2" type="password" autocomplete="new-password"></div>
+    </div>
 
-  <button id="cifrar" type="button">Cifrar y descargar</button>
-  <span id="estado" role="status"></span>
+    <h2>Guardar</h2>
+    <button id="generar" type="button">Generar privado.enc.json nuevo</button>
+    <span id="estado2" class="estado" role="status"></span>
+    <small>Despues de descargarlo: subelo a la raiz del repositorio (rama claude/youthful-mayer-nwoi6w) con Add file, Upload files, y confirma que reemplaza al anterior.</small>
+  </section>
 </main>
 
 <script>
@@ -51,31 +87,136 @@
     for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
     return btoa(s);
   };
-  const estado = document.getElementById('estado');
-  const decir = (txt, clase) => { estado.textContent = txt; estado.className = clase || ''; };
+  const deB64 = (t) => Uint8Array.from(atob(t), (c) => c.charCodeAt(0));
+  const $ = (id) => document.getElementById(id);
+  const decir = (id, txt, clase) => { $(id).textContent = txt; $(id).className = 'estado ' + (clase || ''); };
 
-  document.getElementById('cifrar').addEventListener('click', async (e) => {
-    const boton = e.currentTarget;
-    const clave = document.getElementById('clave').value;
-    const notas = document.getElementById('notas').value;
-    const archivos = [...document.getElementById('archivos').files];
-    if (!window.crypto || !crypto.subtle) return decir('Este navegador no permite cifrar (hace falta https).', 'mal');
-    if (clave.length < 12) return decir('La clave debe tener al menos 12 caracteres.', 'mal');
-    if (clave !== document.getElementById('clave2').value) return decir('Las dos claves no coinciden.', 'mal');
-    if (!archivos.length && !notas.trim()) return decir('Agrega al menos un archivo o una nota.', 'mal');
-    boton.disabled = true;
-    decir('Cifrando...');
+  async function llaveDe(clave, salt, iter, uso) {
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(clave), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, [uso]);
+  }
+  async function descifrar(paquete, clave) {
+    const llave = await llaveDe(clave, deB64(paquete.salt), paquete.iter, 'decrypt');
+    const claro = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: deB64(paquete.iv) }, llave, deB64(paquete.data));
+    return JSON.parse(new TextDecoder().decode(claro));
+  }
+  async function cifrar(contenido, clave) {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const llave = await llaveDe(clave, salt, ITER, 'encrypt');
+    const cifrado = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, llave, new TextEncoder().encode(JSON.stringify(contenido))));
+    return { v: 1, iter: ITER, salt: aB64(salt), iv: aB64(iv), data: aB64(cifrado) };
+  }
+  const pesoTexto = (b64) => {
+    const bytes = Math.floor(b64.length * 3 / 4);
+    return bytes > 1048576 ? (bytes / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(bytes / 1024)) + ' KB';
+  };
+
+  // Estado del panel: lo que se va a guardar al generar el archivo nuevo
+  let archivos = [];   // { nombre, tipo, datos, quitado }
+  let claveVigente = '';
+
+  function dibujarLista() {
+    const lista = $('lista');
+    lista.textContent = '';
+    if (!archivos.length) {
+      const v = document.createElement('p');
+      v.className = 'vacio';
+      v.textContent = 'No hay archivos.';
+      lista.appendChild(v);
+      return;
+    }
+    archivos.forEach((a, i) => {
+      const fila = document.createElement('div');
+      fila.className = 'archivo' + (a.quitado ? ' quitado' : '');
+      const nombre = document.createElement('span');
+      nombre.className = 'nombre';
+      nombre.textContent = a.nombre;
+      const peso = document.createElement('span');
+      peso.className = 'peso';
+      peso.textContent = pesoTexto(a.datos);
+      const boton = document.createElement('button');
+      boton.type = 'button';
+      boton.className = 'chico' + (a.quitado ? '' : ' peligro');
+      boton.textContent = a.quitado ? 'Deshacer' : 'Quitar';
+      boton.addEventListener('click', () => { a.quitado = !a.quitado; dibujarLista(); });
+      fila.append(nombre, peso, boton);
+      lista.appendChild(fila);
+    });
+  }
+
+  function abrirPanel(contenido, clave) {
+    archivos = (contenido.archivos || []).map((a) => ({ ...a, quitado: false }));
+    claveVigente = clave;
+    $('notas').value = contenido.notas || '';
+    $('paso1').hidden = true;
+    $('panel').hidden = false;
+    dibujarLista();
+  }
+
+  async function intentarAbrir(paquete) {
+    const clave = $('clave-actual').value;
+    if (!clave) return decir('estado1', 'Escribe la clave actual.', 'mal');
+    decir('estado1', 'Abriendo...');
     try {
-      const contenido = { notas, archivos: [] };
-      for (const f of archivos) {
-        contenido.archivos.push({ nombre: f.name, tipo: f.type || 'application/octet-stream', datos: aB64(new Uint8Array(await f.arrayBuffer())) });
-      }
-      const salt = crypto.getRandomValues(new Uint8Array(16));
-      const iv = crypto.getRandomValues(new Uint8Array(12));
-      const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(clave), 'PBKDF2', false, ['deriveKey']);
-      const llave = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: ITER, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
-      const cifrado = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, llave, new TextEncoder().encode(JSON.stringify(contenido))));
-      const paquete = { v: 1, iter: ITER, salt: aB64(salt), iv: aB64(iv), data: aB64(cifrado) };
+      abrirPanel(await descifrar(paquete, clave), clave);
+    } catch (e) {
+      decir('estado1', 'Clave incorrecta (o el archivo no es valido).', 'mal');
+    }
+  }
+
+  $('abrir').addEventListener('click', async () => {
+    if (!window.crypto || !crypto.subtle) return decir('estado1', 'Este navegador no permite abrirlo (hace falta una conexion segura).', 'mal');
+    let paquete;
+    try {
+      const r = await fetch('privado.enc.json', { cache: 'no-cache' });
+      if (!r.ok) return decir('estado1', 'No hay nada publicado todavia. Puedes empezar de cero.', 'mal');
+      paquete = await r.json();
+    } catch (e) {
+      return decir('estado1', 'No se pudo cargar lo publicado.', 'mal');
+    }
+    intentarAbrir(paquete);
+  });
+
+  $('archivo-local').addEventListener('change', async (e) => {
+    const f = e.target.files[0];
+    e.target.value = '';   // asi se puede volver a elegir el mismo archivo si la clave fallo
+    if (!f) return;
+    if (!window.crypto || !crypto.subtle) return decir('estado1', 'Este navegador no permite abrirlo (hace falta una conexion segura).', 'mal');
+    try {
+      intentarAbrir(JSON.parse(await f.text()));
+    } catch (err) {
+      decir('estado1', 'Ese archivo no es un privado.enc.json valido.', 'mal');
+    }
+  });
+
+  $('cero').addEventListener('click', () => {
+    if (!window.crypto || !crypto.subtle) return decir('estado1', 'Este navegador no permite cifrar (hace falta una conexion segura).', 'mal');
+    abrirPanel({ notas: '', archivos: [] }, '');
+  });
+
+  $('nuevos').addEventListener('change', async (e) => {
+    for (const f of e.target.files) {
+      archivos.push({ nombre: f.name, tipo: f.type || 'application/octet-stream', datos: aB64(new Uint8Array(await f.arrayBuffer())), quitado: false });
+    }
+    e.target.value = '';
+    dibujarLista();
+  });
+
+  $('generar').addEventListener('click', async (e) => {
+    const boton = e.currentTarget;
+    const nueva = $('clave-nueva').value;
+    const clave = nueva || claveVigente;
+    const notas = $('notas').value;
+    const quedan = archivos.filter((a) => !a.quitado).map(({ nombre, tipo, datos }) => ({ nombre, tipo, datos }));
+    if (nueva && nueva !== $('clave-nueva2').value) return decir('estado2', 'Las dos claves nuevas no coinciden.', 'mal');
+    if (!clave) return decir('estado2', 'Escribe una clave nueva (no hay una clave actual).', 'mal');
+    if (clave.length < 12) return decir('estado2', 'La clave debe tener al menos 12 caracteres.', 'mal');
+    if (!quedan.length && !notas.trim()) return decir('estado2', 'No queda nada que guardar. Para dejarlo vacio, borra privado.enc.json del repositorio.', 'mal');
+    boton.disabled = true;
+    decir('estado2', 'Cifrando...');
+    try {
+      const paquete = await cifrar({ notas, archivos: quedan }, clave);
       const url = URL.createObjectURL(new Blob([JSON.stringify(paquete)], { type: 'application/json' }));
       const a = document.createElement('a');
       a.href = url;
@@ -84,9 +225,15 @@
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 10000);
-      decir('Listo: se descargo privado.enc.json. Subelo a la raiz del repositorio.', 'ok');
+      // El panel queda con lo nuevo para seguir editando sin volver a abrir nada
+      claveVigente = clave;
+      archivos = quedan.map((a) => ({ ...a, quitado: false }));
+      $('clave-nueva').value = '';
+      $('clave-nueva2').value = '';
+      dibujarLista();
+      decir('estado2', 'Listo: se descargo privado.enc.json. Subelo al repositorio para publicarlo.', 'ok');
     } catch (err) {
-      decir('No se pudo cifrar: ' + err.message, 'mal');
+      decir('estado2', 'No se pudo cifrar: ' + err.message, 'mal');
     }
     boton.disabled = false;
   });
