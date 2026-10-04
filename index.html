@@ -523,10 +523,16 @@
       text-transform: uppercase;
     }
     .files .name { flex: 1; color: var(--heading); min-width: 0; overflow-wrap: anywhere; }
-    /* Celulares angostos: la etiqueta (Importante, Nivel medio...) va sola arriba y el nombre debajo */
+    /* Celulares angostos: la etiqueta (Importante, Nivel medio...) pasa a ser un circulo del mismo color */
     @media (max-width: 480px) {
-      .files a { flex-wrap: wrap; row-gap: 6px; }
-      .files a .marca-importante { margin-right: 100%; }
+      .marca-importante {
+        width: 12px;
+        height: 12px;
+        padding: 0;
+        font-size: 0;
+        letter-spacing: 0;
+        overflow: hidden;
+      }
     }
     .files a:hover .name { color: var(--accent); }
     .subgroup {
@@ -1018,6 +1024,7 @@
         const marca = document.createElement('span');
         marca.className = 'marca-importante';
         marca.textContent = 'Importante';
+        marca.title = 'Importante';
         a.insertBefore(marca, nombre);
       }
       const nivel = NIVELES[archivo.replace(/\.[^.]+$/, '')];
@@ -1026,6 +1033,7 @@
         const marca = document.createElement('span');
         marca.className = 'marca-importante ' + nivel.clase;
         marca.textContent = nivel.etiqueta;
+        marca.title = nivel.etiqueta;
         a.insertBefore(marca, nombre);
       }
       if (ext) {
