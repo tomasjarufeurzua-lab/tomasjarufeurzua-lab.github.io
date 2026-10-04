@@ -211,14 +211,19 @@
     .item p { font-size: 0.9rem; margin: 8px 0 0; }
 
     .tags { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 12px 0 0; }
+    /* Mismo estilo metalizado con brillo que el botón "Ver apuntes y material" */
     .tags li {
-      background: var(--accent-bg);
-      color: var(--accent);
+      border: 1px solid var(--metal-borde);
+      background: var(--metal);
+      box-shadow: var(--metal-glow);
+      color: var(--heading);
       border-radius: 999px;
-      padding: 4px 12px;
-      font-size: 0.75rem;
-      font-weight: 500;
+      padding: 7px 16px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
     }
+    .tags li:hover { transform: translateY(-2px); box-shadow: var(--metal-glow-fuerte); }
 
     .cta {
       display: inline-flex;
@@ -1053,7 +1058,12 @@
     // Cuenta regresiva: al lado del ramo (nombre de la carpeta, como se ve en la pagina) aparece
     // solo la proxima evaluacion; al pasar su dia se muestra la siguiente.
     // Fechas AAAA-MM-DD, hora de Chile, en orden.
+    // Si aun no hay dia exacto, se pone { nombre, semana: 'AAAA-MM-DD' } con el LUNES de esa semana:
+    // la semana anterior dice "Proxima semana", esa semana dice "Esta semana" y despues desaparece.
     const EVALUACIONES = {
+      'Ayudantía Laboratorio Álgebra Lineal': [
+        { nombre: 'Control 1', semana: '2026-10-05' },
+      ],
       'Ecuaciones Diferenciales': [
         { nombre: 'Certamen 2', fecha: '2026-10-05' },
         { nombre: 'Control 3', fecha: '2026-11-16' },
@@ -1070,10 +1080,16 @@
     // para poder elegir la que cabe en pantalla.
     function textosCuentaRegresiva(ramo) {
       const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());
-      const dias = (e) => Math.round((Date.parse(e.fecha) - Date.parse(hoy)) / 86400000);
-      const proxima = (EVALUACIONES[ramo] || []).find((e) => dias(e) >= 0);
+      const dias = (e) => Math.round((Date.parse(e.fecha || e.semana) - Date.parse(hoy)) / 86400000);
+      // Una evaluacion por semana sigue vigente hasta el domingo (lunes + 6 dias)
+      const vigente = (e) => dias(e) + (e.semana ? 6 : 0) >= 0;
+      const proxima = (EVALUACIONES[ramo] || []).find(vigente);
       if (!proxima) return null;
       const d = dias(proxima);
+      if (proxima.semana) {
+        if (d > 0) return [proxima.nombre + ' la próxima semana', proxima.nombre + ': próxima semana', 'Próxima semana', 'Próx. semana'];
+        return [proxima.nombre + ' es esta semana', proxima.nombre + ': esta semana', 'Esta semana', 'Esta semana'];
+      }
       if (d === 0) return ['Hoy es el ' + proxima.nombre, 'Hoy: ' + proxima.nombre, 'Hoy', 'Hoy'];
       if (d === 1) return ['Mañana es el ' + proxima.nombre, 'Mañana: ' + proxima.nombre, 'Mañana', 'Mañana'];
       return ['Faltan ' + d + ' días para el ' + proxima.nombre, d + ' días para ' + proxima.nombre, 'Faltan ' + d + ' días', d + ' días'];
