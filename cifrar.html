@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Cifrar contenido privado</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; padding: 24px; background: #34383c; color: #c3c8cd; font-family: system-ui, sans-serif; line-height: 1.6; }
+    main { max-width: 560px; margin: 0 auto; }
+    h1 { color: #f1f3f5; font-size: 1.3rem; }
+    label { display: block; margin: 16px 0 4px; color: #f1f3f5; font-weight: 600; }
+    input, textarea, button { font: inherit; width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: #f1f3f5; }
+    textarea { min-height: 110px; }
+    button { margin-top: 20px; cursor: pointer; font-weight: 600; background: linear-gradient(135deg, #5d6268, #30343a); }
+    button:disabled { opacity: 0.5; cursor: wait; }
+    small, #estado { display: block; margin-top: 6px; color: #a3a9af; }
+    #estado.mal { color: #f87171; }
+    #estado.ok { color: #5eead4; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Cifrar contenido privado</h1>
+  <p>Todo se cifra en tu navegador: ni la clave ni los archivos se envian a ningun lado. Se genera un archivo <b>privado.enc.json</b> que subes a la raiz del repositorio (reemplazando el anterior).</p>
+
+  <label for="archivos">Archivos (opcional)</label>
+  <input id="archivos" type="file" multiple>
+
+  <label for="notas">Notas de texto (opcional)</label>
+  <textarea id="notas" placeholder="Lo que quieras poder leer en cualquier computador"></textarea>
+
+  <label for="clave">Clave</label>
+  <input id="clave" type="password" autocomplete="new-password">
+  <small>Usa una clave larga (12 caracteres o mas) y que no uses en ningun otro lado. Si la olvidas no hay forma de recuperar el contenido.</small>
+
+  <label for="clave2">Repite la clave</label>
+  <input id="clave2" type="password" autocomplete="new-password">
+
+  <button id="cifrar" type="button">Cifrar y descargar</button>
+  <span id="estado" role="status"></span>
+</main>
+
+<script>
+  // Cifrado: la clave se convierte en una llave con PBKDF2 (muchas vueltas, para que adivinarla
+  // sea lento) y el contenido se cifra con AES-GCM, que ademas detecta si la clave es incorrecta.
+  const ITER = 600000;
+  const aB64 = (bytes) => {
+    let s = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(s);
+  };
+  const estado = document.getElementById('estado');
+  const decir = (txt, clase) => { estado.textContent = txt; estado.className = clase || ''; };
+
+  document.getElementById('cifrar').addEventListener('click', async (e) => {
+    const boton = e.currentTarget;
+    const clave = document.getElementById('clave').value;
+    const notas = document.getElementById('notas').value;
+    const archivos = [...document.getElementById('archivos').files];
+    if (!window.crypto || !crypto.subtle) return decir('Este navegador no permite cifrar (hace falta https).', 'mal');
+    if (clave.length < 12) return decir('La clave debe tener al menos 12 caracteres.', 'mal');
+    if (clave !== document.getElementById('clave2').value) return decir('Las dos claves no coinciden.', 'mal');
+    if (!archivos.length && !notas.trim()) return decir('Agrega al menos un archivo o una nota.', 'mal');
+    boton.disabled = true;
+    decir('Cifrando...');
+    try {
+      const contenido = { notas, archivos: [] };
+      for (const f of archivos) {
+        contenido.archivos.push({ nombre: f.name, tipo: f.type || 'application/octet-stream', datos: aB64(new Uint8Array(await f.arrayBuffer())) });
+      }
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(clave), 'PBKDF2', false, ['deriveKey']);
+      const llave = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: ITER, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
+      const cifrado = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, llave, new TextEncoder().encode(JSON.stringify(contenido))));
+      const paquete = { v: 1, iter: ITER, salt: aB64(salt), iv: aB64(iv), data: aB64(cifrado) };
+      const url = URL.createObjectURL(new Blob([JSON.stringify(paquete)], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'privado.enc.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      decir('Listo: se descargo privado.enc.json. Subelo a la raiz del repositorio.', 'ok');
+    } catch (err) {
+      decir('No se pudo cifrar: ' + err.message, 'mal');
+    }
+    boton.disabled = false;
+  });
+</script>
+</body>
+</html>

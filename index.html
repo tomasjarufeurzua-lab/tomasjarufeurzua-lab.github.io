@@ -433,6 +433,55 @@
     .calc-resultado.ok { box-shadow: inset 3px 0 0 var(--accent); }
     .calc-resultado.mal { box-shadow: inset 3px 0 0 #ef4444; }
     .calc-resultado.global { box-shadow: inset 3px 0 0 #f59e0b; }
+    /* Seccion privada: se abre con una clave y descifra el contenido en el navegador */
+    .privado { margin: 40px 0 8px; }
+    .privado > summary {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 0;
+      cursor: pointer;
+      list-style: none;
+      color: var(--heading);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      user-select: none;
+    }
+    .privado > summary::-webkit-details-marker { display: none; }
+    .privado > summary::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      margin: 0 2px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(-45deg);
+      transition: transform 0.2s;
+    }
+    .privado[open] > summary::before { transform: rotate(45deg); }
+    .privado > summary svg { width: 16px; height: 16px; color: var(--oro); }
+    .privado > summary:hover { color: var(--accent); }
+    .privado > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+    .privado form { margin-top: 12px; }
+    .privado label { display: block; margin-bottom: 4px; color: var(--dim); font-size: 0.8rem; }
+    .privado-fila { display: flex; gap: 8px; }
+    .privado-fila input {
+      flex: 1;
+      min-width: 0;
+      padding: 8px 10px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--heading);
+      font: inherit;
+    }
+    .privado-fila input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .privado-estado { min-height: 1.4em; margin: 8px 0 0; font-size: 0.85rem; color: var(--dim); }
+    .privado-estado.mal { color: #f87171; }
+    .privado-notas { white-space: pre-wrap; margin: 12px 0; padding: 12px 14px; border-radius: 8px; background: rgba(255, 255, 255, 0.04); }
+    .privado-cabeza { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 16px; font-size: 0.85rem; color: var(--dim); }
     .cuenta-regresiva {
       display: inline-block;
       margin-left: 12px;
@@ -828,6 +877,19 @@
         <h2 class="sec-title">Material</h2>
         <p>Apuntes, ejercicios y otro material de estudio que he preparado. Puedes descargarlos libremente.</p>
         <div id="material-list" class="material"><p class="muted">Cargando material…</p></div>
+
+        <details class="privado" id="privado">
+          <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Privado</summary>
+          <form id="privado-form" autocomplete="off">
+            <label for="privado-clave">Clave</label>
+            <div class="privado-fila">
+              <input id="privado-clave" type="password" autocomplete="off" spellcheck="false">
+              <button class="calc-boton" type="submit">Abrir</button>
+            </div>
+            <p id="privado-estado" class="privado-estado" role="status"></p>
+          </form>
+          <div id="privado-contenido" hidden></div>
+        </details>
       </section>
 
       <section id="calculadora">
@@ -1847,6 +1909,111 @@
       if (movil.addEventListener) movil.addEventListener('change', aplicar);
       else if (movil.addListener) movil.addListener(aplicar);
       if (movil.matches && location.hash) requestAnimationFrame(() => mostrar(true));
+    })();
+  </script>
+  <script>
+    // Seccion privada: el contenido esta cifrado en privado.enc.json (se genera con cifrar.html).
+    // Con la clave correcta se descifra en el navegador; la clave y el contenido no se guardan en
+    // ningun lado y todo se borra al cerrar, al pasar 10 minutos o al salir de la pagina.
+    (function () {
+      const det = document.getElementById('privado');
+      const form = document.getElementById('privado-form');
+      const campo = document.getElementById('privado-clave');
+      const estado = document.getElementById('privado-estado');
+      const cont = document.getElementById('privado-contenido');
+      let urls = [];
+      let reloj = null;
+
+      const decir = (txt, mal) => { estado.textContent = txt; estado.classList.toggle('mal', !!mal); };
+      const deB64 = (t) => Uint8Array.from(atob(t), (c) => c.charCodeAt(0));
+
+      async function descifrar(paquete, clave) {
+        const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(clave), 'PBKDF2', false, ['deriveKey']);
+        const llave = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: deB64(paquete.salt), iterations: paquete.iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+        const claro = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: deB64(paquete.iv) }, llave, deB64(paquete.data));
+        return JSON.parse(new TextDecoder().decode(claro));
+      }
+
+      // Borra todo lo descifrado y vuelve a pedir la clave
+      function cerrar(mensaje) {
+        clearTimeout(reloj);
+        urls.forEach((u) => URL.revokeObjectURL(u));
+        urls = [];
+        cont.textContent = '';
+        cont.hidden = true;
+        form.hidden = false;
+        campo.value = '';
+        decir(mensaje || '');
+      }
+
+      function mostrar(datos) {
+        cont.textContent = '';
+        const cabeza = document.createElement('div');
+        cabeza.className = 'privado-cabeza';
+        const aviso = document.createElement('span');
+        aviso.textContent = 'Se cierra solo a los 10 minutos.';
+        const salir = document.createElement('button');
+        salir.type = 'button';
+        salir.className = 'calc-boton';
+        salir.textContent = 'Cerrar y borrar';
+        salir.addEventListener('click', () => cerrar());
+        cabeza.append(aviso, salir);
+        cont.appendChild(cabeza);
+        if (datos.notas && datos.notas.trim()) {
+          const n = document.createElement('div');
+          n.className = 'privado-notas';
+          n.textContent = datos.notas;
+          cont.appendChild(n);
+        }
+        const lista = document.createElement('ul');
+        lista.className = 'files';
+        (datos.archivos || []).forEach((f) => {
+          const url = URL.createObjectURL(new Blob([deB64(f.datos)], { type: f.tipo }));
+          urls.push(url);
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = url;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          const nombre = document.createElement('span');
+          nombre.className = 'name';
+          nombre.textContent = f.nombre;
+          a.appendChild(nombre);
+          li.appendChild(a);
+          lista.appendChild(li);
+        });
+        cont.appendChild(lista);
+        cont.hidden = false;
+        form.hidden = true;
+        reloj = setTimeout(() => cerrar('Se cerro por inactividad.'), 10 * 60 * 1000);
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const clave = campo.value;
+        if (!clave) return decir('Escribe la clave.', true);
+        if (!window.crypto || !crypto.subtle) return decir('Este navegador no permite abrirlo (hace falta una conexion segura).', true);
+        decir('Abriendo…');
+        let paquete;
+        try {
+          const r = await fetch('privado.enc.json', { cache: 'no-cache' });
+          if (!r.ok) return decir('Todavia no hay contenido privado.', true);
+          paquete = await r.json();
+        } catch (err) {
+          return decir('No se pudo cargar el contenido. Intenta de nuevo.', true);
+        }
+        try {
+          mostrar(await descifrar(paquete, clave));
+          decir('');
+          campo.value = '';
+        } catch (err) {
+          decir('Clave incorrecta.', true);
+        }
+      });
+
+      // Al cerrar el menu o salir de la pagina no queda nada descifrado
+      det.addEventListener('toggle', () => { if (!det.open) cerrar(); });
+      window.addEventListener('pagehide', () => cerrar());
     })();
   </script>
 </body>
