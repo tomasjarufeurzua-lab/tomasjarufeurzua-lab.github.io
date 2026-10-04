@@ -366,6 +366,14 @@
     .files a.dificil .name { font-weight: 600; }
     .files a.dificil .ext { background: #ef4444; color: #fff; }
     .marca-importante.dificil { background: #ef4444; color: #fff; }
+    .files a.pasado {
+      background: linear-gradient(90deg, rgba(45, 212, 191, 0.16), rgba(45, 212, 191, 0.04));
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+    .files a.pasado:hover { background: linear-gradient(90deg, rgba(45, 212, 191, 0.24), rgba(45, 212, 191, 0.08)); }
+    .files a.pasado .name { font-weight: 600; }
+    .files a.pasado .ext { background: var(--accent); color: #0f2f2b; }
+    .marca-importante.pasado { background: var(--accent); color: #0f2f2b; }
     .files a.medio {
       background: linear-gradient(90deg, rgba(250, 204, 21, 0.18), rgba(250, 204, 21, 0.04));
       box-shadow: inset 3px 0 0 #facc15;
@@ -1100,9 +1108,10 @@
     // (titulo tal como se ve en la pagina, sin el numero inicial)
     const ARCHIVOS_IMPORTANTES = ['Ejercicios de práctica 1 para el Control 1 (Mathematica)'];
 
-    // Ensayos con nivel de dificultad: amarillo "Nivel medio" y rojo "Mas dificil"
+    // Ensayos con nivel: turquesa "Certamen pasado", amarillo "Nivel medio" y rojo "Mas dificil"
     // (clave = nombre del archivo sin extension, con su numero inicial)
     const NIVELES = {
+      '1 - Ensayo Certamen 2': { clase: 'pasado', etiqueta: 'Certamen pasado' },
       '2 - Ensayo Certamen 2': { clase: 'medio', etiqueta: 'Nivel medio' },
       '3 - Ensayo Certamen 2': { clase: 'dificil', etiqueta: 'Más difícil' },
     };
