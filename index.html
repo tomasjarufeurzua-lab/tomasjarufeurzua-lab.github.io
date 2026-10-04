@@ -523,16 +523,16 @@
       text-transform: uppercase;
     }
     .files .name { flex: 1; color: var(--heading); min-width: 0; overflow-wrap: anywhere; }
-    /* Celulares angostos: la etiqueta (Importante, Nivel medio...) pasa a ser un circulo del mismo color */
-    @media (max-width: 480px) {
-      .marca-importante {
-        width: 12px;
-        height: 12px;
-        padding: 0;
-        font-size: 0;
-        letter-spacing: 0;
-        overflow: hidden;
-      }
+    /* Etiquetas de archivo (Importante, Nivel medio...): al lado del nombre, sola arriba si no cabe, o circulo */
+    .files a.con-arriba { flex-wrap: wrap; row-gap: 6px; }
+    .marca-importante.arriba { margin-right: 100%; }
+    .marca-importante.punto {
+      width: 12px;
+      height: 12px;
+      padding: 0;
+      font-size: 0;
+      letter-spacing: 0;
+      overflow: hidden;
     }
     .files a:hover .name { color: var(--accent); }
     .subgroup {
@@ -1082,6 +1082,29 @@
     // Todas las etiquetas usan siempre la misma version (larga, media, corta o minima): la mas
     // larga con la que todas caben en la misma linea que el titulo de su ramo. Si ni la minima
     // cabe, las que no caben van en su propia linea debajo del titulo.
+    // Cada etiqueta de archivo se ajusta al espacio: al lado del nombre si el nombre no se parte en
+    // mas lineas; si no, sola en una linea arriba; y solo si ni asi cabe, un circulo del mismo color.
+    function ajustarMarcas() {
+      document.querySelectorAll('#material-list .marca-importante').forEach((m) => {
+        const fila = m.parentNode;
+        const nombre = fila.querySelector('.name');
+        m.classList.remove('arriba');
+        fila.classList.remove('con-arriba');
+        m.classList.add('punto');
+        const conPunto = nombre.getBoundingClientRect().height;
+        m.classList.remove('punto');
+        if (nombre.getBoundingClientRect().height <= conPunto + 1) return;
+        m.classList.add('arriba');
+        fila.classList.add('con-arriba');
+        const util = fila.clientWidth - 32;
+        if (m.getBoundingClientRect().width > util) {
+          m.classList.remove('arriba');
+          fila.classList.remove('con-arriba');
+          m.classList.add('punto');
+        }
+      });
+    }
+
     function ajustarCuentas() {
       const avisos = [...document.querySelectorAll('.cuenta-regresiva')].map((aviso) => {
         const h = aviso.parentNode;
@@ -1110,9 +1133,9 @@
 
     // Se vuelve a ajustar cuando cambia el ancho de la lista (giro del celular, ventana) y cuando
     // terminan de cargar las tipografias, que cambian el ancho del texto.
-    if (window.ResizeObserver) new ResizeObserver(ajustarCuentas).observe(caja);
-    if (document.fonts) document.fonts.addEventListener('loadingdone', ajustarCuentas);
-    window.addEventListener('load', ajustarCuentas);
+    if (window.ResizeObserver) new ResizeObserver(() => { ajustarCuentas(); ajustarMarcas(); }).observe(caja);
+    if (document.fonts) document.fonts.addEventListener('loadingdone', () => { ajustarCuentas(); ajustarMarcas(); });
+    window.addEventListener('load', () => { ajustarCuentas(); ajustarMarcas(); });
 
     // Secciones que llevan un punto rojo para que se noten mas (nombre de la carpeta, sin tildes cambiadas)
     const DESTACADOS = ['Ayudantía Laboratorio Álgebra Lineal'];
@@ -1305,6 +1328,7 @@
       });
       if (grupo('Otro material', '', sueltos)) hayAlgo = true;
       ajustarCuentas();
+      ajustarMarcas();
       if (!hayAlgo) caja.innerHTML = '<p class="muted">Pronto subiré material aquí.</p>';
     })().catch(() => {
       caja.innerHTML = '<p class="muted">No se pudo cargar el material. Intenta recargar la página en unos minutos.</p>';
