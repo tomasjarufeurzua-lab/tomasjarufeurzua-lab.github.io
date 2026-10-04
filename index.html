@@ -501,6 +501,7 @@
     .privado-fila input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
     .privado-estado { min-height: 1.4em; margin: 8px 0 0; font-size: 0.85rem; color: var(--dim); }
     .privado-estado.mal { color: #f87171; }
+    .privado-estado.emoji { font-size: 1.8rem; line-height: 1.2; }
     .privado-notas { white-space: pre-wrap; margin: 12px 0; padding: 12px 14px; border-radius: 8px; background: rgba(255, 255, 255, 0.04); }
     .privado-cabeza { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 16px; font-size: 0.85rem; color: var(--dim); }
     .cuenta-regresiva {
@@ -2009,7 +2010,7 @@
       let urls = [];
       let reloj = null;
 
-      const decir = (txt, mal) => { estado.textContent = txt; estado.classList.toggle('mal', !!mal); };
+      const decir = (txt, mal) => { estado.textContent = txt; estado.classList.toggle('mal', !!mal); estado.classList.toggle('emoji', txt === '🙄' || txt === '🤩'); };
       const deB64 = (t) => Uint8Array.from(atob(t), (c) => c.charCodeAt(0));
 
       async function descifrar(paquete, clave) {
@@ -2092,7 +2093,7 @@
           decir('');
           campo.value = '';
         } catch (err) {
-          decir('Clave incorrecta.', true);
+          decir(clave.trim() === '67' ? '🤩' : '🙄', true);
         }
       });
 
