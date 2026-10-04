@@ -461,7 +461,7 @@
       transition: transform 0.2s;
     }
     .privado[open] > summary::before { transform: rotate(45deg); }
-    .privado > summary svg { width: 16px; height: 16px; color: var(--oro); }
+    .privado > summary svg { width: 20px; height: 20px; color: var(--oro); }
     .privado > summary:hover { color: var(--accent); }
     .privado > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
     .privado form { margin-top: 12px; }
@@ -879,7 +879,7 @@
         <div id="material-list" class="material"><p class="muted">Cargando material…</p></div>
 
         <details class="privado" id="privado">
-          <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Privado</summary>
+          <summary aria-label="Seccion privada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></summary>
           <form id="privado-form" autocomplete="off">
             <label for="privado-clave">Clave</label>
             <div class="privado-fila">
