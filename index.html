@@ -295,6 +295,35 @@
       text-transform: uppercase;
       margin: 32px 0 8px;
     }
+    .material details.grupo { margin: 32px 0 8px; }
+    .material details.grupo > summary {
+      display: block;
+      padding: 4px 0;
+      cursor: pointer;
+      list-style: none;
+      color: var(--heading);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      user-select: none;
+    }
+    .material details.grupo > summary::-webkit-details-marker { display: none; }
+    .material details.grupo > summary::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      margin: 0 12px 2px 2px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(-45deg);
+      transition: transform 0.2s;
+    }
+    .material details.grupo[open] > summary::before { transform: rotate(45deg); }
+    .material details.grupo > summary:hover { color: var(--accent); }
+    .material details.grupo > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+    .material details.grupo > summary .cuenta { float: right; font-size: 0.75rem; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--dim); }
     .material h3 .dot {
       display: inline-block;
       width: 8px;
@@ -1001,10 +1030,11 @@
     const ARCHIVOS_IMPORTANTES = ['Ejercicios de práctica 1 para el Control 1 (Mathematica)'];
 
     // Archivos que se destacan en rojo con la etiqueta "Mas dificil" (nombre del archivo, con su numero inicial)
-    const ARCHIVOS_DIFICILES = ['3 - Ensayo Certamen 2'];
+    const ARCHIVOS_DIFICILES = ['2 - Ensayo Certamen 2'];
 
-    // Subsecciones que se pueden plegar (nombre de la carpeta, sin el numero inicial)
-    const PLEGABLES = ['Control 2 — Ensayos', 'Resumen'];
+    // Categorias que se muestran siempre abiertas y sin poder plegarse (nombre de la carpeta);
+    // todas las demas categorias y subcategorias son desplegables y empiezan cerradas
+    const ABIERTAS = ['Ayudantía Laboratorio Álgebra Lineal'];
 
     function visible(ruta) {
       const nombre = ruta.split('/').pop();
@@ -1047,7 +1077,7 @@
     // cada subcarpeta (que puede tener mas subcarpetas dentro). Se ordena con el nombre
     // real de la carpeta (puede llevar un numero al inicio, como "1 - Laboratorio") y se
     // muestra sin ese numero.
-    function dibujarNivel(contenedor, lista, nivel) {
+    function dibujarNivel(contenedor, lista, nivel, fijo) {
       const directos = [];
       const subcarpetas = new Map();
       for (const ruta of lista) {
@@ -1081,8 +1111,8 @@
         vaciarArchivos();
         const nombreSub = titulo(e.nombre);
         const archivosSub = e.rutas;
-        if (PLEGABLES.includes(nombreSub)) {
-          // Subseccion plegable: empieza cerrada y muestra cuantos archivos tiene
+        if (!fijo) {
+          // Subcategoria desplegable: empieza cerrada y muestra cuantos archivos tiene
           const bloque = document.createElement('details');
           bloque.className = 'subgroup plegable';
           const resumen = document.createElement('summary');
@@ -1092,7 +1122,7 @@
           cuenta.textContent = archivosSub.length === 1 ? '1 archivo' : archivosSub.length + ' archivos';
           resumen.appendChild(cuenta);
           bloque.appendChild(resumen);
-          dibujarNivel(bloque, archivosSub, nivel + 1);
+          dibujarNivel(bloque, archivosSub, nivel + 1, false);
           contenedor.appendChild(bloque);
           return;
         }
@@ -1101,7 +1131,7 @@
         const h4 = document.createElement('h4');
         h4.textContent = nombreSub;
         bloque.appendChild(h4);
-        dibujarNivel(bloque, archivosSub, nivel + 1);
+        dibujarNivel(bloque, archivosSub, nivel + 1, true);
         contenedor.appendChild(bloque);
       });
       vaciarArchivos();
@@ -1111,7 +1141,9 @@
       lista = lista.filter(visible);
       if (!lista.length) return false;
       const nivel = carpeta ? carpeta.split('/').length : 1;
-      const h = document.createElement('h3');
+      const fijo = ABIERTAS.includes(nombre);
+      // Categoria fija: titulo normal. Las demas: bloque desplegable cerrado con el titulo como cabecera.
+      const h = document.createElement(fijo ? 'h3' : 'summary');
       h.textContent = nombre;
       if (DESTACADOS.includes(nombre)) {
         const punto = document.createElement('span');
@@ -1128,8 +1160,20 @@
         aviso.dataset.textos = JSON.stringify(cuenta);
         h.appendChild(aviso);
       }
-      caja.appendChild(h);
-      dibujarNivel(caja, lista, nivel);
+      if (fijo) {
+        caja.appendChild(h);
+        dibujarNivel(caja, lista, nivel, true);
+        return true;
+      }
+      const bloque = document.createElement('details');
+      bloque.className = 'grupo';
+      const total = document.createElement('span');
+      total.className = 'cuenta';
+      total.textContent = lista.length === 1 ? '1 archivo' : lista.length + ' archivos';
+      h.prepend(total);
+      bloque.appendChild(h);
+      dibujarNivel(bloque, lista, nivel, false);
+      caja.appendChild(bloque);
       return true;
     }
 
