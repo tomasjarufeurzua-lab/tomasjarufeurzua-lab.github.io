@@ -62,6 +62,7 @@
       left: 0;
       right: 0;
       z-index: -1;
+      will-change: transform;
       background:
         linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.05) 45%, rgba(255, 255, 255, 0.09) 50%, rgba(255, 255, 255, 0.04) 55%, transparent 70%),
         linear-gradient(160deg, #3c4044 0%, #2f3236 45%, #2a2d31 70%, #36393d 100%);
@@ -70,13 +71,22 @@
     a { color: inherit; text-decoration: none; }
 
     /* Luz que sigue al mouse */
+    /* Es un circulo fijo que se desplaza con transform (lo hace la GPU, no repinta la pagina);
+       solo existe si hay mouse */
     .spotlight {
       pointer-events: none;
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
+      width: 1200px;
+      height: 1200px;
+      margin: -600px 0 0 -600px;
       z-index: 0;
-      transition: background 0.3s;
+      opacity: 0;
+      will-change: transform;
+      background: radial-gradient(circle 600px at center, var(--spot), transparent 80%);
     }
+    @media (hover: none), (pointer: coarse) { .spotlight { display: none; } }
 
     .wrap {
       position: relative;
@@ -170,8 +180,7 @@
       z-index: 2;
       margin: 0 -24px 24px;
       padding: 20px 24px;
-      background: rgba(46, 49, 53, 0.85);
-      backdrop-filter: blur(8px);
+      background: rgba(46, 49, 53, 0.96);
       color: var(--heading);
       font-size: 0.85rem;
       font-weight: 700;
@@ -337,13 +346,21 @@
       border-radius: 50%;
       vertical-align: 1px;
       background: #f87171;
-      box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.55), 0 0 8px rgba(248, 113, 113, 0.6);
+      box-shadow: 0 0 8px rgba(248, 113, 113, 0.6);
+      position: relative;
+    }
+    /* Anillo que late: solo transform y opacity, para no repintar en cada cuadro */
+    .material h3 .dot::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: rgba(248, 113, 113, 0.55);
       animation: latido 2.4s ease-out infinite;
     }
     @keyframes latido {
-      0%   { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.55), 0 0 8px rgba(248, 113, 113, 0.6); }
-      70%  { box-shadow: 0 0 0 7px rgba(248, 113, 113, 0), 0 0 8px rgba(248, 113, 113, 0.6); }
-      100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0), 0 0 8px rgba(248, 113, 113, 0.6); }
+      0%   { transform: scale(1); opacity: 1; }
+      70%, 100% { transform: scale(2.75); opacity: 0; }
     }
     .files { list-style: none; padding: 0; margin: 0; }
     .files a {
@@ -674,10 +691,19 @@
         box-shadow: var(--metal-glow);
         color: var(--heading);
         cursor: pointer;
+      }
+      .menu-btn::after {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        border: 2px solid rgba(212, 175, 55, 0.5);
+        border-radius: 12px;
+        pointer-events: none;
         animation: menu-pulso 2.6s ease-out infinite;
       }
+      .menu-btn[aria-expanded="true"]::after { display: none; }
       .menu-btn:focus-visible { outline: 2px solid var(--heading); outline-offset: 3px; }
-      .menu-btn[aria-expanded="true"] { animation: none; background: #2f3236; border-color: rgba(212, 175, 55, 0.6); color: #e9d58f; }
+      .menu-btn[aria-expanded="true"] { background: #2f3236; border-color: rgba(212, 175, 55, 0.6); color: #e9d58f; }
       .menu-btn svg { width: 24px; height: 24px; stroke-width: 2.4; }
       .menu-btn .cerrar, .menu-btn[aria-expanded="true"] .abrir { display: none; }
       .menu-btn[aria-expanded="true"] .cerrar { display: block; }
@@ -712,15 +738,15 @@
     @media (max-width: 767px) { .wrap { padding-top: 72px; } }
 
     @keyframes menu-pulso {
-      0% { box-shadow: 0 0 9px rgba(212, 175, 55, 0.4), 0 0 0 0 rgba(212, 175, 55, 0.35); }
-      70%, 100% { box-shadow: 0 0 9px rgba(212, 175, 55, 0.4), 0 0 0 10px rgba(212, 175, 55, 0); }
+      0% { transform: scale(1); opacity: 1; }
+      70%, 100% { transform: scale(1.45); opacity: 0; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .menu-btn { animation: none; }
+      .menu-btn::after { animation: none; display: none; }
       html { scroll-behavior: auto; }
       * { transition: none !important; }
-      .material h3 .dot { animation: none; }
+      .material h3 .dot::after { animation: none; display: none; }
     }
 
     /* Al imprimir sale como un CV en blanco y negro */
@@ -973,9 +999,20 @@
 
     // Luz que sigue al mouse
     const spot = document.getElementById('spotlight');
-    window.addEventListener('pointermove', (e) => {
-      spot.style.background = `radial-gradient(600px at ${e.clientX}px ${e.clientY}px, var(--spot), transparent 80%)`;
-    });
+    if (window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      let spotX = 0, spotY = 0, spotPendiente = false;
+      window.addEventListener('pointermove', (e) => {
+        spotX = e.clientX;
+        spotY = e.clientY;
+        if (spotPendiente) return;
+        spotPendiente = true;
+        requestAnimationFrame(() => {
+          spotPendiente = false;
+          spot.style.opacity = '1';
+          spot.style.transform = `translate3d(${spotX}px, ${spotY}px, 0)`;
+        });
+      }, { passive: true });
+    }
 
     // Marca en el menu la seccion que se esta viendo
     const links = document.querySelectorAll('nav.toc a');
@@ -990,7 +1027,12 @@
       }
       links.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === '#' + current.id));
     }
-    window.addEventListener('scroll', markActive, { passive: true });
+    let activoPendiente = false;
+    window.addEventListener('scroll', () => {
+      if (activoPendiente) return;
+      activoPendiente = true;
+      requestAnimationFrame(() => { activoPendiente = false; markActive(); });
+    }, { passive: true });
     markActive();
 
     // Lista automaticamente los archivos subidos a la carpeta material/.
