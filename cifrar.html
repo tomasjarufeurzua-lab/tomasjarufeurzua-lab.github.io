@@ -65,7 +65,7 @@
     <textarea id="notas" placeholder="Texto que quieras poder leer en cualquier computador"></textarea>
 
     <h2>Clave</h2>
-    <small>Deja estos campos vacios para mantener la clave actual. Si escribes una nueva, el contenido se cifra con ella y la anterior deja de servir.</small>
+    <small>La clave debe tener al menos 8 caracteres y una mayuscula. Deja estos campos vacios para mantener la clave actual. Si escribes una nueva, el contenido se cifra con ella y la anterior deja de servir.</small>
     <div class="dos">
       <div><label for="clave-nueva">Clave nueva</label><input id="clave-nueva" type="password" autocomplete="new-password"></div>
       <div><label for="clave-nueva2">Repite la nueva</label><input id="clave-nueva2" type="password" autocomplete="new-password"></div>
@@ -214,7 +214,8 @@
     const quedan = archivos.filter((a) => !a.quitado).map(({ nombre, tipo, datos }) => ({ nombre, tipo, datos }));
     if (nueva && nueva !== $('clave-nueva2').value) return decir('estado2', 'Las dos claves nuevas no coinciden.', 'mal');
     if (!clave) return decir('estado2', 'Escribe una clave nueva (no hay una clave actual).', 'mal');
-    if (clave.length < 12) return decir('estado2', 'La clave debe tener al menos 12 caracteres.', 'mal');
+    if (clave.length < 8) return decir('estado2', 'La clave debe tener al menos 8 caracteres.', 'mal');
+    if (!/[A-ZÁÉÍÓÚÑ]/.test(clave)) return decir('estado2', 'La clave debe tener al menos una mayuscula.', 'mal');
     if (!quedan.length && !notas.trim()) return decir('estado2', 'No queda nada que guardar. Para dejarlo vacio, borra privado.enc.json del repositorio.', 'mal');
     boton.disabled = true;
     decir('estado2', 'Cifrando...');
