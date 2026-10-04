@@ -523,6 +523,11 @@
       text-transform: uppercase;
     }
     .files .name { flex: 1; color: var(--heading); min-width: 0; overflow-wrap: anywhere; }
+    /* Celulares angostos: la etiqueta (Importante, Nivel medio...) va sola arriba y el nombre debajo */
+    @media (max-width: 480px) {
+      .files a { flex-wrap: wrap; row-gap: 6px; }
+      .files a .marca-importante { margin-right: 100%; }
+    }
     .files a:hover .name { color: var(--accent); }
     .subgroup {
       margin: 12px 0 0;
