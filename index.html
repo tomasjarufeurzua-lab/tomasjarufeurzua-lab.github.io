@@ -366,6 +366,14 @@
     .files a.dificil .name { font-weight: 600; }
     .files a.dificil .ext { background: #ef4444; color: #fff; }
     .marca-importante.dificil { background: #ef4444; color: #fff; }
+    .files a.medio {
+      background: linear-gradient(90deg, rgba(250, 204, 21, 0.18), rgba(250, 204, 21, 0.04));
+      box-shadow: inset 3px 0 0 #facc15;
+    }
+    .files a.medio:hover { background: linear-gradient(90deg, rgba(250, 204, 21, 0.28), rgba(250, 204, 21, 0.08)); }
+    .files a.medio .name { font-weight: 600; }
+    .files a.medio .ext { background: #facc15; color: #2a2300; }
+    .marca-importante.medio { background: #facc15; color: #2a2300; }
     /* Calculadora de promedio */
     .calc { margin-top: 20px; }
     .calc button { font: inherit; cursor: pointer; }
@@ -999,11 +1007,12 @@
         marca.textContent = 'Importante';
         a.insertBefore(marca, nombre);
       }
-      if (ARCHIVOS_DIFICILES.includes(archivo.replace(/\.[^.]+$/, ''))) {
-        a.classList.add('dificil');
+      const nivel = NIVELES[archivo.replace(/\.[^.]+$/, '')];
+      if (nivel) {
+        a.classList.add(nivel.clase);
         const marca = document.createElement('span');
-        marca.className = 'marca-importante dificil';
-        marca.textContent = 'Más difícil';
+        marca.className = 'marca-importante ' + nivel.clase;
+        marca.textContent = nivel.etiqueta;
         a.insertBefore(marca, nombre);
       }
       if (ext) {
@@ -1091,8 +1100,12 @@
     // (titulo tal como se ve en la pagina, sin el numero inicial)
     const ARCHIVOS_IMPORTANTES = ['Ejercicios de práctica 1 para el Control 1 (Mathematica)'];
 
-    // Archivos que se destacan en rojo con la etiqueta "Mas dificil" (nombre del archivo, con su numero inicial)
-    const ARCHIVOS_DIFICILES = ['2 - Ensayo Certamen 2'];
+    // Ensayos con nivel de dificultad: amarillo "Nivel medio" y rojo "Mas dificil"
+    // (clave = nombre del archivo sin extension, con su numero inicial)
+    const NIVELES = {
+      '2 - Ensayo Certamen 2': { clase: 'medio', etiqueta: 'Nivel medio' },
+      '3 - Ensayo Certamen 2': { clase: 'dificil', etiqueta: 'Más difícil' },
+    };
 
     // Categorias que se muestran siempre abiertas y sin poder plegarse (nombre de la carpeta);
     // todas las demas categorias y subcategorias son desplegables y empiezan cerradas
