@@ -1664,7 +1664,7 @@
           entrada(r2, 'otro-pl', 'Laboratorio (%)', 'pl', 'Ej: 10');
         }
         if (o.lab === 'mult') {
-          g2.appendChild(el('p', 'calc-aviso', 'Ojo: el multiplicador se asigna de forma lineal con tu nota de laboratorio: un 0 da ×0,9, un 100 da ×1,1 y un 50 da ×1,0 (multiplicador = 0,9 + 0,002 × nota). Se calcula tu nota con controles y certámenes y después se multiplica por ese valor.'));
+          g2.appendChild(el('p', 'calc-aviso', 'Ojo: así se calcula el multiplicador ω a partir de tu nota de laboratorio (NL). Si 55 ≤ NL ≤ 100: ω = 79/90 + NL/450. Si 0 ≤ NL < 55: ω = 9/10 + NL/550. Así, un 0 da ×0,9, un 55 da ×1,0 y un 100 da ×1,1. Se calcula tu nota con controles y certámenes y después se multiplica por ω.'));
         }
 
         const suma = el('p', 'calc-nota');
@@ -1700,7 +1700,8 @@
         const pk = num(o.pk), pc = num(o.pc), pl = o.lab === 'pondera' ? num(o.pl) : 0;
         const serie = (pre, etiqueta, n) => Array.from({ length: n }, (_, i) => [pre + (i + 1), etiqueta + ' ' + (i + 1)]);
         const claves = (pre, n) => Array.from({ length: n }, (_, i) => pre + (i + 1));
-        const mult = (lab) => 0.9 + 0.002 * lab;
+        // Multiplicador del laboratorio (omega): dos tramos lineales, vale 1 con NL = 55
+        const mult = (lab) => (lab >= 55 ? 79 / 90 + lab / 450 : 9 / 10 + lab / 550);
         const lista = (v, pre, n) => claves(pre, n).map((k) => v[k]);
         const desc = Number(o.desc) || 0;
         // Promedio de controles; si ya estan todos, se quitan los peores
@@ -1723,7 +1724,7 @@
           },
         ];
         if (o.lab === 'pondera') grupos.push({ titulo: 'Laboratorio', nota: 'Pesa ' + fmtN(pl) + '%.', campos: [['lab', 'Laboratorio']] });
-        if (o.lab === 'mult') grupos.push({ titulo: 'Laboratorio', nota: 'Da un multiplicador lineal: 0 → ×0,9 y 100 → ×1,1.', campos: [['lab', 'Laboratorio']] });
+        if (o.lab === 'mult') grupos.push({ titulo: 'Laboratorio', nota: 'Da un multiplicador ω: 0 → ×0,9, 55 → ×1,0 y 100 → ×1,1 (ω = 79/90 + NL/450 desde 55; ω = 9/10 + NL/550 bajo 55).', campos: [['lab', 'Laboratorio']] });
         const base = (v) => (pk * promControles(lista(v, 'k', o.nk)) + pc * prom(lista(v, 'c', o.nc)) + (o.lab === 'pondera' ? pl * v.lab : 0)) / (pk + pc + pl);
         return {
           grupos,
@@ -1743,7 +1744,7 @@
           },
           extra(v) {
             if (o.lab !== 'mult' || v.lab == null) return '';
-            return 'Multiplicador de laboratorio: ×' + (0.9 + 0.002 * v.lab).toFixed(3).replace('.', ',') + ' (por tu nota de ' + fmtN(v.lab) + ').';
+            return 'Multiplicador de laboratorio: ×' + mult(v.lab).toFixed(3).replace('.', ',') + ' (por tu nota de ' + fmtN(v.lab) + ').';
           },
         };
       }
