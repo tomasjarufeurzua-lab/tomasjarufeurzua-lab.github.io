@@ -300,6 +300,20 @@
     a.inline { color: var(--heading); border-bottom: 1px solid var(--dim); transition: all 0.2s; }
     a.inline:hover { color: var(--accent); border-color: var(--accent); }
     .muted { color: var(--dim); font-size: 0.9rem; }
+    /* Aviso para la red eduroam (que bloquea tomasjarufe.site) */
+    .aviso-red {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+    .aviso-red svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; color: var(--accent); }
+    .aviso-red a.inline { overflow-wrap: anywhere; }
 
     .material h3 {
       color: var(--heading);
@@ -938,6 +952,11 @@
       <section id="material">
         <h2 class="sec-title">Material</h2>
         <p>Apuntes, ejercicios y otro material de estudio que he preparado. Puedes descargarlos libremente.</p>
+        <p class="aviso-red" id="aviso-eduroam">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg>
+          <span>¿No carga desde <strong>eduroam</strong>? Usa esta dirección:
+          <a class="inline" href="https://tomasjarufe.tomasjarufeurzua.workers.dev/">tomasjarufe.tomasjarufeurzua.workers.dev</a></span>
+        </p>
         <div id="material-list" class="material"><p class="muted">Cargando material…</p></div>
 
         <details class="privado" id="privado">
@@ -996,6 +1015,12 @@
     ajustarLateral();
     window.addEventListener('resize', ajustarLateral);
     if (document.fonts) document.fonts.ready.then(ajustarLateral);
+
+    // En la copia de workers.dev el aviso de eduroam no hace falta
+    if (/\.workers\.dev$|\.pages\.dev$/.test(location.hostname)) {
+      const aviso = document.getElementById('aviso-eduroam');
+      if (aviso) aviso.remove();
+    }
 
     // Luz que sigue al mouse
     const spot = document.getElementById('spotlight');
