@@ -33,7 +33,7 @@ def main():
         subcarpetas[:] = [s for s in subcarpetas if publicable(s)]
         rel = os.path.relpath(carpeta, RAIZ)
         for nombre in archivos:
-            if not publicable(nombre) or (rel == "." and nombre in ("material.json", "CNAME")):
+            if not publicable(nombre) or (rel == "." and nombre in ("material.json", "CNAME", "wrangler.jsonc")):
                 continue
             ruta_rel = os.path.normpath(os.path.join(rel, nombre))
             destino = os.path.join(SALIDA, ruta_rel)
