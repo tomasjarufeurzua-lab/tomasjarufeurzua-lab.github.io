@@ -6,7 +6,10 @@ programa hace lo mismo: copia los archivos a _cf/ y escribe material.json con la
 lista de todo lo que hay en material/. Jekyll ignora este archivo porque empieza
 con "_", así que no se publica en tomasjarufe.site.
 
-En Cloudflare Pages: comando de compilación `python3 _cloudflare_build.py`,
+Cada subida a la rama claude/youthful-mayer-nwoi6w publica a la vez en GitHub Pages
+(tomasjarufe.site) y en esta copia.
+
+En Cloudflare: comando de compilación `python3 _cloudflare_build.py`,
 carpeta de salida `_cf`.
 """
 import json
