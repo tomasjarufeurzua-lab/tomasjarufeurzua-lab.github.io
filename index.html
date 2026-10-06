@@ -332,7 +332,10 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      display: block;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 0;
       cursor: pointer;
       list-style: none;
       user-select: none;
@@ -356,6 +359,7 @@
     .noticias-titulo .etiqueta-ia {
       display: inline-block;
       margin-left: 12px;
+      vertical-align: middle;
       padding: 3px 11px;
       border: 1px solid var(--metal-borde);
       border-radius: 999px;
@@ -366,9 +370,9 @@
       font-weight: 600;
       letter-spacing: 0.04em;
       text-transform: none;
-      vertical-align: 1px;
       white-space: nowrap;
     }
+    @media (max-width: 480px) { .noticias-titulo .etiqueta-ia { margin-left: 22px; } }
     .noticias-texto { margin-top: 4px !important; font-size: 0.9rem; color: var(--text); }
     .noticias-fuentes { margin-top: 8px !important; font-size: 0.75rem; color: var(--dim); }
     .noticias-fuentes a { color: var(--text); border-bottom: 1px solid var(--dim); }
@@ -1011,7 +1015,7 @@
       <section id="material">
         <h2 class="sec-title">Material</h2>
         <details class="noticias" id="noticias" hidden>
-          <summary class="noticias-titulo">Noticias<span class="etiqueta-ia" title="Este resumen lo escribe una inteligencia artificial a partir de las fuentes indicadas. Revisa las fuentes para confirmar los datos.">Hecho por IA</span></summary>
+          <summary class="noticias-titulo">Noticias de actualidad<span class="etiqueta-ia" title="Este resumen lo escribe una inteligencia artificial a partir de las fuentes indicadas. Revisa las fuentes para confirmar los datos.">Hecho por IA</span></summary>
           <p class="noticias-fecha" id="noticias-fecha"></p>
           <p class="noticias-texto" id="noticias-texto"></p>
           <p class="noticias-fuentes">Fuentes: <span id="noticias-fuentes"></span></p>
@@ -1328,7 +1332,7 @@
 
     // Archivos que se destacan con la etiqueta "Importante" y un fondo verde
     // (titulo tal como se ve en la pagina, sin el numero inicial)
-    const ARCHIVOS_IMPORTANTES = ['Ejercicios de práctica 1 para el Control 1 (Mathematica)', 'Corrección Certamen EDO'];
+    const ARCHIVOS_IMPORTANTES = ['Ejercicios de práctica 1 para el Control 1 (Mathematica)', 'Corrección Certamen 2 EDO'];
 
     // Ensayos con nivel: turquesa "Certamen pasado", amarillo "Nivel medio" y rojo "Mas dificil"
     // (clave = nombre del archivo sin extension, con su numero inicial)
