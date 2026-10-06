@@ -325,13 +325,33 @@
     }
     .noticias[hidden] { display: none; }
     .noticias p { margin: 0; }
+    .noticias-fecha { margin-top: 10px !important; font-size: 0.75rem; color: var(--dim); }
     .noticias-titulo {
       color: var(--heading);
       font-size: 0.75rem;
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
+      display: block;
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
     }
+    .noticias-titulo::-webkit-details-marker { display: none; }
+    .noticias-titulo::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      margin: 0 12px 2px 2px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(-45deg);
+      transition: transform 0.2s;
+    }
+    .noticias[open] > .noticias-titulo::before { transform: rotate(45deg); }
+    .noticias-titulo:hover { color: var(--accent); }
+    .noticias-titulo:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
     .noticias-titulo span { color: var(--dim); font-weight: 500; letter-spacing: 0.04em; text-transform: none; margin-left: 6px; }
     .noticias-titulo .etiqueta-ia {
       display: inline-block;
@@ -347,7 +367,7 @@
       text-transform: uppercase;
       vertical-align: 1px;
     }
-    .noticias-texto { margin-top: 8px !important; font-size: 0.9rem; color: var(--text); }
+    .noticias-texto { margin-top: 4px !important; font-size: 0.9rem; color: var(--text); }
     .noticias-fuentes { margin-top: 8px !important; font-size: 0.75rem; color: var(--dim); }
     .noticias-fuentes a { color: var(--text); border-bottom: 1px solid var(--dim); }
     .noticias-fuentes a:hover { color: var(--accent); border-color: var(--accent); }
@@ -988,11 +1008,12 @@
 
       <section id="material">
         <h2 class="sec-title">Material</h2>
-        <aside class="noticias" id="noticias" hidden aria-label="Noticias en breve">
-          <p class="noticias-titulo">Noticias en breve <span id="noticias-fecha"></span><span class="etiqueta-ia" title="Este resumen lo escribe una inteligencia artificial a partir de las fuentes indicadas. Revisa las fuentes para confirmar los datos.">Hecho por IA</span></p>
+        <details class="noticias" id="noticias" hidden>
+          <summary class="noticias-titulo">Noticias<span class="etiqueta-ia" title="Este resumen lo escribe una inteligencia artificial a partir de las fuentes indicadas. Revisa las fuentes para confirmar los datos.">Hecho por IA</span></summary>
+          <p class="noticias-fecha" id="noticias-fecha"></p>
           <p class="noticias-texto" id="noticias-texto"></p>
           <p class="noticias-fuentes">Fuentes: <span id="noticias-fuentes"></span></p>
-        </aside>
+        </details>
         <p>Apuntes, ejercicios y otro material de estudio que he preparado. Puedes descargarlos libremente.</p>
         <p class="aviso-red" id="aviso-eduroam">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg>
