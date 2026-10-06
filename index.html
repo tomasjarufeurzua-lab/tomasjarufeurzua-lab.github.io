@@ -1078,8 +1078,13 @@
         const dia = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
         if (Date.now() - dia.getTime() > 10 * 24 * 3600 * 1000) return;
         document.getElementById('noticias-texto').textContent = n.parrafo;
-        document.getElementById('noticias-fecha').textContent =
-          dia.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+        // Dice "Ayer" si la noticia es de ayer (hora de Chile); si la rutina se atrasa, muestra la fecha real
+        const hoyChile = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());
+        const [hy, hm, hd] = hoyChile.split('-').map(Number);
+        const esAyer = Date.UTC(hy, hm - 1, hd) - dia.getTime() === 24 * 3600 * 1000;
+        document.getElementById('noticias-fecha').textContent = esAyer
+          ? 'Ayer'
+          : dia.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
         const fuentes = document.getElementById('noticias-fuentes');
         (Array.isArray(n.fuentes) ? n.fuentes : []).filter((f) => f && /^https?:\/\//.test(f.url)).forEach((f, i) => {
           if (i) fuentes.append(' · ');
