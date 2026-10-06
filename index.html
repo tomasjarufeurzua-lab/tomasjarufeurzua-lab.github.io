@@ -415,30 +415,6 @@
     .material details.grupo > summary:hover { color: var(--accent); }
     .material details.grupo > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
     .material details.grupo > summary .cuenta { float: right; font-size: 0.75rem; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--dim); }
-    .material h3 .dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      margin-right: 10px;
-      border-radius: 50%;
-      vertical-align: 1px;
-      background: #f87171;
-      box-shadow: 0 0 8px rgba(248, 113, 113, 0.6);
-      position: relative;
-    }
-    /* Anillo que late: solo transform y opacity, para no repintar en cada cuadro */
-    .material h3 .dot::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      background: rgba(248, 113, 113, 0.55);
-      animation: latido 2.4s ease-out infinite;
-    }
-    @keyframes latido {
-      0%   { transform: scale(1); opacity: 1; }
-      70%, 100% { transform: scale(2.75); opacity: 0; }
-    }
     .files { list-style: none; padding: 0; margin: 0; }
     .files a {
       display: flex;
@@ -823,7 +799,6 @@
       .menu-btn::after { animation: none; display: none; }
       html { scroll-behavior: auto; }
       * { transition: none !important; }
-      .material h3 .dot::after { animation: none; display: none; }
     }
 
     /* Al imprimir sale como un CV en blanco y negro */
@@ -1327,8 +1302,6 @@
     if (document.fonts) document.fonts.addEventListener('loadingdone', () => { ajustarCuentas(); ajustarMarcas(); });
     window.addEventListener('load', () => { ajustarCuentas(); ajustarMarcas(); });
 
-    // Secciones que llevan un punto rojo para que se noten mas (nombre de la carpeta, sin tildes cambiadas)
-    const DESTACADOS = ['Ayudantía Laboratorio Álgebra Lineal'];
 
     // Archivos que se destacan con la etiqueta "Importante" y un fondo verde
     // (titulo tal como se ve en la pagina, sin el numero inicial)
@@ -1344,7 +1317,9 @@
 
     // Categorias que se muestran siempre abiertas y sin poder plegarse (nombre de la carpeta);
     // todas las demas categorias y subcategorias son desplegables y empiezan cerradas
-    const ABIERTAS = ['Ayudantía Laboratorio Álgebra Lineal'];
+    const ABIERTAS = [];
+    // Categorias plegables cuyas subcarpetas se ven directo (como subtitulo), sin plegarse otra vez
+    const SUBCARPETAS_VISIBLES = ['Ayudantía Laboratorio Álgebra Lineal'];
 
     function visible(ruta) {
       const nombre = ruta.split('/').pop();
@@ -1455,14 +1430,6 @@
       // Categoria fija: titulo normal. Las demas: bloque desplegable cerrado con el titulo como cabecera.
       const h = document.createElement(fijo ? 'h3' : 'summary');
       h.textContent = nombre;
-      if (DESTACADOS.includes(nombre)) {
-        const punto = document.createElement('span');
-        punto.className = 'dot';
-        punto.title = 'Importante';
-        punto.setAttribute('role', 'img');
-        punto.setAttribute('aria-label', 'Importante');
-        h.prepend(punto);
-      }
       const cuenta = textosCuentaRegresiva(nombre);
       if (cuenta) {
         const aviso = document.createElement('span');
@@ -1482,7 +1449,7 @@
       total.textContent = lista.length === 1 ? '1 archivo' : lista.length + ' archivos';
       h.prepend(total);
       bloque.appendChild(h);
-      dibujarNivel(bloque, lista, nivel, false);
+      dibujarNivel(bloque, lista, nivel, SUBCARPETAS_VISIBLES.includes(nombre));
       caja.appendChild(bloque);
       return true;
     }
