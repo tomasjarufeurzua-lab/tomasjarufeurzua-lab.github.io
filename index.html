@@ -1509,8 +1509,11 @@
 
     (async () => {
       const rutas = (await todasLasRutas()).filter((ruta) => ruta.startsWith('material/'));
+      // Estas secciones van primero y en este orden; las demas, alfabeticamente
+      const PRIMERAS = ['Ayudantía Laboratorio Álgebra Lineal', 'Electricidad y Magnetismo'];
+      const posicion = (c) => { const i = PRIMERAS.indexOf(c); return i < 0 ? PRIMERAS.length : i; };
       const carpetas = [...new Set(rutas.filter((r) => r.split('/').length > 2).map((r) => r.split('/')[1]))]
-        .sort((x, y) => x.localeCompare(y, 'es', { numeric: true }));
+        .sort((x, y) => posicion(x) - posicion(y) || x.localeCompare(y, 'es', { numeric: true }));
       const sueltos = rutas.filter((r) => r.split('/').length === 2);
       caja.innerHTML = '';
       let hayAlgo = false;
