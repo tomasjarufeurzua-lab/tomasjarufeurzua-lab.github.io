@@ -1082,9 +1082,10 @@
         const hoyChile = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());
         const [hy, hm, hd] = hoyChile.split('-').map(Number);
         const esAyer = Date.UTC(hy, hm - 1, hd) - dia.getTime() === 24 * 3600 * 1000;
+        const fechaTexto = dia.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
         document.getElementById('noticias-fecha').textContent = esAyer
           ? 'Ayer'
-          : dia.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+          : fechaTexto.charAt(0).toUpperCase() + fechaTexto.slice(1);
         const fuentes = document.getElementById('noticias-fuentes');
         (Array.isArray(n.fuentes) ? n.fuentes : []).filter((f) => f && /^https?:\/\//.test(f.url)).forEach((f, i) => {
           if (i) fuentes.append(' · ');
