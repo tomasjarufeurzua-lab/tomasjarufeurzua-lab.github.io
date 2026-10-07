@@ -1036,6 +1036,19 @@
           </form>
           <div id="privado-contenido" hidden></div>
         </details>
+
+        <details class="privado skills" id="skills">
+          <summary aria-label="Skills"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Skills</summary>
+          <form id="skills-form" autocomplete="off">
+            <label for="skills-clave">Clave</label>
+            <div class="privado-fila">
+              <input id="skills-clave" type="password" autocomplete="off" spellcheck="false">
+              <button class="calc-boton" type="submit">Abrir</button>
+            </div>
+            <p id="skills-estado" class="skills-estado" role="status"></p>
+          </form>
+          <div id="skills-contenido" hidden></div>
+        </details>
       </section>
 
       <section id="calculadora">
@@ -2166,15 +2179,16 @@
     })();
   </script>
   <script>
-    // Seccion privada: el contenido esta cifrado en privado.enc.json (se genera con cifrar.html).
+    // Secciones con clave: el contenido esta cifrado en privado.enc.json y skills.enc.json (se generan con cifrar.html;
+    // para Skills se abre cifrar.html?s=skills).
     // Con la clave correcta se descifra en el navegador; la clave y el contenido no se guardan en
     // ningun lado y todo se borra al cerrar, al pasar 10 minutos o al salir de la pagina.
-    (function () {
-      const det = document.getElementById('privado');
-      const form = document.getElementById('privado-form');
-      const campo = document.getElementById('privado-clave');
-      const estado = document.getElementById('privado-estado');
-      const cont = document.getElementById('privado-contenido');
+    function iniciarPrivado(id, archivo) {
+      const det = document.getElementById(id);
+      const form = document.getElementById(id + '-form');
+      const campo = document.getElementById(id + '-clave');
+      const estado = document.getElementById(id + '-estado');
+      const cont = document.getElementById(id + '-contenido');
       let urls = [];
       let reloj = null;
 
@@ -2250,7 +2264,7 @@
         decir('Abriendo…');
         let paquete;
         try {
-          const r = await fetch('privado.enc.json', { cache: 'no-cache' });
+          const r = await fetch(archivo, { cache: 'no-cache' });
           if (!r.ok) return decir('Todavia no hay contenido privado.', true);
           paquete = await r.json();
         } catch (err) {
@@ -2268,7 +2282,9 @@
       // Al cerrar el menu o salir de la pagina no queda nada descifrado
       det.addEventListener('toggle', () => { if (!det.open) cerrar(); });
       window.addEventListener('pagehide', () => cerrar());
-    })();
+    }
+    iniciarPrivado('privado', 'privado.enc.json');
+    iniciarPrivado('skills', 'skills.enc.json');
   </script>
 </body>
 </html>

@@ -36,8 +36,8 @@
 </head>
 <body>
 <main>
-  <h1>Panel privado</h1>
-  <p>Todo ocurre en tu navegador: ni la clave ni los archivos se envian a ningun lado. Cada cambio genera un <b>privado.enc.json</b> nuevo, que subes a la raiz del repositorio reemplazando el anterior.</p>
+  <h1 id="titulo">Panel privado</h1>
+  <p>Todo ocurre en tu navegador: ni la clave ni los archivos se envian a ningun lado. Cada cambio genera un archivo <b>.enc.json</b> nuevo (<b>privado.enc.json</b> o, en el panel de Skills, <b>skills.enc.json</b>), que subes a la raiz del repositorio reemplazando el anterior.</p>
 
   <!-- Paso 1: abrir lo que ya hay (o empezar de cero) -->
   <section id="paso1">
@@ -82,6 +82,8 @@
 <script>
   // Cifrado: la clave se convierte en una llave con PBKDF2 (muchas vueltas, para que adivinarla
   // sea lento) y el contenido se cifra con AES-GCM, que ademas detecta si la clave es incorrecta.
+  // ?s=skills edita la seccion Skills (skills.enc.json); sin eso, la privada (privado.enc.json)
+  const ARCHIVO = new URLSearchParams(location.search).get('s') === 'skills' ? 'skills.enc.json' : 'privado.enc.json';
   const ITER = 600000;
   const aB64 = (bytes) => {
     let s = '';
@@ -90,6 +92,7 @@
   };
   const deB64 = (t) => Uint8Array.from(atob(t), (c) => c.charCodeAt(0));
   const $ = (id) => document.getElementById(id);
+  if (ARCHIVO === 'skills.enc.json') { $('titulo').textContent = 'Panel de Skills'; document.title = 'Panel de Skills'; }
   const decir = (id, txt, clase) => { $(id).textContent = txt; $(id).className = 'estado ' + (clase || ''); };
 
   async function llaveDe(clave, salt, iter, uso) {
@@ -170,7 +173,7 @@
     if (!window.crypto || !crypto.subtle) return decir('estado1', 'Este navegador no permite abrirlo (hace falta una conexion segura).', 'mal');
     let paquete;
     try {
-      const r = await fetch('privado.enc.json', { cache: 'no-cache' });
+      const r = await fetch(ARCHIVO, { cache: 'no-cache' });
       if (!r.ok) return decir('estado1', 'No hay nada publicado todavia. Puedes empezar de cero.', 'mal');
       paquete = await r.json();
     } catch (e) {
@@ -187,7 +190,7 @@
     try {
       intentarAbrir(JSON.parse(await f.text()));
     } catch (err) {
-      decir('estado1', 'Ese archivo no es un privado.enc.json valido.', 'mal');
+      decir('estado1', 'Ese archivo no es un .enc.json valido.', 'mal');
     }
   });
 
@@ -216,7 +219,7 @@
     if (!clave) return decir('estado2', 'Escribe una clave nueva (no hay una clave actual).', 'mal');
     if (clave.length < 8) return decir('estado2', 'La clave debe tener al menos 8 caracteres.', 'mal');
     if (!/[A-ZÁÉÍÓÚÑ]/.test(clave)) return decir('estado2', 'La clave debe tener al menos una mayuscula.', 'mal');
-    if (!quedan.length && !notas.trim()) return decir('estado2', 'No queda nada que guardar. Para dejarlo vacio, borra privado.enc.json del repositorio.', 'mal');
+    if (!quedan.length && !notas.trim()) return decir('estado2', 'No queda nada que guardar. Para dejarlo vacio, borra ' + ARCHIVO + ' del repositorio.', 'mal');
     boton.disabled = true;
     decir('estado2', 'Cifrando...');
     try {
@@ -224,7 +227,7 @@
       const url = URL.createObjectURL(new Blob([JSON.stringify(paquete)], { type: 'application/json' }));
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'privado.enc.json';
+      a.download = ARCHIVO;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -235,7 +238,7 @@
       $('clave-nueva').value = '';
       $('clave-nueva2').value = '';
       dibujarLista();
-      decir('estado2', (soloClave || nueva ? 'Clave cambiada. ' : '') + 'Listo: se descargo privado.enc.json. Subelo al repositorio para publicarlo.', 'ok');
+      decir('estado2', (soloClave || nueva ? 'Clave cambiada. ' : '') + 'Listo: se descargo ' + ARCHIVO + '. Subelo al repositorio para publicarlo.', 'ok');
     } catch (err) {
       decir('estado2', 'No se pudo cifrar: ' + err.message, 'mal');
     }
