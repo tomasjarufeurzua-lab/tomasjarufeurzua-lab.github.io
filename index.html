@@ -2241,8 +2241,7 @@
           const li = document.createElement('li');
           const a = document.createElement('a');
           a.href = url;
-          a.target = '_blank';
-          a.rel = 'noopener';
+          a.download = f.nombre;   // se descarga directo, sin abrir vista previa
           const nombre = document.createElement('span');
           nombre.className = 'name';
           nombre.textContent = f.nombre;
