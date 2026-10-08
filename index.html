@@ -319,69 +319,6 @@
     }
     .aviso-red svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; color: var(--accent); }
     .aviso-red a.inline { overflow-wrap: anywhere; }
-    /* Cuadro de noticias en breve (se llena desde noticias.json) */
-    .noticias {
-      margin: 0 0 20px;
-      padding: 14px 16px;
-      border: 1px solid rgba(148, 163, 184, 0.18);
-      border-left: 3px solid var(--accent);
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.04);
-    }
-    .noticias[hidden] { display: none; }
-    .noticias p { margin: 0; }
-    .noticias-fecha { margin-top: 10px !important; font-size: 0.75rem; color: var(--dim); }
-    .noticias-titulo {
-      color: var(--heading);
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 6px 0;
-      cursor: pointer;
-      list-style: none;
-      user-select: none;
-    }
-    .noticias-titulo::-webkit-details-marker { display: none; }
-    .noticias-titulo::before {
-      content: "";
-      display: inline-block;
-      width: 6px;
-      height: 6px;
-      margin: 0 12px 2px 2px;
-      border-right: 2px solid currentColor;
-      border-bottom: 2px solid currentColor;
-      transform: rotate(-45deg);
-      transition: transform 0.2s;
-    }
-    .noticias[open] > .noticias-titulo::before { transform: rotate(45deg); }
-    .noticias-titulo:hover { color: var(--accent); }
-    .noticias-titulo:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
-    .noticias-titulo span { color: var(--dim); font-weight: 500; letter-spacing: 0.04em; text-transform: none; margin-left: 6px; }
-    .noticias-titulo .etiqueta-ia {
-      display: inline-block;
-      margin-left: 12px;
-      vertical-align: middle;
-      padding: 3px 11px;
-      border: 1px solid var(--metal-borde);
-      border-radius: 999px;
-      background: var(--metal);
-      box-shadow: var(--metal-glow);
-      color: var(--heading);
-      font-size: 0.7rem;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      text-transform: none;
-      white-space: nowrap;
-    }
-    @media (max-width: 480px) { .noticias-titulo .etiqueta-ia { margin-left: 22px; } }
-    .noticias-texto { margin-top: 4px !important; font-size: 0.9rem; color: var(--text); }
-    .noticias-fuentes { margin-top: 8px !important; font-size: 0.75rem; color: var(--dim); }
-    .noticias-fuentes a { color: var(--text); border-bottom: 1px solid var(--dim); }
-    .noticias-fuentes a:hover { color: var(--accent); border-color: var(--accent); }
 
     .material h3 {
       color: var(--heading);
@@ -1010,12 +947,6 @@
 
       <section id="material">
         <h2 class="sec-title">Material</h2>
-        <details class="noticias" id="noticias" hidden>
-          <summary class="noticias-titulo">Noticias de actualidad<span class="etiqueta-ia" title="Este resumen lo escribe una inteligencia artificial a partir de las fuentes indicadas. Revisa las fuentes para confirmar los datos.">Hecho por IA</span></summary>
-          <p class="noticias-fecha" id="noticias-fecha"></p>
-          <p class="noticias-texto" id="noticias-texto"></p>
-          <p class="noticias-fuentes">Fuentes: <span id="noticias-fuentes"></span></p>
-        </details>
         <p>Apuntes, ejercicios y otro material de estudio que he preparado. Puedes descargarlos libremente.</p>
         <p class="aviso-red" id="aviso-eduroam">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg>
@@ -1108,39 +1039,6 @@
       const aviso = document.getElementById('aviso-eduroam');
       if (aviso) aviso.remove();
     }
-
-    // Noticias en breve: se leen de noticias.json (una rutina diaria lo actualiza).
-    // Si falta el archivo, es invalido o tiene mas de 10 dias, el cuadro queda oculto.
-    (async () => {
-      try {
-        const r = await fetch('noticias.json', { cache: 'no-cache' });
-        if (!r.ok) return;
-        const n = await r.json();
-        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(n.fecha || '');
-        if (!m || typeof n.parrafo !== 'string' || !n.parrafo.trim()) return;
-        const dia = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
-        if (Date.now() - dia.getTime() > 10 * 24 * 3600 * 1000) return;
-        document.getElementById('noticias-texto').textContent = n.parrafo;
-        // Dice "Ayer" si la noticia es de ayer (hora de Chile); si la rutina se atrasa, muestra la fecha real
-        const hoyChile = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());
-        const [hy, hm, hd] = hoyChile.split('-').map(Number);
-        const esAyer = Date.UTC(hy, hm - 1, hd) - dia.getTime() === 24 * 3600 * 1000;
-        const fechaTexto = dia.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
-        document.getElementById('noticias-fecha').textContent = esAyer
-          ? 'Ayer'
-          : fechaTexto.charAt(0).toUpperCase() + fechaTexto.slice(1);
-        const fuentes = document.getElementById('noticias-fuentes');
-        (Array.isArray(n.fuentes) ? n.fuentes : []).filter((f) => f && /^https?:\/\//.test(f.url)).forEach((f, i) => {
-          if (i) fuentes.append(' · ');
-          const a = document.createElement('a');
-          a.href = f.url; a.target = '_blank'; a.rel = 'noopener';
-          a.textContent = f.nombre || new URL(f.url).hostname;
-          fuentes.appendChild(a);
-        });
-        if (!fuentes.children.length) fuentes.parentElement.remove();
-        document.getElementById('noticias').hidden = false;
-      } catch (e) { /* sin noticias: el cuadro sigue oculto */ }
-    })();
 
     // Luz que sigue al mouse
     const spot = document.getElementById('spotlight');
