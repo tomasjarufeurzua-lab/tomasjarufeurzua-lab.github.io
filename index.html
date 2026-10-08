@@ -1,0 +1,2187 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2f3236">
+  <meta name="color-scheme" content="dark">
+  <title>Tomás Jarufe Urzúa</title>
+  <meta name="description" content="Estudiante de Ingeniería Civil Industrial en la USM y ayudante de Álgebra Lineal. Currículum, apuntes, ensayos y material de estudio.">
+  <link rel="canonical" href="https://tomasjarufe.site/">
+
+  <!-- Vista previa al compartir el enlace (LinkedIn, WhatsApp, etc.) -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://tomasjarufe.site/">
+  <meta property="og:site_name" content="Tomás Jarufe Urzúa">
+  <meta property="og:title" content="Tomás Jarufe Urzúa · Ingeniería Civil Industrial USM">
+  <meta property="og:description" content="Estudiante de Ingeniería Civil Industrial en la USM y ayudante de Álgebra Lineal. Currículum, apuntes, ensayos y material de estudio.">
+  <meta property="og:image" content="https://tomasjarufe.site/img/preview.png?v=2">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="627">
+  <meta property="og:image:alt" content="Tomás Jarufe Urzúa, estudiante de Ingeniería Civil Industrial en la USM">
+  <meta property="og:locale" content="es_CL">
+  <meta name="twitter:card" content="summary_large_image">
+  <!-- Estadisticas de visitas (GoatCounter: sin cookies, no guarda IPs) -->
+  <script data-goatcounter="https://tomasjarufe.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- La tipografia se carga sin bloquear: la pagina se dibuja altiro con la del sistema y despues cambia -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
+  <style>
+    :root {
+      /* Gris metalizado inspirado en el Machine Gray de Mazda */
+      --bg: #34383c;
+      --text: #c3c8cd;
+      --heading: #f1f3f5;
+      --dim: #a3a9af;
+      --accent: #5eead4;
+      --accent-bg: rgba(45, 212, 191, 0.12);
+      --card-hover: rgba(255, 255, 255, 0.06);
+      --spot: rgba(255, 255, 255, 0.07);
+      /* Botones: gris metalizado con un pequeno brillo dorado */
+      --metal: linear-gradient(135deg, #5d6268 0%, #42464b 45%, #30343a 70%, #52575d 100%);
+      --metal-borde: rgba(255, 255, 255, 0.28);
+      --metal-glow: 0 0 9px rgba(212, 175, 55, 0.4);
+      --metal-glow-fuerte: 0 0 14px rgba(212, 175, 55, 0.6);
+      --oro: #e9d58f;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; background: var(--bg); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: "Inter", system-ui, sans-serif;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Fondo metalizado: grafito con un brillo diagonal suave, como el reflejo en la pintura */
+    body::before {
+      content: "";
+      position: fixed;
+      /* Sobra por arriba y por abajo: en iPhone, al subir o bajar la barra del navegador,
+         la capa fija no alcanzaba y quedaba un corte visible al final de la pagina */
+      top: -30vh;
+      bottom: -30vh;
+      left: 0;
+      right: 0;
+      z-index: -1;
+      will-change: transform;
+      background:
+        linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.05) 45%, rgba(255, 255, 255, 0.09) 50%, rgba(255, 255, 255, 0.04) 55%, transparent 70%),
+        linear-gradient(160deg, #3c4044 0%, #2f3236 45%, #2a2d31 70%, #36393d 100%);
+    }
+    ::selection { background: #2dd4bf; color: #134e4a; }
+    a { color: inherit; text-decoration: none; }
+
+    /* Luz que sigue al mouse */
+    /* Es un circulo fijo que se desplaza con transform (lo hace la GPU, no repinta la pagina);
+       solo existe si hay mouse */
+    .spotlight {
+      pointer-events: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 1200px;
+      height: 1200px;
+      margin: -600px 0 0 -600px;
+      z-index: 0;
+      opacity: 0;
+      will-change: transform;
+      background: radial-gradient(circle 600px at center, var(--spot), transparent 80%);
+    }
+    @media (hover: none), (pointer: coarse) { .spotlight { display: none; } }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 48px 24px;
+    }
+
+    /* Columna izquierda */
+    .side h1 {
+      color: var(--heading);
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin: 0;
+    }
+    .side h2 {
+      color: var(--heading);
+      font-size: 1.15rem;
+      font-weight: 500;
+      margin: 12px 0 0;
+    }
+    .side .tagline { max-width: 27.5rem; margin: 16px 0 0; }
+    .side .location { margin: 8px 0 0; font-size: 0.875rem; color: var(--dim); }
+    .side .location .mail { color: var(--text); transition: color 0.2s; }
+    .side .location .mail:hover { color: var(--accent); }
+
+    nav.toc { display: none; margin-top: 64px; }
+    nav.toc ul { list-style: none; padding: 0; margin: 0; }
+    nav.toc a {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 0;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+    nav.toc .line {
+      height: 1px;
+      width: 32px;
+      background: var(--dim);
+      transition: width 0.2s, background-color 0.2s;
+    }
+    nav.toc a:hover, nav.toc a.active { color: var(--heading); }
+    nav.toc a:hover .line, nav.toc a.active .line { width: 64px; background: var(--heading); }
+
+    .social { display: flex; gap: 20px; margin-top: 32px; list-style: none; padding: 0; }
+    .social a { color: var(--text); transition: color 0.2s; display: block; }
+    .social a:hover { color: var(--heading); }
+    .social svg { width: 1.5rem; height: 1.5rem; display: block; }
+
+    /* Botón destacado para ir al material. En celular va bajo los íconos;
+       en computador va bajo la descripción. */
+    .go-material {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 24px 0 16px;
+      padding: 12px 22px;
+      border: 1px solid var(--metal-borde);
+      border-radius: 999px;
+      background: var(--metal);
+      box-shadow: var(--metal-glow);
+      color: var(--heading);
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .go-material svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--oro); }
+    .go-material .arrow { color: var(--oro); transition: transform 0.2s; }
+    .go-material:hover, .go-material:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: var(--metal-glow-fuerte);
+    }
+    .go-material:hover .arrow { transform: translateY(3px); }
+    .go-material:active { transform: translateY(0); }
+    .go-desktop { display: none; }
+    .go-sobre { display: none; }
+    .go-sobre:hover .arrow { transform: translateX(4px); }
+
+    /* Columna derecha */
+    main section { margin-bottom: 96px; }
+    .sec-title {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      margin: 0 -24px 24px;
+      padding: 20px 24px;
+      background: rgba(46, 49, 53, 0.96);
+      color: var(--heading);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    main p { margin: 0 0 16px; }
+    main strong { color: var(--heading); font-weight: 500; }
+
+    .list { list-style: none; padding: 0; margin: 0; }
+    .item {
+      position: relative;
+      display: grid;
+      gap: 8px;
+      padding: 16px 0;
+      margin-bottom: 32px;
+      border-radius: 8px;
+      transition: background-color 0.2s, box-shadow 0.2s, opacity 0.2s;
+    }
+    .item .date {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-top: 4px;
+    }
+    .item h3 {
+      color: var(--heading);
+      font-size: 1rem;
+      font-weight: 500;
+      line-height: 1.4;
+      margin: 0;
+    }
+    .item h3 .org { color: var(--text); }
+    .item:hover h3 { color: var(--accent); }
+    .item p { font-size: 0.9rem; margin: 8px 0 0; }
+
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 12px 0 0; }
+    /* Mismo estilo metalizado con brillo que el botón "Ver apuntes y material" */
+    .tags li {
+      border: 1px solid var(--metal-borde);
+      background: var(--metal);
+      box-shadow: var(--metal-glow);
+      color: var(--heading);
+      border-radius: 999px;
+      padding: 7px 16px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .tags li:hover { transform: translateY(-2px); box-shadow: var(--metal-glow-fuerte); }
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--heading);
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    .cta:hover { color: var(--accent); }
+    .cta span { transition: transform 0.2s; }
+    .cta:hover span { transform: translateX(4px); }
+
+    .reading { margin-top: 40px; }
+    .reading h3 {
+      color: var(--heading);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin: 0 0 16px;
+    }
+    .books { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+    .book {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      padding: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .book .cover {
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+      width: 64px;
+      height: 96px;
+      border-radius: 4px 8px 8px 4px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(45, 212, 191, 0.3), rgba(45, 212, 191, 0.08));
+      border-left: 3px solid var(--accent);
+      color: var(--accent);
+      font-family: Georgia, serif;
+      font-size: 1.6rem;
+      font-style: italic;
+      font-weight: 700;
+      box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.6);
+    }
+    /* La foto de la portada tapa la portada de respaldo; si no carga, se elimina */
+    .book .cover img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .book p { margin: 0; }
+    .book .book-title { color: var(--heading); font-weight: 600; font-style: italic; }
+    .book .book-author { font-size: 0.85rem; color: var(--dim); margin-top: 2px; }
+    .book .book-note { font-size: 0.85rem; margin-top: 8px; }
+    @media (min-width: 640px) { .books { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); } }
+
+    a.inline { color: var(--heading); border-bottom: 1px solid var(--dim); transition: color 0.2s, border-color 0.2s; }
+    a.inline:hover { color: var(--accent); border-color: var(--accent); }
+    .muted { color: var(--dim); font-size: 0.9rem; }
+    /* Aviso para la red eduroam (que bloquea tomasjarufe.site) */
+    .aviso-red {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+    .aviso-red svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; color: var(--accent); }
+    .aviso-red a.inline { overflow-wrap: anywhere; }
+
+    .material h3 {
+      color: var(--heading);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin: 32px 0 8px;
+    }
+    .material details.grupo { margin: 32px 0 8px; }
+    .material details.grupo > summary {
+      display: block;
+      padding: 4px 0;
+      cursor: pointer;
+      list-style: none;
+      color: var(--heading);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      user-select: none;
+    }
+    .material details.grupo > summary::-webkit-details-marker { display: none; }
+    .material details.grupo > summary::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      margin: 0 12px 2px 2px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(-45deg);
+      transition: transform 0.2s;
+    }
+    .material details.grupo[open] > summary::before { transform: rotate(45deg); }
+    .material details.grupo > summary:hover { color: var(--accent); }
+    .material details.grupo > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+    /* Letrero dentro del titulo: no agranda la linea del titulo */
+    .material summary .cuenta-regresiva:not(.sola) { line-height: 1.2; padding-top: 2px; padding-bottom: 2px; margin-top: -4px; margin-bottom: -4px; vertical-align: middle; }
+    .files { list-style: none; padding: 0; margin: 0; }
+    .files a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      margin: 0 -16px;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+    .files a:hover { background: var(--card-hover); }
+    .files a.importante {
+      background: linear-gradient(90deg, rgba(45, 212, 191, 0.16), rgba(45, 212, 191, 0.04));
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+    .files a.importante:hover { background: linear-gradient(90deg, rgba(45, 212, 191, 0.24), rgba(45, 212, 191, 0.08)); }
+    .files a.importante .name { font-weight: 600; }
+    .files a.importante .ext { background: var(--accent); color: #0f2f2b; }
+    .files a.dificil {
+      background: linear-gradient(90deg, rgba(239, 68, 68, 0.18), rgba(239, 68, 68, 0.04));
+      box-shadow: inset 3px 0 0 #ef4444;
+    }
+    .files a.dificil:hover { background: linear-gradient(90deg, rgba(239, 68, 68, 0.28), rgba(239, 68, 68, 0.08)); }
+    .files a.dificil .name { font-weight: 600; }
+    .files a.dificil .ext { background: #ef4444; color: #fff; }
+    .marca-importante.dificil { background: #ef4444; color: #fff; }
+    .files a.pasado {
+      background: linear-gradient(90deg, rgba(45, 212, 191, 0.16), rgba(45, 212, 191, 0.04));
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+    .files a.pasado:hover { background: linear-gradient(90deg, rgba(45, 212, 191, 0.24), rgba(45, 212, 191, 0.08)); }
+    .files a.pasado .name { font-weight: 600; }
+    .files a.pasado .ext { background: var(--accent); color: #0f2f2b; }
+    .marca-importante.pasado { background: var(--accent); color: #0f2f2b; }
+    .files a.medio {
+      background: linear-gradient(90deg, rgba(250, 204, 21, 0.18), rgba(250, 204, 21, 0.04));
+      box-shadow: inset 3px 0 0 #facc15;
+    }
+    .files a.medio:hover { background: linear-gradient(90deg, rgba(250, 204, 21, 0.28), rgba(250, 204, 21, 0.08)); }
+    .files a.medio .name { font-weight: 600; }
+    .files a.medio .ext { background: #facc15; color: #2a2300; }
+    .marca-importante.medio { background: #facc15; color: #2a2300; }
+    /* Calculadora de promedio */
+    .calc { margin-top: 20px; }
+    .calc button { font: inherit; cursor: pointer; }
+    .calc-ramos { display: grid; gap: 12px; grid-template-columns: 1fr; }
+    @media (min-width: 640px) { .calc-ramos { grid-template-columns: repeat(3, 1fr); } }
+    .calc-ramo {
+      padding: 16px;
+      border: 1px solid var(--metal-borde);
+      border-radius: 8px;
+      background: var(--metal);
+      box-shadow: var(--metal-glow);
+      color: var(--heading);
+      text-align: left;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .calc-ramo:hover, .calc-ramo:focus-visible { box-shadow: var(--metal-glow-fuerte); transform: translateY(-1px); outline: none; }
+    .calc-pregunta { margin: 0 0 12px; color: var(--heading); font-weight: 600; }
+    .calc-cabeza { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 20px; }
+    .calc-cabeza h3 { margin: 0; color: var(--heading); font-size: 1.05rem; }
+    .calc-links { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+    .calc-link { padding: 0; white-space: nowrap; border: 0; background: none; color: var(--dim); font-size: 0.85rem; text-decoration: underline; text-underline-offset: 3px; }
+    .calc-link:hover { color: var(--accent); }
+    .calc-grupo { margin: 0 0 20px; }
+    .calc-grupo[hidden] { display: none; }
+    .calc-grupo h4 { margin: 0 0 4px; color: var(--heading); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; }
+    .calc-grupo .calc-nota { margin: 0 0 8px; color: var(--dim); font-size: 0.85rem; }
+    .calc-campos { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+    .calc-campo label { display: block; margin-bottom: 4px; color: var(--dim); font-size: 0.8rem; }
+    .calc-campo input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--heading);
+      font: inherit;
+    }
+    .calc-campo input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .calc input.invalido { border-color: #ef4444; }
+    .calc-campo.descartado input { text-decoration: line-through; opacity: 0.6; }
+    .calc-pista { min-height: 1.2em; margin-top: 4px; font-size: 0.78rem; color: var(--dim); }
+    .calc-pista.necesita { color: var(--accent); font-weight: 600; }
+    .calc-boton { padding: 6px 12px; border: 1px solid var(--metal-borde); border-radius: 6px; background: var(--metal); box-shadow: var(--metal-glow); color: var(--heading); font-size: 0.85rem; transition: box-shadow 0.2s; }
+    .calc-boton:hover, .calc-boton:focus-visible { box-shadow: var(--metal-glow-fuerte); outline: none; }
+    .calc-editar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .calc-boton.principal { margin-top: 12px; color: var(--oro); }
+    .calc-radio { display: block; margin: 6px 0; cursor: pointer; }
+    .calc-aviso { margin: 8px 0 0; padding: 10px 12px; border-radius: 6px; background: rgba(245, 158, 11, 0.12); box-shadow: inset 3px 0 0 #f59e0b; font-size: 0.85rem; }
+    .calc-error { margin: 8px 0 0; color: #f87171; font-size: 0.9rem; }
+    .calc-error:empty { display: none; }
+    .calc-resultado {
+      margin-top: 24px;
+      padding: 16px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      box-shadow: inset 3px 0 0 rgba(148, 163, 184, 0.5);
+    }
+    .calc-resultado p { margin: 8px 0 0; }
+    .calc-resultado p:first-child { margin-top: 0; }
+    .calc-resultado .grande { color: var(--heading); font-size: 1.1rem; font-weight: 600; }
+    .calc-pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+    .calc-pill.ok { background: var(--accent); color: #0f2f2b; }
+    .calc-pill.mal { background: #ef4444; color: #fff; }
+    .calc-pill.global { background: #f59e0b; color: #2a1a00; }
+    .calc-resultado.ok { box-shadow: inset 3px 0 0 var(--accent); }
+    .calc-resultado.mal { box-shadow: inset 3px 0 0 #ef4444; }
+    .calc-resultado.global { box-shadow: inset 3px 0 0 #f59e0b; }
+    /* Seccion privada: se abre con una clave y descifra el contenido en el navegador */
+    .privado { margin: 40px 0 8px; }
+    .privado > summary {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 0;
+      cursor: pointer;
+      list-style: none;
+      color: var(--heading);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      user-select: none;
+    }
+    .privado > summary::-webkit-details-marker { display: none; }
+    .privado > summary::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      margin: 0 2px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(-45deg);
+      transition: transform 0.2s;
+    }
+    .privado[open] > summary::before { transform: rotate(45deg); }
+    .privado > summary svg { width: 20px; height: 20px; color: var(--oro); }
+    .privado > summary:hover { color: var(--accent); }
+    .privado > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+    .privado form { margin-top: 12px; }
+    .privado label { display: block; margin-bottom: 4px; color: var(--dim); font-size: 0.8rem; }
+    .privado-fila { display: flex; gap: 8px; }
+    .privado-fila input {
+      flex: 1;
+      min-width: 0;
+      padding: 8px 10px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--heading);
+      font: inherit;
+    }
+    .privado-fila input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .privado-estado { min-height: 1.4em; margin: 8px 0 0; font-size: 0.85rem; color: var(--dim); }
+    .privado-estado.mal { color: #f87171; }
+    .privado-estado.emoji { font-size: 1.8rem; line-height: 1.2; }
+    .privado-notas { white-space: pre-wrap; margin: 12px 0; padding: 12px 14px; border-radius: 8px; background: rgba(255, 255, 255, 0.04); }
+    .privado-cabeza { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 16px; font-size: 0.85rem; color: var(--dim); }
+    .cuenta-regresiva {
+      display: inline-block;
+      margin-left: 12px;
+      padding: 3px 11px;
+      border: 1px solid var(--metal-borde);
+      border-radius: 999px;
+      background: var(--metal);
+      box-shadow: var(--metal-glow);
+      color: var(--heading);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      vertical-align: 1px;
+      white-space: nowrap;
+    }
+    .cuenta-regresiva.sola { display: table; margin: 8px 0 0; }
+    .marca-importante {
+      flex-shrink: 0;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #0f2f2b;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .files .name { flex: 1; color: var(--heading); min-width: 0; overflow-wrap: anywhere; }
+    /* Etiquetas de archivo (Importante, Nivel medio...): al lado del nombre, sola arriba si no cabe, o circulo */
+    .files a.con-arriba { flex-wrap: wrap; row-gap: 6px; }
+    .marca-importante.arriba { margin-right: 100%; }
+    .marca-importante.punto {
+      width: 12px;
+      height: 12px;
+      padding: 0;
+      font-size: 0;
+      letter-spacing: 0;
+      overflow: hidden;
+    }
+    .files a:hover .name { color: var(--accent); }
+    .subgroup {
+      margin: 12px 0 0;
+      padding-left: 16px;
+      border-left: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    .subgroup.plegable summary {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 8px 0 4px;
+      padding: 4px 0;
+      cursor: pointer;
+      list-style: none;
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 600;
+      user-select: none;
+    }
+    .subgroup.plegable summary::-webkit-details-marker { display: none; }
+    .subgroup.plegable summary::before {
+      content: "";
+      flex-shrink: 0;
+      width: 6px;
+      height: 6px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(-45deg);
+      transition: transform 0.2s;
+    }
+    .subgroup.plegable[open] > summary::before { transform: rotate(45deg); }
+    .subgroup.plegable summary:hover { color: var(--heading); }
+    .subgroup.plegable summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+    .subgroup h4 {
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin: 8px 0 4px;
+    }
+    .files .ext {
+      background: var(--accent-bg);
+      color: var(--accent);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .files .arrow { color: var(--dim); transition: transform 0.2s; }
+    .files a:hover .arrow { transform: translateY(2px); color: var(--accent); }
+
+    /* Iconos repetidos al final: solo en celular y tablet, donde los de arriba quedan lejos */
+    .footer-social { margin-top: 16px; }
+
+    footer { font-size: 0.85rem; color: var(--dim); max-width: 420px; padding-bottom: 32px; }
+
+    @media (min-width: 768px) {
+      .wrap { padding: 80px 48px; }
+      .sec-title { margin: 0 -48px 24px; padding: 20px 48px; }
+      .side h1 { font-size: 3rem; }
+      .item { grid-template-columns: 2fr 6fr; gap: 24px; }
+    }
+
+    @media (min-width: 1024px) {
+      .wrap {
+        display: flex;
+        justify-content: space-between;
+        gap: 64px;
+        padding: 0 96px;
+      }
+      .side {
+        position: sticky;
+        top: 0;
+        align-self: flex-start;
+        width: 48%;
+        min-height: 100vh;
+        padding: 96px 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      nav.toc { display: block; }
+      .go-mobile { display: none; }
+      .footer-social { display: none; }
+      .go-desktop { display: inline-flex; margin: 24px 0 0; }
+      main { width: 52%; padding: 96px 0; }
+      .sec-title {
+        position: absolute;
+        width: 1px; height: 1px; overflow: hidden;
+        clip: rect(0 0 0 0); white-space: nowrap;
+        margin: 0; padding: 0;
+      }
+      main section { margin-bottom: 144px; scroll-margin-top: 96px; }
+      .item { padding: 16px 24px; margin: 0 -24px 32px; }
+      .item:hover {
+        background: var(--card-hover);
+        box-shadow: inset 0 1px 0 0 rgba(148, 163, 184, 0.1);
+      }
+      .list:hover .item:not(:hover) { opacity: 0.5; }
+    }
+
+    @media (min-width: 1024px) and (max-width: 1279px) {
+      .wrap { padding: 0 48px; gap: 48px; }
+      .side { width: 44%; }
+      main { width: 56%; }
+    }
+
+    /* Pantallas muy grandes (monitores 2K/4K sin escalar): todo un poco mas grande y mas ancho */
+    @media (min-width: 1800px) {
+      html { font-size: 112.5%; }
+      .wrap { max-width: 1440px; }
+    }
+    @media (min-width: 2400px) {
+      html { font-size: 125%; }
+      .wrap { max-width: 1680px; }
+    }
+
+    /* Notebooks con pantallas bajas: compacta la columna izquierda */
+    @media (min-width: 1024px) and (max-height: 900px) {
+      .side { padding: 48px 0 32px; }
+      .side h1 { font-size: 2.5rem; }
+      .go-desktop { margin-top: 20px; }
+      nav.toc { margin-top: 24px; }
+      nav.toc a { padding: 5px 0; }
+      .social { margin-top: 20px; }
+    }
+
+    /* Celular y tablet: al entrar solo se ve el inicio; el menu plegable abre cada seccion */
+    .menu-btn, .menu-movil { display: none; }
+    @media (max-width: 1023px) {
+      .menu-btn {
+        position: fixed;
+        top: 9px;
+        left: 12px;
+        z-index: 60;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border: 1px solid var(--metal-borde);
+        border-radius: 12px;
+        background: var(--metal);
+        box-shadow: var(--metal-glow);
+        color: var(--heading);
+        cursor: pointer;
+      }
+      .menu-btn::after {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        border: 2px solid rgba(212, 175, 55, 0.5);
+        border-radius: 12px;
+        pointer-events: none;
+        animation: menu-pulso 2.6s ease-out infinite;
+      }
+      .menu-btn[aria-expanded="true"]::after { display: none; }
+      .menu-btn:focus-visible { outline: 2px solid var(--heading); outline-offset: 3px; }
+      .menu-btn[aria-expanded="true"] { background: #2f3236; border-color: rgba(212, 175, 55, 0.6); color: #e9d58f; }
+      .menu-btn svg { width: 24px; height: 24px; stroke-width: 2.4; }
+      .menu-btn .cerrar, .menu-btn[aria-expanded="true"] .abrir { display: none; }
+      .menu-btn[aria-expanded="true"] .cerrar { display: block; }
+      .menu-movil {
+        position: fixed;
+        top: 61px;
+        left: 12px;
+        z-index: 59;
+        display: block;
+        min-width: 220px;
+        max-width: calc(100vw - 24px);
+        padding: 8px;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        border-radius: 12px;
+        background: rgba(46, 49, 53, 0.98);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+      }
+      .menu-movil[hidden] { display: none; }
+      .menu-movil ul { list-style: none; margin: 0; padding: 0; }
+      .menu-movil a { display: block; padding: 10px 14px; border-radius: 8px; color: var(--text); font-weight: 500; }
+      .menu-movil a:hover, .menu-movil a:focus-visible { background: var(--card-hover); color: var(--heading); outline: none; }
+      .menu-movil a.actual { color: #e9d58f; background: rgba(212, 175, 55, 0.1); }
+      .sec-title { padding-left: 72px; }
+      body.movil main { display: none; }
+      body.movil.con-seccion main { display: block; }
+      body.movil main section { display: none; }
+      body.movil main section.visible { display: block; }
+      body.movil[data-pagina="material"] .go-sobre, body.movil[data-pagina="calculadora"] .go-sobre { display: inline-flex; margin: 8px 0 32px; }
+      body.movil.con-seccion .wrap { padding-bottom: 24px; }
+    }
+
+    @media (max-width: 767px) { .wrap { padding-top: 72px; } }
+
+    @keyframes menu-pulso {
+      0% { transform: scale(1); opacity: 1; }
+      70%, 100% { transform: scale(1.45); opacity: 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .menu-btn::after { animation: none; display: none; }
+      html { scroll-behavior: auto; }
+      * { transition: none !important; }
+    }
+
+    /* Al imprimir sale como un CV en blanco y negro */
+    @media print {
+      :root { --bg: #fff; --text: #333; --heading: #000; --dim: #555; --accent: #000; --accent-bg: #eee; }
+      .spotlight, nav.toc, .social, .cta, .go-material, footer, #material, #calculadora, .menu-btn, .menu-movil { display: none !important; }
+      .wrap { display: block; padding: 0; }
+      .side, main { width: auto; position: static; padding: 0; max-height: none; }
+      .side { margin-bottom: 24px; }
+      .sec-title { position: static; width: auto; height: auto; clip: auto; overflow: visible; background: none; margin: 0 0 8px; padding: 0; border-bottom: 1px solid #ccc; }
+      main section { margin-bottom: 24px; }
+      .item { margin: 0 0 12px; padding: 0; break-inside: avoid; }
+      .reading { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="spotlight" id="spotlight"></div>
+
+  <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="menu-movil" aria-label="Menú de secciones">
+    <svg class="abrir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    <svg class="cerrar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <nav class="menu-movil" id="menu-movil" aria-label="Secciones" hidden><ul></ul></nav>
+
+  <div class="wrap">
+    <header class="side">
+      <div>
+        <h1>Tomás Jarufe Urzúa</h1>
+        <h2>Estudiante de Ingeniería Civil Industrial</h2>
+        <p class="tagline">Ayudante en la Universidad Técnica Federico Santa María. Me interesa usar la inteligencia artificial para optimizar procesos y apoyar la toma de decisiones. Además, me apasiona entender la matemática de forma didáctica e intuitiva, más que mecanizarla, algo en lo que hoy solemos pecar.</p>
+        <p class="location">Valparaíso, Chile · <a class="mail" href="mailto:tjarufe@usm.cl">tjarufe@usm.cl</a></p>
+        <a class="go-material go-desktop" href="#material"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>Ver apuntes y material <span class="arrow" aria-hidden="true">↓</span></a>
+
+        <nav class="toc" aria-label="Secciones">
+          <ul>
+            <li><a href="#sobre-mi" class="active"><span class="line"></span>Sobre mí</a></li>
+            <li><a href="#experiencia"><span class="line"></span>Experiencia</a></li>
+            <li><a href="#educacion"><span class="line"></span>Educación</a></li>
+            <li><a href="#logros"><span class="line"></span>Logros</a></li>
+            <li><a href="#habilidades"><span class="line"></span>Habilidades</a></li>
+            <li><a href="#material"><span class="line"></span>Material</a></li>
+            <li><a href="#calculadora"><span class="line"></span>Calculadora</a></li>
+          </ul>
+        </nav>
+      </div>
+
+      <ul class="social" aria-label="Redes">
+        <li>
+          <a href="https://www.linkedin.com/in/tomas-jarufe-urzua-916941420/" target="_blank" rel="noopener" aria-label="LinkedIn">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>
+          </a>
+        </li>
+        <li>
+          <a href="https://www.instagram.com/tomas.jarufe/" target="_blank" rel="noopener" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor"/></svg>
+          </a>
+        </li>
+        <li>
+          <a href="mailto:tjarufe@usm.cl" aria-label="Correo: tjarufe@usm.cl" title="tjarufe@usm.cl">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
+          </a>
+        </li>
+      </ul>
+
+      <a class="go-material go-mobile" href="#material"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>Ver apuntes y material <span class="arrow" aria-hidden="true">↓</span></a>
+    </header>
+
+    <main>
+      <section id="sobre-mi">
+        <h2 class="sec-title">Sobre mí</h2>
+        <p>Soy estudiante de segundo año de <strong>Ingeniería Civil Industrial</strong> en la <strong>Universidad Técnica Federico Santa María</strong>, donde llevo dos semestres trabajando como ayudante.</p>
+        <p>Tengo experiencia en <strong>inteligencia artificial</strong> y me interesa aplicarla para optimizar procesos y apoyar la toma de decisiones.</p>
+        <p>Hablo <strong>francés a nivel nativo</strong>, tras completar el Bac del sistema francés, e inglés a nivel intermedio.</p>
+        <p>Estoy abierto a prácticas, proyectos y conexiones en IA, datos e ingeniería industrial.</p>
+
+        <div class="reading">
+          <h3>Leyendo ahora</h3>
+          <ul class="books">
+            <li class="book">
+              <div class="cover"><span aria-hidden="true">x</span><img src="img/the-joy-of-x.jpg" alt="Portada de The Joy of x" width="64" height="96" decoding="async"></div>
+              <div>
+                <p class="book-title">The Joy of x</p>
+                <p class="book-author">Steven Strogatz</p>
+                <p class="book-note">Un recorrido por las grandes ideas de la matemática, de los números al infinito, contadas de forma intuitiva.</p>
+              </div>
+            </li>
+            <li class="book">
+              <div class="cover"><span aria-hidden="true">N</span><img src="https://covers.openlibrary.org/b/isbn/9780593734223-M.jpg?default=false" alt="Portada de Nexus" width="64" height="96" loading="lazy" decoding="async" onerror="this.remove()"></div>
+              <div>
+                <p class="book-title">Nexus</p>
+                <p class="book-author">Yuval Noah Harari</p>
+                <p class="book-note">Una historia de las redes de información, desde la Edad de Piedra hasta la inteligencia artificial.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="experiencia">
+        <h2 class="sec-title">Experiencia</h2>
+        <ol class="list">
+          <li class="item">
+            <div class="date">Sept 2026 — Presente</div>
+            <div>
+              <h3>Ayudante de Álgebra Lineal, Departamento de Matemática · <span class="org">Universidad Técnica Federico Santa María</span></h3>
+              <p>Ayudantía del ramo de Álgebra Lineal. Presencial · Valparaíso, Chile</p>
+              <ul class="tags"><li>Fluidez de IA</li><li>Educación matemática</li></ul>
+            </div>
+          </li>
+          <li class="item">
+            <div class="date">Mar — Ago 2026</div>
+            <div>
+              <h3>Ayudante, Departamento de Física · <span class="org">Universidad Técnica Federico Santa María</span></h3>
+              <p>Jornada parcial · Región de Valparaíso, Chile</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section id="educacion">
+        <h2 class="sec-title">Educación</h2>
+        <ol class="list">
+          <li class="item">
+            <div class="date">2025 — Presente</div>
+            <div>
+              <h3>Ingeniería Civil Industrial · <span class="org">Universidad Técnica Federico Santa María</span></h3>
+              <ul class="tags"><li>Educación matemática</li><li>Liderazgo de equipos</li></ul>
+            </div>
+          </li>
+          <li class="item">
+            <div class="date">2020 — 2024</div>
+            <div>
+              <h3>Enseñanza media (Bac francés) · <span class="org">Lycée Jean D'Alembert</span></h3>
+              <ul class="tags"><li>Educación matemática</li></ul>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section id="logros">
+        <h2 class="sec-title">Logros</h2>
+        <ol class="list">
+          <li class="item">
+            <div class="date">Feb 2025</div>
+            <div>
+              <h3>Beca de excelencia del gobierno francés · <span class="org">Bourse Excellence-Major</span></h3>
+              <p>Otorgada por la Agence pour l'enseignement français à l'étranger (AEFE) por excelencia académica.</p>
+            </div>
+          </li>
+          <li class="item">
+            <div class="date">Dic 2024</div>
+            <div>
+              <h3>Puntaje 1000 en Matemática M1 · <span class="org">PAES</span></h3>
+              <p>Puntaje máximo en la Prueba de Acceso a la Educación Superior.</p>
+            </div>
+          </li>
+          <li class="item">
+            <div class="date">Nov 2024</div>
+            <div>
+              <h3>20/20 en Matemática, Física y Química · <span class="org">Bac francés</span></h3>
+              <p>Nota perfecta en las pruebas de Matemática, Física y Química del Bac (Baccalauréat), el examen de acceso a la educación superior del sistema francés.</p>
+            </div>
+          </li>
+          <li class="item">
+            <div class="date">Sept 2026</div>
+            <div>
+              <h3>Certificaciones en Fluidez de IA · <span class="org">Anthropic</span></h3>
+              <p>Tres cursos de Claude Academy:
+                <a class="inline" href="https://academy.claude.com/verify/e591917eda5fdc5fac61221e5c027bfd" target="_blank" rel="noopener">AI Fluency: Framework and foundations</a>,
+                <a class="inline" href="https://academy.claude.com/verify/0a0af8972860b60601cacb50dad9900f" target="_blank" rel="noopener">AI Fluency for educators</a> y
+                <a class="inline" href="https://academy.claude.com/verify/88d653856b2e658152f0895335457a28" target="_blank" rel="noopener">Building effective human-agent teams</a>.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section id="habilidades">
+        <h2 class="sec-title">Habilidades</h2>
+        <p><strong>Aptitudes</strong></p>
+        <ul class="tags"><li>Fluidez de IA</li><li>Educación matemática</li><li>Liderazgo de equipos</li></ul>
+        <p style="margin-top:24px"><strong>Idiomas</strong></p>
+        <ul class="tags"><li>Español (nativo)</li><li>Francés (nativo)</li><li>Inglés (intermedio)</li></ul>
+        <a class="cta" href="https://www.linkedin.com/in/tomas-jarufe-urzua-916941420/" target="_blank" rel="noopener" style="margin-top:32px">
+          Ver perfil completo en LinkedIn <span>→</span>
+        </a>
+      </section>
+
+      <section id="material">
+        <h2 class="sec-title">Material</h2>
+        <p>Apuntes, ejercicios y otro material de estudio que he preparado. Puedes descargarlos libremente.</p>
+        <p class="aviso-red" id="aviso-eduroam">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg>
+          <span>¿No carga desde <strong>eduroam</strong>? Usa esta dirección:
+          <a class="inline" href="https://tomasjarufe.tomasjarufeurzua.workers.dev/">tomasjarufe.tomasjarufeurzua.workers.dev</a></span>
+        </p>
+        <div id="material-list" class="material"><p class="muted">Cargando material…</p></div>
+
+        <details class="privado skills" id="skills">
+          <summary aria-label="Skills"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Skills</summary>
+          <form id="skills-form" autocomplete="off">
+            <label for="skills-clave">Clave</label>
+            <div class="privado-fila">
+              <input id="skills-clave" type="password" autocomplete="off" spellcheck="false">
+              <button class="calc-boton" type="submit">Abrir</button>
+            </div>
+            <p id="skills-estado" class="privado-estado" role="status"></p>
+          </form>
+          <div id="skills-contenido" hidden></div>
+        </details>
+
+        <details class="privado" id="privado">
+          <summary aria-label="Seccion privada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></summary>
+          <form id="privado-form" autocomplete="off">
+            <label for="privado-clave">Clave</label>
+            <div class="privado-fila">
+              <input id="privado-clave" type="password" autocomplete="off" spellcheck="false">
+              <button class="calc-boton" type="submit">Abrir</button>
+            </div>
+            <p id="privado-estado" class="privado-estado" role="status"></p>
+          </form>
+          <div id="privado-contenido" hidden></div>
+        </details>
+      </section>
+
+      <section id="calculadora">
+        <h2 class="sec-title">Calculadora de promedio</h2>
+        <p>Elige tu ramo, ingresa las notas que ya tienes y te muestro cómo vas y qué nota necesitas. Las notas no se guardan: al salir o recargar la página se borran. Se redondea como en la USM: desde 54,5 cuenta como 55.</p>
+        <div id="calc" class="calc"></div>
+      </section>
+
+      <a class="go-material go-sobre" href="#sobre-mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Sobre mí <span class="arrow" aria-hidden="true">→</span></a>
+
+      <footer>
+        <p>Hecho con HTML y CSS.</p>
+        <ul class="social footer-social" aria-label="Redes">
+          <li>
+            <a href="https://www.linkedin.com/in/tomas-jarufe-urzua-916941420/" target="_blank" rel="noopener" aria-label="LinkedIn">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>
+            </a>
+          </li>
+          <li>
+            <a href="https://www.instagram.com/tomas.jarufe/" target="_blank" rel="noopener" aria-label="Instagram">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor"/></svg>
+            </a>
+          </li>
+          <li>
+            <a href="mailto:tjarufe@usm.cl" aria-label="Correo: tjarufe@usm.cl" title="tjarufe@usm.cl">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
+            </a>
+          </li>
+        </ul>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    // Columna izquierda en computador: si no cabe de alto (notebooks con la
+    // pantalla ampliada), se desplaza con la pagina hasta mostrarse completa
+    // y recien ahi se queda fija. Asi nunca aparece una segunda barra de scroll.
+    const lateral = document.querySelector('.side');
+    function ajustarLateral() {
+      lateral.style.top = innerWidth >= 1024 ? Math.min(0, innerHeight - lateral.offsetHeight) + 'px' : '';
+    }
+    ajustarLateral();
+    let lateralPendiente = false;
+    window.addEventListener('resize', () => {
+      if (lateralPendiente) return;
+      lateralPendiente = true;
+      requestAnimationFrame(() => { lateralPendiente = false; ajustarLateral(); });
+    });
+    // La tipografia llega despues del primer dibujo y cambia el alto de la columna
+    if (document.fonts) {
+      document.fonts.ready.then(ajustarLateral);
+      document.fonts.addEventListener('loadingdone', ajustarLateral);
+    }
+
+    // En la copia de workers.dev el aviso de eduroam no hace falta
+    if (/\.workers\.dev$|\.pages\.dev$/.test(location.hostname)) {
+      const aviso = document.getElementById('aviso-eduroam');
+      if (aviso) aviso.remove();
+    }
+
+    // Luz que sigue al mouse
+    const spot = document.getElementById('spotlight');
+    if (window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      let spotX = 0, spotY = 0, spotPendiente = false;
+      window.addEventListener('pointermove', (e) => {
+        spotX = e.clientX;
+        spotY = e.clientY;
+        if (spotPendiente) return;
+        spotPendiente = true;
+        requestAnimationFrame(() => {
+          spotPendiente = false;
+          spot.style.opacity = '1';
+          spot.style.transform = `translate3d(${spotX}px, ${spotY}px, 0)`;
+        });
+      }, { passive: true });
+    }
+
+    // Marca en el menu la seccion que se esta viendo
+    const links = document.querySelectorAll('nav.toc a');
+    const sections = [...document.querySelectorAll('main section')];
+    function markActive() {
+      let current = sections[0];
+      for (const s of sections) {
+        if (s.getBoundingClientRect().top <= window.innerHeight * 0.3) current = s;
+      }
+      if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 2) {
+        current = sections[sections.length - 1];
+      }
+      links.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === '#' + current.id));
+    }
+    let activoPendiente = false;
+    window.addEventListener('scroll', () => {
+      if (activoPendiente) return;
+      activoPendiente = true;
+      requestAnimationFrame(() => { activoPendiente = false; markActive(); });
+    }, { passive: true });
+    markActive();
+
+    // Lista automaticamente los archivos subidos a la carpeta material/.
+    // Cada carpeta dentro de material/ aparece como un grupo con el nombre de la carpeta.
+    // Si cambias el nombre del repositorio o la rama publicada, actualiza estos valores.
+    const usuario = 'tomasjarufeurzua-lab';
+    const repo = 'tomasjarufeurzua-lab.github.io';
+    const RAMA = 'claude/youthful-mayer-nwoi6w';
+    const caja = document.getElementById('material-list');
+
+    // "Mi_archivo - parte-1.pdf" → "Mi archivo — parte 1"
+    // Un numero al inicio ("1 - Resumen.pdf") sirve para ordenar y no se muestra.
+    function titulo(nombre) {
+      return nombre.replace(/^\d+\s*-\s+/, '').replace(/\s+-\s+/g, ' — ').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+    function bonito(archivo) {
+      return titulo(archivo.replace(/\.[^.]+$/, ''));
+    }
+    function fila(ruta) {
+      const partes = ruta.split('/');
+      const archivo = partes[partes.length - 1];
+      const ext = archivo.includes('.') ? archivo.split('.').pop().toUpperCase() : '';
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = ruta.split('/').map(encodeURIComponent).join('/') + (versionMaterial ? '?v=' + versionMaterial : '');
+      a.target = '_blank';
+      a.rel = 'noopener';
+      // Cuenta la descarga en GoatCounter (aparece como evento en el panel)
+      a.addEventListener('click', () => {
+        if (window.goatcounter && window.goatcounter.count) {
+          window.goatcounter.count({ path: 'descarga/' + ruta.replace(/^material\//, ''), title: bonito(archivo), event: true });
+        }
+      });
+      const nombre = document.createElement('span');
+      nombre.className = 'name';
+      nombre.textContent = bonito(archivo);
+      a.appendChild(nombre);
+      if (ARCHIVOS_IMPORTANTES.includes(bonito(archivo))) {
+        a.classList.add('importante');
+        const marca = document.createElement('span');
+        marca.className = 'marca-importante';
+        marca.textContent = 'Importante';
+        marca.title = 'Importante';
+        a.insertBefore(marca, nombre);
+      }
+      const nivel = NIVELES[archivo.replace(/\.[^.]+$/, '')];
+      if (nivel) {
+        a.classList.add(nivel.clase);
+        const marca = document.createElement('span');
+        marca.className = 'marca-importante ' + nivel.clase;
+        marca.textContent = nivel.etiqueta;
+        marca.title = nivel.etiqueta;
+        a.insertBefore(marca, nombre);
+      }
+      if (ext) {
+        const e = document.createElement('span');
+        e.className = 'ext';
+        e.textContent = ext;
+        a.appendChild(e);
+      }
+      const flecha = document.createElement('span');
+      flecha.className = 'arrow';
+      flecha.textContent = '↓';
+      a.appendChild(flecha);
+      li.appendChild(a);
+      return li;
+    }
+
+    // Cuenta regresiva: al lado del ramo (nombre de la carpeta, como se ve en la pagina) aparece
+    // solo la proxima evaluacion; al pasar su dia se muestra la siguiente.
+    // Fechas AAAA-MM-DD, hora de Chile, en orden.
+    // Si aun no hay dia exacto, se pone { nombre, semana: 'AAAA-MM-DD' } con el LUNES de esa semana:
+    // la semana anterior dice "Control N proxima semana", esa semana "Control N esta semana" y despues desaparece.
+    const EVALUACIONES = {
+      'Ayudantía Laboratorio Álgebra Lineal': [
+        { nombre: 'Control 1', semana: '2026-10-05' },
+      ],
+      'Ecuaciones Diferenciales': [
+        { nombre: 'Certamen 2', fecha: '2026-10-05' },
+        { nombre: 'Control 3', fecha: '2026-11-16' },
+        { nombre: 'Certamen 3', fecha: '2026-11-23' },
+      ],
+      'Probabilidad y Estadística': [
+        { nombre: 'Control 3', fecha: '2026-10-22' },
+        { nombre: 'Certamen 2', fecha: '2026-10-29' },
+        { nombre: 'Control 4', fecha: '2026-11-12' },
+        { nombre: 'Certamen 3', fecha: '2026-11-26' },
+      ],
+    };
+    // Devuelve el texto de la cuenta regresiva en cuatro versiones, de la mas larga a la mas corta,
+    // para poder elegir la que cabe en pantalla.
+    function textosCuentaRegresiva(ramo) {
+      const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());
+      const dias = (e) => Math.round((Date.parse(e.fecha || e.semana) - Date.parse(hoy)) / 86400000);
+      // Una evaluacion por semana sigue vigente hasta el domingo (lunes + 6 dias)
+      const vigente = (e) => dias(e) + (e.semana ? 6 : 0) >= 0;
+      const proxima = (EVALUACIONES[ramo] || []).find(vigente);
+      if (!proxima) return null;
+      const d = dias(proxima);
+      if (proxima.semana) {
+        if (d > 0) return [proxima.nombre + ' próxima semana', 'Próxima semana'];
+        return [proxima.nombre + ' esta semana', 'Esta semana'];
+      }
+      if (d === 0) return ['Hoy es el ' + proxima.nombre, 'Hoy: ' + proxima.nombre, 'Hoy', 'Hoy'];
+      if (d === 1) return ['Mañana es el ' + proxima.nombre, 'Mañana: ' + proxima.nombre, 'Mañana', 'Mañana'];
+      return ['Faltan ' + d + ' días para el ' + proxima.nombre, d + ' días para ' + proxima.nombre, 'Faltan ' + d + ' días', d + ' días'];
+    }
+
+    // Cada cartel de cuenta regresiva usa la version mas larga que quepa en la linea del titulo de su ramo.
+    // Cada etiqueta de archivo se ajusta al espacio: al lado del nombre si el nombre no se parte en
+    // mas lineas; si no, sola en una linea arriba; y solo si ni asi cabe, un circulo del mismo color.
+    function ajustarMarcas() {
+      document.querySelectorAll('#material-list .marca-importante').forEach((m) => {
+        const fila = m.parentNode;
+        const nombre = fila.querySelector('.name');
+        m.classList.remove('arriba');
+        fila.classList.remove('con-arriba');
+        m.classList.add('punto');
+        const conPunto = nombre.getBoundingClientRect().height;
+        m.classList.remove('punto');
+        if (nombre.getBoundingClientRect().height <= conPunto + 1) return;
+        m.classList.add('arriba');
+        fila.classList.add('con-arriba');
+        const util = fila.clientWidth - 32;
+        if (m.getBoundingClientRect().width > util) {
+          m.classList.remove('arriba');
+          fila.classList.remove('con-arriba');
+          m.classList.add('punto');
+        }
+      });
+    }
+
+    function ajustarCuentas() {
+      const avisos = [...document.querySelectorAll('.cuenta-regresiva')].map((aviso) => {
+        const h = aviso.parentNode;
+        const rango = document.createRange();
+        rango.selectNodeContents([...h.childNodes].find((n) => n.nodeType === 3));
+        aviso.classList.remove('sola');
+        return { aviso, rango, textos: JSON.parse(aviso.dataset.textos) };
+      });
+      const cabe = ({ aviso, rango }) => {
+        const lineas = rango.getClientRects();
+        const ultima = lineas[lineas.length - 1];
+        return !ultima || aviso.getBoundingClientRect().top < ultima.bottom - 1;
+      };
+      // Cada cartel usa su version mas larga que quepa en la linea del titulo de su ramo.
+      // Si ninguna cabe al lado, va sola en su propia linea debajo del titulo (con la mas larga que quepa).
+      avisos.forEach((x) => {
+        let n = 0;
+        for (; n < x.textos.length; n++) {
+          x.aviso.textContent = x.textos[n];
+          if (cabe(x)) break;
+        }
+        if (n === x.textos.length) {
+          // Sola en su linea hay mas espacio: la version mas larga que quepa a lo ancho
+          x.aviso.classList.add('sola');
+          const ancho = x.aviso.parentNode.clientWidth;
+          let k = 0;
+          for (; k < x.textos.length - 1; k++) {
+            x.aviso.textContent = x.textos[k];
+            if (x.aviso.getBoundingClientRect().width <= ancho) break;
+          }
+          x.aviso.textContent = x.textos[k];
+        }
+      });
+    }
+
+    // Se vuelve a ajustar cuando cambia el ancho de la lista (giro del celular, ventana) y cuando
+    // terminan de cargar las tipografias, que cambian el ancho del texto.
+    // Se agrupa en un solo ajuste por cuadro aunque lleguen varios avisos seguidos.
+    let marcasPendiente = false;
+    function reajustar() {
+      if (marcasPendiente) return;
+      marcasPendiente = true;
+      requestAnimationFrame(() => { marcasPendiente = false; ajustarCuentas(); ajustarMarcas(); });
+    }
+    if (window.ResizeObserver) new ResizeObserver(reajustar).observe(caja);
+    if (document.fonts) document.fonts.addEventListener('loadingdone', reajustar);
+    window.addEventListener('load', reajustar);
+
+
+    // Archivos que se destacan con la etiqueta "Importante" y un fondo verde
+    // (titulo tal como se ve en la pagina, sin el numero inicial)
+    const ARCHIVOS_IMPORTANTES = ['Ejercicios de práctica 1 para el Control 1 (Mathematica)', 'Corrección Certamen 2 EDO'];
+
+    // Ensayos con nivel: turquesa "Certamen pasado", amarillo "Nivel medio" y rojo "Mas dificil"
+    // (clave = nombre del archivo sin extension, con su numero inicial)
+    const NIVELES = {
+      '1 - Ensayo Certamen 2': { clase: 'pasado', etiqueta: 'Nivel certamen pasado' },
+      '2 - Ensayo Certamen 2': { clase: 'medio', etiqueta: 'Nivel medio' },
+      '3 - Ensayo Certamen 2': { clase: 'dificil', etiqueta: 'Más difícil' },
+    };
+
+    // Categorias que se muestran siempre abiertas y sin poder plegarse (nombre de la carpeta);
+    // todas las demas categorias y subcategorias son desplegables y empiezan cerradas
+    const ABIERTAS = [];
+    // Categorias plegables cuyas subcarpetas se ven directo (como subtitulo), sin plegarse otra vez
+    const SUBCARPETAS_VISIBLES = ['Ayudantía Laboratorio Álgebra Lineal'];
+
+    function visible(ruta) {
+      const nombre = ruta.split('/').pop();
+      return !nombre.startsWith('.') && nombre.toLowerCase() !== 'readme.md';
+    }
+
+    // Pide el contenido de una carpeta a GitHub
+    async function contenido(ruta) {
+      const r = await fetch(`https://api.github.com/repos/${usuario}/${repo}/contents/${ruta.split('/').map(encodeURIComponent).join('/')}?ref=${encodeURIComponent(RAMA)}`);
+      if (r.status === 404) return [];
+      if (!r.ok) throw new Error(r.status);
+      return r.json();
+    }
+
+    // Todos los archivos de una carpeta, incluyendo sus subcarpetas
+    async function archivos(ruta) {
+      const rutas = [];
+      for (const x of await contenido(ruta)) {
+        if (x.type === 'dir') rutas.push(...await archivos(x.path));
+        else if (x.type === 'file') rutas.push(x.path);
+      }
+      return rutas;
+    }
+
+    function ordenar(lista) {
+      const n = (ruta) => ruta.split('/').pop().replace(/\.[^.]+$/, '');
+      return lista.sort((x, y) => n(x).localeCompare(n(y), 'es', { numeric: true }));
+    }
+
+    function listaArchivos(rutas) {
+      const ul = document.createElement('ul');
+      ul.className = 'files';
+      ordenar(rutas).forEach((ruta) => ul.appendChild(fila(ruta)));
+      return ul;
+    }
+
+    // Un grupo por carpeta. Los archivos sueltos van primero y cada
+    // subcarpeta aparece como un subtitulo con sus propios archivos.
+    // Dibuja lo que hay en un nivel de carpetas: primero los archivos sueltos y luego
+    // cada subcarpeta (que puede tener mas subcarpetas dentro). Se ordena con el nombre
+    // real de la carpeta (puede llevar un numero al inicio, como "1 - Laboratorio") y se
+    // muestra sin ese numero.
+    function dibujarNivel(contenedor, lista, nivel, fijo) {
+      const directos = [];
+      const subcarpetas = new Map();
+      for (const ruta of lista) {
+        const partes = ruta.split('/');
+        if (partes.length === nivel + 1) { directos.push(ruta); continue; }
+        const sub = partes[nivel];
+        if (!subcarpetas.has(sub)) subcarpetas.set(sub, []);
+        subcarpetas.get(sub).push(ruta);
+      }
+      // Archivos y carpetas se ordenan juntos. Con numero al inicio ("1 - ...") van segun el
+      // numero; sin numero, los archivos van primero y las carpetas despues.
+      const elementos = [
+        ...directos.map((ruta) => ({ tipo: 'archivo', nombre: ruta.split('/').pop().replace(/\.[^.]+$/, ''), ruta })),
+        ...[...subcarpetas.keys()].map((sub) => ({ tipo: 'carpeta', nombre: sub, rutas: subcarpetas.get(sub) })),
+      ];
+      const rango = (e) => {
+        const m = e.nombre.match(/^(\d+)\s*-\s+/);
+        return m ? [1, Number(m[1])] : [e.tipo === 'archivo' ? 0 : 2, 0];
+      };
+      elementos.sort((x, y) => {
+        const [rx, nx] = rango(x), [ry, ny] = rango(y);
+        return rx - ry || nx - ny || x.nombre.localeCompare(y.nombre, 'es', { numeric: true });
+      });
+      let seguidos = [];
+      const vaciarArchivos = () => {
+        if (seguidos.length) contenedor.appendChild(listaArchivos(seguidos));
+        seguidos = [];
+      };
+      elementos.forEach((e) => {
+        if (e.tipo === 'archivo') { seguidos.push(e.ruta); return; }
+        vaciarArchivos();
+        const nombreSub = titulo(e.nombre);
+        const archivosSub = e.rutas;
+        if (!fijo) {
+          // Subcategoria desplegable: empieza cerrada
+          const bloque = document.createElement('details');
+          bloque.className = 'subgroup plegable';
+          const resumen = document.createElement('summary');
+          resumen.textContent = nombreSub;
+          bloque.appendChild(resumen);
+          dibujarNivel(bloque, archivosSub, nivel + 1, false);
+          contenedor.appendChild(bloque);
+          return;
+        }
+        const bloque = document.createElement('div');
+        bloque.className = 'subgroup';
+        const h4 = document.createElement('h4');
+        h4.textContent = nombreSub;
+        bloque.appendChild(h4);
+        dibujarNivel(bloque, archivosSub, nivel + 1, true);
+        contenedor.appendChild(bloque);
+      });
+      vaciarArchivos();
+    }
+
+    function grupo(nombre, carpeta, lista) {
+      lista = lista.filter(visible);
+      if (!lista.length) return false;
+      const nivel = carpeta ? carpeta.split('/').length : 1;
+      const fijo = ABIERTAS.includes(nombre);
+      // Categoria fija: titulo normal. Las demas: bloque desplegable cerrado con el titulo como cabecera.
+      const h = document.createElement(fijo ? 'h3' : 'summary');
+      h.textContent = nombre;
+      const cuenta = textosCuentaRegresiva(nombre);
+      if (cuenta) {
+        const aviso = document.createElement('span');
+        aviso.className = 'cuenta-regresiva';
+        aviso.dataset.textos = JSON.stringify(cuenta);
+        h.appendChild(aviso);
+      }
+      if (fijo) {
+        caja.appendChild(h);
+        dibujarNivel(caja, lista, nivel, true);
+        return true;
+      }
+      const bloque = document.createElement('details');
+      bloque.className = 'grupo';
+      bloque.appendChild(h);
+      dibujarNivel(bloque, lista, nivel, SUBCARPETAS_VISIBLES.includes(nombre));
+      caja.appendChild(bloque);
+      return true;
+    }
+
+    // Lista de rutas de todo lo que hay en material/. Primero usa material.json,
+    // que GitHub Pages genera al publicar; si no esta, le pregunta a la API de GitHub.
+    // material.json tambien trae la fecha de la ultima publicacion: se agrega a los enlaces
+    // (?v=...) para que, si reemplazas un PDF, a todos les descargue la version nueva y no
+    // la que el navegador tenia guardada.
+    let versionMaterial = '';
+    async function todasLasRutas() {
+      try {
+        const r = await fetch('material.json', { cache: 'no-cache' });
+        if (r.ok) {
+          const datos = await r.json();
+          versionMaterial = /^\d+$/.test(datos.version || '') ? datos.version : '';
+          return (datos.files || datos).map((ruta) => ruta.replace(/^\//, ''));
+        }
+      } catch (e) { /* sigue con la API */ }
+      return archivos('material');
+    }
+
+    (async () => {
+      const rutas = (await todasLasRutas()).filter((ruta) => ruta.startsWith('material/'));
+      // Estas secciones van primero y en este orden; las demas, alfabeticamente
+      const PRIMERAS = ['Ayudantía Laboratorio Álgebra Lineal', 'Electricidad y Magnetismo'];
+      const posicion = (c) => { const i = PRIMERAS.indexOf(c); return i < 0 ? PRIMERAS.length : i; };
+      const carpetas = [...new Set(rutas.filter((r) => r.split('/').length > 2).map((r) => r.split('/')[1]))]
+        .sort((x, y) => posicion(x) - posicion(y) || x.localeCompare(y, 'es', { numeric: true }));
+      const sueltos = rutas.filter((r) => r.split('/').length === 2);
+      caja.innerHTML = '';
+      let hayAlgo = false;
+      carpetas.forEach((c) => {
+        const lista = rutas.filter((r) => r.split('/')[1] === c && r.split('/').length > 2);
+        if (grupo(titulo(c), 'material/' + c, lista)) hayAlgo = true;
+      });
+      if (grupo('Otro material', '', sueltos)) hayAlgo = true;
+      ajustarCuentas();
+      ajustarMarcas();
+      if (!hayAlgo) caja.innerHTML = '<p class="muted">Pronto subiré material aquí.</p>';
+    })().catch(() => {
+      caja.innerHTML = '<p class="muted">No se pudo cargar el material. Intenta recargar la página en unos minutos.</p>';
+    });
+  </script>
+  <script>
+    // Calculadora de promedio. Las notas van de 0 a 100 y no se guardan: al recargar se parte de cero.
+    (function () {
+      const RAMOS = [
+        { id: 'prob', nombre: 'Probabilidad y Estadística' },
+        { id: 'edo', nombre: 'Ecuaciones Diferenciales' },
+        { id: 'otro', nombre: 'Otro' },
+      ];
+      // Ajustes del ramo "Otro": ponderaciones, laboratorio y cuantas evaluaciones tiene
+      function otroInicial() {
+        return { listo: false, pc: '', pk: '', lab: 'no', pl: '', desc: '0', nc: 1, nk: 1, notas: {} };
+      }
+      const estado = { ramo: null, prob: {}, edo: {}, otro: otroInicial() };
+
+      // ---- utilidades ----
+      const EPS = 1e-9;
+      // En la USM, desde 54,5 se redondea a 55: una nota "llega" a un valor desde medio punto antes
+      const ge = (a, b) => a >= b - 0.5 - EPS;
+      const prom = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+      const fmt = (v, d = 1) => v.toFixed(d).replace('.', ',');
+      // Texto → numero de 0 a 100; null si esta vacio, NaN si no es valido
+      const num = (t) => {
+        const s = String(t == null ? '' : t).trim().replace(',', '.');
+        if (s === '') return null;
+        const v = Number(s);
+        return Number.isFinite(v) && v >= 0 && v <= 100 ? v : NaN;
+      };
+      const fmtN = (v) => String(Math.round(v * 10) / 10).replace('.', ',');
+      const el = (tag, clase, texto) => {
+        const e = document.createElement(tag);
+        if (clase) e.className = clase;
+        if (texto != null) e.textContent = texto;
+        return e;
+      };
+
+      // Promedio de pares [peso, nota] ignorando las partes sin nota; null si no hay ninguna
+      function promedioPonderado(partes) {
+        const con = partes.filter(([, x]) => x != null);
+        if (!con.length) return null;
+        return con.reduce((t, [w, x]) => t + w * x, 0) / con.reduce((t, [w]) => t + w, 0);
+      }
+
+      // Claves de los n peores controles, cuando ya estan todos ingresados (si no, ninguno)
+      function peoresControles(v, claves, n) {
+        if (n < 1 || claves.length <= n || claves.some((k) => v[k] == null)) return [];
+        return claves.map((k, i) => [k, i]).sort((a, b) => v[a[0]] - v[b[0]] || a[1] - b[1]).slice(0, n).map((x) => x[0]);
+      }
+
+      // ---- ramos con ponderacion fija ----
+      // evaluar recibe todas las notas y devuelve la nota semestral (ns) y su estado.
+      const MODELOS = {
+        prob: {
+          grupos: [
+            { titulo: 'Certámenes', campos: [['c1', 'Certamen 1'], ['c2', 'Certamen 2'], ['c3', 'Certamen 3']] },
+            { titulo: 'Controles', nota: 'Se descarta el peor y se promedian los 3 mejores.', campos: [['k1', 'Control 1'], ['k2', 'Control 2'], ['k3', 'Control 3'], ['k4', 'Control 4']] },
+            { titulo: 'Laboratorio', campos: [['lab', 'Laboratorio']] },
+          ],
+          evaluar(v) {
+            const cert = [v.c1, v.c2, v.c3];
+            const mejores = [v.k1, v.k2, v.k3, v.k4].sort((a, b) => b - a).slice(0, 3);
+            const ns = 0.75 * prom(cert) + 0.15 * prom(mejores) + 0.10 * v.lab;
+            if (!ge(ns, 45)) return { ns, estado: 'reprobado' };
+            return { ns, estado: ge(ns, 55) && cert.every((c) => ge(c, 40)) ? 'aprobado' : 'global' };
+          },
+          // Promedio con las notas que ya hay: cada parte pesa lo suyo, repartido entre las que tienen notas
+          parcial(v) {
+            const ok = (a) => a.filter((x) => x != null);
+            const cert = ok([v.c1, v.c2, v.c3]);
+            let ctrl = ok([v.k1, v.k2, v.k3, v.k4]);
+            if (ctrl.length === 4) ctrl = ctrl.sort((a, b) => b - a).slice(0, 3);
+            return promedioPonderado([[0.75, cert.length ? prom(cert) : null], [0.15, ctrl.length ? prom(ctrl) : null], [0.10, v.lab]]);
+          },
+          descartados: (v) => peoresControles(v, ['k1', 'k2', 'k3', 'k4'], 1),
+          globalTitulo: 'Examen global',
+          globalEtiqueta: 'Nota del global',
+          // Ya es seguro que ira a global, aunque falten notas?
+          globalSeguro(lo, hi, v) {
+            const bajo40 = ['c1', 'c2', 'c3'].some((k) => v[k] != null && !ge(v[k], 40));
+            return ge(lo.ns, 45) && (!ge(hi.ns, 55) || bajo40);
+          },
+        },
+        edo: {
+          grupos: [
+            { titulo: 'Certámenes', campos: [['c1', 'Certamen 1'], ['c2', 'Certamen 2'], ['c3', 'Certamen 3']] },
+            { titulo: 'Controles', campos: [['k1', 'Control 1'], ['k2', 'Control 2'], ['k3', 'Control 3']] },
+          ],
+          // Si se rinde el certamen global, su nota reemplaza al peor certamen
+          evaluar(v) {
+            const cert = [v.c1, v.c2, v.c3];
+            if (v.g != null) cert[cert.indexOf(Math.min(...cert))] = v.g;
+            const ns = 0.75 * prom(cert) + 0.25 * prom([v.k1, v.k2, v.k3]);
+            return { ns, estado: ge(ns, 55) ? 'aprobado' : 'reprobado' };
+          },
+          parcial(v) {
+            const ok = (a) => a.filter((x) => x != null);
+            const cert = ok([v.c1, v.c2, v.c3]);
+            const ctrl = ok([v.k1, v.k2, v.k3]);
+            return promedioPonderado([[0.75, cert.length ? prom(cert) : null], [0.25, ctrl.length ? prom(ctrl) : null]]);
+          },
+          globalTitulo: 'Certamen global',
+          globalEtiqueta: 'Nota del certamen global',
+          reemplazaPeor: true,
+        },
+      };
+
+      // Analiza las notas ingresadas: que falta, si el resultado ya esta decidido y, si falta
+      // una sola nota, cual es la minima para aprobar directo.
+      function analizar(m, v) {
+        const claves = m.grupos.flatMap((g) => g.campos.map((c) => c[0]));
+        const faltan = claves.filter((k) => v[k] == null);
+        const rellenar = (x) => { const r = { ...v, g: null }; faltan.forEach((k) => { r[k] = x; }); return r; };
+        const lo = m.evaluar(rellenar(0));
+        const hi = m.evaluar(rellenar(100));
+        const res = { faltan, completo: !faltan.length, ns: faltan.length ? null : lo.ns, estado: null, necesita: null };
+        if (res.completo) { res.estado = lo.estado; return res; }
+        if (hi.estado === 'reprobado' && !m.reemplazaPeor) res.estado = 'reprobado';
+        else if (m.globalSeguro && m.globalSeguro(lo, hi, v)) res.estado = 'global';
+        if (!res.estado && faltan.length === 1) {
+          let minimo = null;
+          for (let i = 0; i <= 1000 && minimo === null; i++) {
+            if (m.evaluar(rellenar(i / 10)).estado === 'aprobado') minimo = i / 10;
+          }
+          res.necesita = { clave: faltan[0], valor: minimo };
+        }
+        return res;
+      }
+
+      // ---- pantalla ----
+      const cont = document.getElementById('calc');
+
+      function elegirRamo(id) {
+        estado.ramo = id;
+       
+        dibujar();
+      }
+
+      function dibujar() {
+        cont.textContent = '';
+        if (!estado.ramo) return dibujarSelector();
+        const ramo = RAMOS.find((r) => r.id === estado.ramo);
+        const cabeza = el('div', 'calc-cabeza');
+        cabeza.appendChild(el('h3', '', ramo.nombre));
+        const links = el('div', 'calc-links');
+        const borrar = el('button', 'calc-link', 'Borrar notas');
+        borrar.type = 'button';
+        borrar.addEventListener('click', () => {
+          if (estado.ramo === 'otro') estado.otro.notas = {};
+          else estado[estado.ramo] = {};
+         
+          dibujar();
+        });
+        const cambiar = el('button', 'calc-link', 'Cambiar ramo');
+        cambiar.type = 'button';
+        cambiar.addEventListener('click', () => elegirRamo(null));
+        if (estado.ramo === 'otro' && estado.otro.listo) {
+          const config = el('button', 'calc-link', 'Cambiar ponderaciones');
+          config.type = 'button';
+          config.addEventListener('click', () => { estado.otro.listo = false; dibujar(); });
+          links.appendChild(config);
+        }
+        links.append(borrar, cambiar);
+        cabeza.appendChild(links);
+        cont.appendChild(cabeza);
+        if (estado.ramo !== 'otro') dibujarFijo(MODELOS[estado.ramo], estado[estado.ramo]);
+        else if (!estado.otro.listo) dibujarConfigOtro();
+        else dibujarFijo(modeloOtro(), estado.otro.notas);
+      }
+
+      function dibujarSelector() {
+        cont.appendChild(el('p', 'calc-pregunta', '¿De qué ramo quieres calcular tu promedio?'));
+        const lista = el('div', 'calc-ramos');
+        RAMOS.forEach((r) => {
+          const b = el('button', 'calc-ramo');
+          b.type = 'button';
+          b.appendChild(el('strong', '', r.nombre));
+          b.addEventListener('click', () => elegirRamo(r.id));
+          lista.appendChild(b);
+        });
+        cont.appendChild(lista);
+      }
+
+      function campo(clave, etiqueta, valores, alCambiar) {
+        const caja = el('div', 'calc-campo');
+        const id = 'calc-' + estado.ramo + '-' + clave;
+        const label = el('label', '', etiqueta);
+        label.htmlFor = id;
+        const input = el('input');
+        input.id = id;
+        input.type = 'text';
+        input.inputMode = 'decimal';
+        input.autocomplete = 'off';
+        input.placeholder = '0 – 100';
+        input.value = valores[clave] || '';
+        input.addEventListener('input', () => {
+          valores[clave] = input.value;
+         
+          alCambiar();
+        });
+        const pista = el('div', 'calc-pista');
+        caja.append(label, input, pista);
+        return { caja, input, pista };
+      }
+
+      function dibujarFijo(m, valores) {
+        const campos = {};
+        m.grupos.forEach((g) => {
+          const grupo = el('div', 'calc-grupo');
+          grupo.appendChild(el('h4', '', g.titulo));
+          if (g.nota) grupo.appendChild(el('p', 'calc-nota', g.nota));
+          const rejilla = el('div', 'calc-campos');
+          g.campos.forEach(([clave, etiqueta]) => {
+            campos[clave] = campo(clave, etiqueta, valores, actualizar);
+            rejilla.appendChild(campos[clave].caja);
+          });
+          grupo.appendChild(rejilla);
+          if (g.agregar) {
+            const barra = el('div', 'calc-editar');
+            const mas = el('button', 'calc-boton', '+ Agregar');
+            mas.type = 'button';
+            mas.addEventListener('click', () => { g.agregar(); dibujar(); });
+            barra.appendChild(mas);
+            if (g.campos.length > 1) {
+              const menos = el('button', 'calc-boton', '− Quitar el último');
+              menos.type = 'button';
+              menos.addEventListener('click', () => { g.quitar(); dibujar(); });
+              barra.appendChild(menos);
+            }
+            grupo.appendChild(barra);
+          }
+          cont.appendChild(grupo);
+        });
+        // Examen global (solo ramos que lo tienen); aparece cuando corresponde
+        let global = null;
+        if (m.globalTitulo) {
+          const grupo = el('div', 'calc-grupo');
+          grupo.hidden = true;
+          grupo.appendChild(el('h4', '', m.globalTitulo));
+          const rejilla = el('div', 'calc-campos');
+          campos.g = campo('g', m.globalEtiqueta, valores, actualizar);
+          rejilla.appendChild(campos.g.caja);
+          grupo.appendChild(rejilla);
+          cont.appendChild(grupo);
+          global = grupo;
+        }
+        const resultado = el('div', 'calc-resultado');
+        resultado.setAttribute('aria-live', 'polite');
+        cont.appendChild(resultado);
+
+        function actualizar() {
+          const v = {};
+          let hayInvalida = false;
+          Object.keys(campos).forEach((k) => {
+            const n = num(valores[k]);
+            campos[k].input.classList.toggle('invalido', Number.isNaN(n));
+            if (Number.isNaN(n)) hayInvalida = true;
+            campos[k].pista.textContent = '';
+            campos[k].pista.classList.remove('necesita');
+            campos[k].caja.classList.remove('descartado');
+            v[k] = Number.isNaN(n) ? null : n;
+          });
+          const r = analizar(m, v);
+          if (m.reemplazaPeor && r.completo && r.estado === 'reprobado') r.estado = 'global';
+          resultado.textContent = '';
+          resultado.className = 'calc-resultado';
+          if (hayInvalida) resultado.appendChild(el('p', '', 'Revisa las notas marcadas en rojo: deben ir de 0 a 100.'));
+
+          // Controles descartados: se marcan cuando ya estan todos los controles
+          if (m.descartados) {
+            m.descartados(v).forEach((k) => {
+              campos[k].caja.classList.add('descartado');
+              campos[k].pista.textContent = 'Descartado';
+            });
+          }
+          if (!r.completo) {
+            const parcial = m.parcial(v);
+            if (parcial != null) {
+              resultado.appendChild(el('p', 'grande', 'Por ahora tu promedio es ' + fmt(Math.min(parcial, 100), 2) + '.'));
+              avisoTope(resultado, parcial);
+            }
+            resultado.appendChild(el('p', '', (r.faltan.length === 1 ? 'Falta 1 nota' : 'Faltan ' + r.faltan.length + ' notas') + ' para el resultado final.'));
+          }
+          if (r.necesita) {
+            const { clave, valor } = r.necesita;
+            const pista = campos[clave].pista;
+            const etiqueta = m.grupos.flatMap((g) => g.campos).find((c) => c[0] === clave)[1];
+            let texto;
+            if (valor === null) texto = 'Ya no alcanzas a aprobar directo, ni con 100 en ' + etiqueta + '.' + (m.reemplazaPeor ? ' Te quedaría rendir el certamen global.' : '');
+            else if (valor === 0) texto = 'Ya aprobaste: con cualquier nota en ' + etiqueta + ' apruebas.';
+            else texto = 'Necesitas al menos ' + fmt(valor) + ' en ' + etiqueta + ' para aprobar.';
+            pista.textContent = valor === null ? 'No alcanza' : valor === 0 ? 'Cualquier nota' : 'Necesitas ≥ ' + fmt(valor);
+            if (valor !== null) pista.classList.add('necesita');
+            resultado.appendChild(el('p', 'grande', texto));
+          }
+          if (r.completo) {
+            resultado.appendChild(el('p', 'grande', (m.etiquetaNota || 'NS') + ' = ' + fmt(Math.min(r.ns, 100), 2)));
+            avisoTope(resultado, r.ns);
+          }
+          if (m.extra) { const t = m.extra(v); if (t) resultado.appendChild(el('p', '', t)); }
+          if (r.estado) resumenEstado(m, r, v, valores, resultado, campos);
+          if (global) global.hidden = r.estado !== 'global';
+        }
+        actualizar();
+      }
+
+      // La nota no puede pasar de 100: si te pasas, se avisa cuanto tienes en realidad
+      function avisoTope(resultado, nota) {
+        if (nota > 100 + EPS) resultado.appendChild(el('p', '', 'En realidad tienes ' + fmt(nota, 2) + ', pero el ramo solo se puede pasar con 100 😂'));
+      }
+
+      // Pastilla y explicacion segun el estado (reprobado, aprobado o global)
+      function resumenEstado(m, r, v, valores, resultado, campos) {
+        const conGlobal = !!m.globalSeguro;
+        const pasa = 55;
+        const pill = el('span', 'calc-pill');
+        const nota = (txt, clase) => resultado.appendChild(el('p', clase || '', txt));
+        if (r.estado === 'reprobado') {
+          resultado.classList.add('mal');
+          pill.classList.add('mal');
+          pill.textContent = conGlobal ? '✕ Reprobación directa' : '✕ Reprobado';
+          resultado.prepend(pill);
+          if (r.completo) nota('NF = ' + Math.round(r.ns) + '. ' + (conGlobal ? 'Con NS menor a 45 no hay examen global.' : 'Necesitabas ' + (m.etiquetaNota ? '' : 'NS de ') + fmtN(pasa) + ' o más.'));
+          else nota('Aun con 100 en lo que falta, no llegas a ' + fmtN(conGlobal ? 45 : pasa) + '.');
+        } else if (r.estado === 'aprobado') {
+          resultado.classList.add('ok');
+          pill.classList.add('ok');
+          pill.textContent = conGlobal ? '✓ Aprobación directa' : '✓ Aprobado';
+          resultado.prepend(pill);
+          nota('NF = ' + Math.round(Math.min(r.ns, 100)) + '. ¡Aprobado!');
+        } else if (r.estado === 'global') {
+          resultado.classList.add('global');
+          pill.classList.add('global');
+          pill.textContent = '⚠ Global';
+          resultado.prepend(pill);
+          if (!r.completo) {
+            nota('Ya vas a global. Cuando ingreses todas las notas te digo cuánto necesitas.');
+            return;
+          }
+          if (m.reemplazaPeor) return resumenCertamenGlobal(m, r, v, valores, resultado, campos);
+          const sobre55 = ge(r.ns, 55);
+          nota(sobre55
+            ? 'Tienes una prueba escrita bajo 40, así que debes rendir el examen global. Si no lo rindes, NF = 54 (reprobado).'
+            : 'Puedes optar por rendir el examen global. Si no lo rindes, NF = ' + Math.round(r.ns) + ' (reprobado).');
+          const gmin = (54.5 - 0.6 * r.ns) / 0.4;
+          let pistaG;
+          if (gmin > 100 + EPS) { nota('Ni con 100 en el global llegas a aprobar.', 'grande'); pistaG = 'No alcanza'; }
+          else if (gmin <= 0) { nota('Con cualquier nota en el global apruebas.', 'grande'); pistaG = 'Cualquier nota'; }
+          else {
+            const g = Math.ceil(gmin * 10 - EPS) / 10;
+            nota('Necesitas al menos ' + fmt(g) + ' en el global para aprobar (NF = 0,6·NS + 0,4·G).', 'grande');
+            pistaG = 'Necesitas ≥ ' + fmt(g);
+            campos.g.pista.classList.add('necesita');
+          }
+          campos.g.pista.textContent = pistaG;
+          const g = num(valores.g);
+          if (g != null && !Number.isNaN(g)) {
+            const nf = Math.round(0.6 * r.ns + 0.4 * g);
+            nota('Con ' + fmt(g) + ' en el global: NF = ' + nf + (nf >= 55 ? ' → Aprobado.' : ' → Reprobado.'), 'grande');
+          }
+        }
+      }
+
+      // EDO: la nota del certamen global reemplaza al peor certamen y se recalcula NS
+      function resumenCertamenGlobal(m, r, v, valores, resultado, campos) {
+        const nota = (txt, clase) => resultado.appendChild(el('p', clase || '', txt));
+        const cert = ['c1', 'c2', 'c3'];
+        const peor = cert.reduce((a, b) => (v[b] < v[a] ? b : a));
+        const numPeor = peor.slice(1);
+        nota('Con NS = ' + fmt(r.ns, 2) + ' no apruebas directo. Puedes rendir el certamen global: su nota reemplaza a tu peor certamen (Certamen ' + numPeor + ', con ' + fmt(v[peor]) + ') y se vuelve a calcular NS.');
+        let minimo = null;
+        for (let i = 0; i <= 1000 && minimo === null; i++) {
+          if (m.evaluar({ ...v, g: i / 10 }).estado === 'aprobado') minimo = i / 10;
+        }
+        if (minimo === null) { nota('Ni con 100 en el certamen global llegas a 55.', 'grande'); campos.g.pista.textContent = 'No alcanza'; }
+        else { nota('Necesitas al menos ' + fmt(minimo) + ' en el certamen global para aprobar.', 'grande'); campos.g.pista.textContent = 'Necesitas ≥ ' + fmt(minimo); campos.g.pista.classList.add('necesita'); }
+        const g = num(valores.g);
+        if (g != null && !Number.isNaN(g)) {
+          const f = m.evaluar({ ...v, g });
+          nota('Con ' + fmt(g) + ' en el global: NS = ' + fmt(f.ns, 2) + ', NF = ' + Math.round(f.ns) + (f.estado === 'aprobado' ? ' → Aprobado.' : ' → Reprobado.'), 'grande');
+        }
+      }
+
+      // ---- ramo "Otro" ----
+      // Paso 1: se pregunta como se pondera el ramo. Paso 2: se agregan las evaluaciones y notas.
+      function dibujarConfigOtro() {
+        const o = estado.otro;
+        cont.appendChild(el('p', 'calc-pregunta', 'Cuéntame cómo se calcula la nota de tu ramo'));
+
+        const grupo = (titulo, nota) => {
+          const g = el('div', 'calc-grupo');
+          g.appendChild(el('h4', '', titulo));
+          if (nota) g.appendChild(el('p', 'calc-nota', nota));
+          cont.appendChild(g);
+          return g;
+        };
+        const entrada = (padre, id, etiqueta, clave, ph) => {
+          const caja = el('div', 'calc-campo');
+          const label = el('label', '', etiqueta);
+          label.htmlFor = id;
+          const inp = el('input');
+          inp.id = id;
+          inp.type = 'text';
+          inp.inputMode = 'decimal';
+          inp.autocomplete = 'off';
+          inp.placeholder = ph;
+          inp.value = o[clave] || '';
+          inp.addEventListener('input', () => { o[clave] = inp.value; error.textContent = ''; actualizarSuma(); });
+          caja.append(label, inp);
+          padre.appendChild(caja);
+          return inp;
+        };
+
+        const g1 = grupo('Ponderaciones', 'Cuánto pesa cada parte en la nota. Las notas van de 0 a 100.');
+        const r1 = el('div', 'calc-campos');
+        g1.appendChild(r1);
+        entrada(r1, 'otro-pk', 'Controles (%)', 'pk', 'Ej: 30');
+        entrada(r1, 'otro-pc', 'Certámenes (%)', 'pc', 'Ej: 70');
+
+        const gd = grupo('Controles descartados', 'Si el ramo descarta tus peores controles, no cuentan en el promedio (cuando ya están todos los controles).');
+        [['0', 'No se descarta ninguno'], ['1', 'Se descarta el peor control'], ['2', 'Se descartan los 2 peores controles']].forEach(([valor, texto]) => {
+          const l = el('label', 'calc-radio');
+          const r = el('input');
+          r.type = 'radio';
+          r.name = 'otro-desc';
+          r.checked = o.desc === valor;
+          r.addEventListener('change', () => { o.desc = valor; });
+          l.append(r, document.createTextNode(' ' + texto));
+          gd.appendChild(l);
+        });
+
+        const g2 = grupo('Laboratorio');
+        const opciones = [
+          ['no', 'El ramo no tiene laboratorio'],
+          ['pondera', 'Tiene laboratorio y pondera como una nota más'],
+          ['mult', 'Tiene laboratorio y da un multiplicador de 0,9 a 1,1'],
+        ];
+        opciones.forEach(([valor, texto]) => {
+          const l = el('label', 'calc-radio');
+          const r = el('input');
+          r.type = 'radio';
+          r.name = 'otro-lab';
+          r.checked = o.lab === valor;
+          r.addEventListener('change', () => { o.lab = valor; dibujar(); });
+          l.append(r, document.createTextNode(' ' + texto));
+          g2.appendChild(l);
+        });
+        if (o.lab === 'pondera') {
+          const r2 = el('div', 'calc-campos');
+          g2.appendChild(r2);
+          entrada(r2, 'otro-pl', 'Laboratorio (%)', 'pl', 'Ej: 10');
+        }
+        if (o.lab === 'mult') {
+          g2.appendChild(el('p', 'calc-aviso', 'Ojo: así se calcula el multiplicador ω a partir de tu nota de laboratorio (NL). Si 55 ≤ NL ≤ 100: ω = 79/90 + NL/450. Si 0 ≤ NL < 55: ω = 9/10 + NL/550. Así, un 0 da ×0,9, un 55 da ×1,0 y un 100 da ×1,1. Se calcula tu nota con controles y certámenes y después se multiplica por ω.'));
+        }
+
+        const suma = el('p', 'calc-nota');
+        const error = el('p', 'calc-error');
+        error.setAttribute('role', 'alert');
+        function actualizarSuma() {
+          const partes = [num(o.pk), num(o.pc), o.lab === 'pondera' ? num(o.pl) : 0];
+          const total = partes.reduce((t, x) => t + (x == null || Number.isNaN(x) ? 0 : x), 0);
+          suma.textContent = 'Las ponderaciones suman ' + fmtN(total) + '% (deben sumar 100%).';
+        }
+        const seguir = el('button', 'calc-boton principal', 'Continuar');
+        seguir.type = 'button';
+        seguir.addEventListener('click', () => {
+          const pk = num(o.pk), pc = num(o.pc), pl = o.lab === 'pondera' ? num(o.pl) : 0;
+          const mal = (x) => x == null || Number.isNaN(x);
+          if (mal(pk) || mal(pc) || mal(pl) || pk <= 0 || pc <= 0 || (o.lab === 'pondera' && pl <= 0)) {
+            error.textContent = 'Completa las ponderaciones con números mayores que 0 y hasta 100.';
+          } else if (Math.abs(pk + pc + pl - 100) > 0.01) {
+            error.textContent = 'Las ponderaciones deben sumar 100%; ahora suman ' + fmtN(pk + pc + pl) + '%.';
+          } else {
+            o.listo = true;
+           
+            dibujar();
+          }
+        });
+        cont.append(suma, error, seguir);
+        actualizarSuma();
+      }
+
+      // Modelo del ramo "Otro" segun lo que se contesto en el paso 1
+      function modeloOtro() {
+        const o = estado.otro;
+        const pk = num(o.pk), pc = num(o.pc), pl = o.lab === 'pondera' ? num(o.pl) : 0;
+        const serie = (pre, etiqueta, n) => Array.from({ length: n }, (_, i) => [pre + (i + 1), etiqueta + ' ' + (i + 1)]);
+        const claves = (pre, n) => Array.from({ length: n }, (_, i) => pre + (i + 1));
+        // Multiplicador del laboratorio (omega): dos tramos lineales, vale 1 con NL = 55
+        const mult = (lab) => (lab >= 55 ? 79 / 90 + lab / 450 : 9 / 10 + lab / 550);
+        const lista = (v, pre, n) => claves(pre, n).map((k) => v[k]);
+        const desc = Number(o.desc) || 0;
+        // Promedio de controles; si ya estan todos, se quitan los peores
+        const promControles = (lst) => {
+          const orden = lst.slice().sort((a, b) => b - a);
+          return prom(lst.length === o.nk && o.nk > desc ? orden.slice(0, o.nk - desc) : orden);
+        };
+        const grupos = [
+          {
+            titulo: 'Controles', nota: 'Pesan ' + fmtN(pk) + '%.' + (desc ? ' Se descarta' + (desc === 1 ? ' el peor.' : 'n los ' + desc + ' peores.') : '') + ' Agrega todos los que tiene el ramo; los que dejes vacíos cuentan como pendientes.',
+            campos: serie('k', 'Control', o.nk),
+            agregar: () => { o.nk++; },
+            quitar: () => { delete o.notas['k' + o.nk]; o.nk--; },
+          },
+          {
+            titulo: 'Certámenes', nota: 'Pesan ' + fmtN(pc) + '%. Agrega todos los que tiene el ramo; los que dejes vacíos cuentan como pendientes.',
+            campos: serie('c', 'Certamen', o.nc),
+            agregar: () => { o.nc++; },
+            quitar: () => { delete o.notas['c' + o.nc]; o.nc--; },
+          },
+        ];
+        if (o.lab === 'pondera') grupos.push({ titulo: 'Laboratorio', nota: 'Pesa ' + fmtN(pl) + '%.', campos: [['lab', 'Laboratorio']] });
+        if (o.lab === 'mult') grupos.push({ titulo: 'Laboratorio', nota: 'Da un multiplicador ω: 0 → ×0,9, 55 → ×1,0 y 100 → ×1,1 (ω = 79/90 + NL/450 desde 55; ω = 9/10 + NL/550 bajo 55).', campos: [['lab', 'Laboratorio']] });
+        const base = (v) => (pk * promControles(lista(v, 'k', o.nk)) + pc * prom(lista(v, 'c', o.nc)) + (o.lab === 'pondera' ? pl * v.lab : 0)) / (pk + pc + pl);
+        return {
+          grupos,
+          etiquetaNota: 'Nota final',
+          descartados: (v) => peoresControles(v, claves('k', o.nk), desc),
+          evaluar(v) {
+            const ns = o.lab === 'mult' ? base(v) * mult(v.lab) : base(v);
+            return { ns, estado: ge(ns, 55) ? 'aprobado' : 'reprobado' };
+          },
+          parcial(v) {
+            const ok = (a) => a.filter((x) => x != null);
+            const ctrl = ok(lista(v, 'k', o.nk)), cert = ok(lista(v, 'c', o.nc));
+            const partes = [[pk, ctrl.length ? promControles(ctrl) : null], [pc, cert.length ? prom(cert) : null]];
+            if (o.lab === 'pondera') partes.push([pl, v.lab]);
+            const b = promedioPonderado(partes);
+            return b != null && o.lab === 'mult' && v.lab != null ? b * mult(v.lab) : b;
+          },
+          extra(v) {
+            if (o.lab !== 'mult' || v.lab == null) return '';
+            return 'Multiplicador de laboratorio: ×' + mult(v.lab).toFixed(3).replace('.', ',') + ' (por tu nota de ' + fmtN(v.lab) + ').';
+          },
+        };
+      }
+
+      dibujar();
+    })();
+  </script>
+  <script>
+    // Menu plegable para celular y tablet: al entrar solo se ve el inicio (hasta el boton de
+    // apuntes y material). Cada opcion del menu muestra su seccion y deja las demas ocultas.
+    (function () {
+      const movil = window.matchMedia('(max-width: 1023px)');
+      const boton = document.getElementById('menu-btn');
+      const menu = document.getElementById('menu-movil');
+      const lista = menu.querySelector('ul');
+      const secciones = [...document.querySelectorAll('main section')];
+
+      // Secciones que se ven en cada opcion del menu: Sobre mi termina con el material, Material
+      // termina con la calculadora, y la calculadora se ve sola.
+      const SOBRE_MI = ['sobre-mi', 'experiencia', 'educacion', 'logros', 'habilidades'];
+      const PAGINAS = {
+        'sobre-mi': [...SOBRE_MI, 'material'],
+        material: ['material', 'calculadora'],
+        calculadora: ['calculadora'],
+      };
+      // A que opcion del menu pertenece una seccion (los enlaces a experiencia, logros, etc. abren Sobre mi)
+      const paginaDe = (id) => (SOBRE_MI.includes(id) ? 'sobre-mi' : id);
+
+      // Opciones: inicio y una por pagina (los nombres salen del menu de escritorio)
+      const opciones = [['inicio', 'Inicio']];
+      document.querySelectorAll('nav.toc a').forEach((a) => {
+        const id = a.getAttribute('href').slice(1);
+        if (PAGINAS[id]) opciones.push([id, a.textContent.trim()]);
+      });
+      opciones.forEach(([id, texto]) => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = '#' + id;
+        a.textContent = texto;
+        a.dataset.id = id;
+        li.appendChild(a);
+        lista.appendChild(li);
+      });
+
+      function abrirMenu(abrir) {
+        menu.hidden = !abrir;
+        boton.setAttribute('aria-expanded', String(abrir));
+      }
+
+      // Muestra la seccion de la URL (#id); sin seccion valida se ve solo el inicio
+      function mostrar(desplazar) {
+        const id = location.hash.slice(1);
+        const actual = secciones.find((s) => s.id === id);
+        const pagina = actual ? paginaDe(actual.id) : null;
+        if (movil.matches) {
+          secciones.forEach((s) => s.classList.toggle('visible', !!pagina && PAGINAS[pagina].includes(s.id)));
+          document.body.classList.toggle('con-seccion', !!actual);
+          document.body.dataset.pagina = pagina || '';
+          lista.querySelectorAll('a').forEach((a) => a.classList.toggle('actual', a.dataset.id === (pagina || 'inicio')));
+        }
+        if (desplazar && movil.matches) {
+          if (actual) actual.scrollIntoView();
+          else window.scrollTo(0, 0);
+        }
+      }
+
+      function aplicar() {
+        document.body.classList.toggle('movil', movil.matches);
+        if (!movil.matches) {
+          abrirMenu(false);
+          document.body.classList.remove('con-seccion');
+          delete document.body.dataset.pagina;
+          secciones.forEach((s) => s.classList.remove('visible'));
+        } else {
+          mostrar(false);
+        }
+      }
+
+      boton.addEventListener('click', (e) => { e.stopPropagation(); abrirMenu(menu.hidden); });
+      menu.addEventListener('click', (e) => {
+        const a = e.target.closest('a');
+        if (!a) return;
+        abrirMenu(false);
+        // Si ya estamos en esa direccion no hay cambio de URL: se muestra igual
+        if (a.dataset.id === 'inicio') {
+          e.preventDefault();
+          history.pushState(null, '', location.pathname + location.search);
+          mostrar(true);
+        } else if (location.hash === '#' + a.dataset.id) {
+          e.preventDefault();
+          mostrar(true);
+        }
+      });
+      document.addEventListener('click', (e) => { if (!menu.hidden && !menu.contains(e.target)) abrirMenu(false); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !menu.hidden) { abrirMenu(false); boton.focus(); } });
+      window.addEventListener('hashchange', () => mostrar(true));
+      window.addEventListener('popstate', () => mostrar(true));
+      aplicar();
+      // Safari antiguo solo conoce addListener
+      if (movil.addEventListener) movil.addEventListener('change', aplicar);
+      else if (movil.addListener) movil.addListener(aplicar);
+      if (movil.matches && location.hash) requestAnimationFrame(() => mostrar(true));
+    })();
+  </script>
+  <script>
+    // Secciones con clave: el contenido esta cifrado en privado.enc.json y skills.enc.json (se generan con cifrar.html;
+    // para Skills se abre cifrar.html?s=skills).
+    // Con la clave correcta se descifra en el navegador; la clave y el contenido no se guardan en
+    // ningun lado y todo se borra al cerrar, al pasar 10 minutos o al salir de la pagina.
+    function iniciarPrivado(id, archivo) {
+      const det = document.getElementById(id);
+      const form = document.getElementById(id + '-form');
+      const campo = document.getElementById(id + '-clave');
+      const estado = document.getElementById(id + '-estado');
+      const cont = document.getElementById(id + '-contenido');
+      let urls = [];
+      let reloj = null;
+
+      const decir = (txt, mal) => { estado.textContent = txt; estado.classList.toggle('mal', !!mal); estado.classList.toggle('emoji', txt === '🙄' || txt === '🤩'); };
+      const deB64 = (t) => Uint8Array.from(atob(t), (c) => c.charCodeAt(0));
+
+      async function descifrar(paquete, clave) {
+        const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(clave), 'PBKDF2', false, ['deriveKey']);
+        const llave = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: deB64(paquete.salt), iterations: paquete.iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+        const claro = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: deB64(paquete.iv) }, llave, deB64(paquete.data));
+        return JSON.parse(new TextDecoder().decode(claro));
+      }
+
+      // Borra todo lo descifrado y vuelve a pedir la clave
+      function cerrar(mensaje) {
+        clearTimeout(reloj);
+        urls.forEach((u) => URL.revokeObjectURL(u));
+        urls = [];
+        cont.textContent = '';
+        cont.hidden = true;
+        form.hidden = false;
+        campo.value = '';
+        decir(mensaje || '');
+      }
+
+      function mostrar(datos) {
+        cont.textContent = '';
+        const cabeza = document.createElement('div');
+        cabeza.className = 'privado-cabeza';
+        const aviso = document.createElement('span');
+        aviso.textContent = 'Se cierra solo a los 10 minutos.';
+        const salir = document.createElement('button');
+        salir.type = 'button';
+        salir.className = 'calc-boton';
+        salir.textContent = 'Cerrar y borrar';
+        salir.addEventListener('click', () => cerrar());
+        cabeza.append(aviso, salir);
+        cont.appendChild(cabeza);
+        if (datos.notas && datos.notas.trim()) {
+          const n = document.createElement('div');
+          n.className = 'privado-notas';
+          n.textContent = datos.notas;
+          cont.appendChild(n);
+        }
+        const lista = document.createElement('ul');
+        lista.className = 'files';
+        (datos.archivos || []).forEach((f) => {
+          const url = URL.createObjectURL(new Blob([deB64(f.datos)], { type: f.tipo }));
+          urls.push(url);
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = f.nombre;   // se descarga directo, sin abrir vista previa
+          const nombre = document.createElement('span');
+          nombre.className = 'name';
+          nombre.textContent = f.nombre;
+          a.appendChild(nombre);
+          li.appendChild(a);
+          lista.appendChild(li);
+        });
+        cont.appendChild(lista);
+        cont.hidden = false;
+        form.hidden = true;
+        reloj = setTimeout(() => cerrar('Se cerro por inactividad.'), 10 * 60 * 1000);
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const clave = campo.value;
+        if (!clave) return decir('Escribe la clave.', true);
+        if (!window.crypto || !crypto.subtle) return decir('Este navegador no permite abrirlo (hace falta una conexion segura).', true);
+        decir('Abriendo…');
+        let paquete;
+        try {
+          const r = await fetch(archivo, { cache: 'no-cache' });
+          if (!r.ok) return decir('Todavia no hay contenido privado.', true);
+          paquete = await r.json();
+        } catch (err) {
+          return decir('No se pudo cargar el contenido. Intenta de nuevo.', true);
+        }
+        try {
+          mostrar(await descifrar(paquete, clave));
+          decir('');
+          campo.value = '';
+        } catch (err) {
+          decir(clave.trim() === '67' ? '🤩' : '🙄', true);
+        }
+      });
+
+      // Al cerrar el menu o salir de la pagina no queda nada descifrado
+      det.addEventListener('toggle', () => { if (!det.open) cerrar(); });
+      window.addEventListener('pagehide', () => cerrar());
+    }
+    iniciarPrivado('privado', 'privado.enc.json');
+    iniciarPrivado('skills', 'skills.enc.json');
+  </script>
+</body>
+</html>
