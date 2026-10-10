@@ -320,6 +320,15 @@
     .aviso-red svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; color: var(--accent); }
     .aviso-red a.inline { overflow-wrap: anywhere; }
 
+    .videos { margin-bottom: 40px; }
+    .videos h3 {
+      color: var(--heading);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin: 0 0 8px;
+    }
     .material h3 {
       color: var(--heading);
       font-size: 0.8rem;
@@ -799,7 +808,6 @@
             <li><a href="#logros"><span class="line"></span>Logros</a></li>
             <li><a href="#habilidades"><span class="line"></span>Habilidades</a></li>
             <li><a href="#material"><span class="line"></span>Material</a></li>
-            <li><a href="#videos"><span class="line"></span>Videos</a></li>
             <li><a href="#calculadora"><span class="line"></span>Calculadora</a></li>
           </ul>
         </nav>
@@ -948,6 +956,13 @@
 
       <section id="material">
         <h2 class="sec-title">Material</h2>
+        <div class="videos" id="videos">
+          <h3>Videos cortos</h3>
+          <p>Videos cortos de estadística, matemática y otros temas, explicados de forma didáctica e intuitiva. Los publico como <strong>mathndstats</strong>.</p>
+          <p><a class="cta" href="https://www.instagram.com/mathndstats/" target="_blank" rel="noopener">Instagram @mathndstats <span>→</span></a></p>
+          <p><a class="cta" href="https://www.tiktok.com/@mathndstats" target="_blank" rel="noopener">TikTok @mathndstats <span>→</span></a></p>
+        </div>
+
         <p>Apuntes, ejercicios y otro material de estudio que he preparado. Puedes descargarlos libremente.</p>
         <p class="aviso-red" id="aviso-eduroam">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg>
@@ -981,17 +996,6 @@
           </form>
           <div id="privado-contenido" hidden></div>
         </details>
-      </section>
-
-      <section id="videos">
-        <h2 class="sec-title">Videos</h2>
-        <p>Videos cortos de estadística, matemática y otros temas, explicados de forma didáctica e intuitiva. Los publico como <strong>mathndstats</strong>.</p>
-        <p>
-          <a class="cta" href="https://www.instagram.com/mathndstats/" target="_blank" rel="noopener">Instagram @mathndstats <span>→</span></a>
-        </p>
-        <p>
-          <a class="cta" href="https://www.tiktok.com/@mathndstats" target="_blank" rel="noopener">TikTok @mathndstats <span>→</span></a>
-        </p>
       </section>
 
       <section id="calculadora">
@@ -2007,7 +2011,6 @@
       const PAGINAS = {
         'sobre-mi': [...SOBRE_MI, 'material'],
         material: ['material', 'calculadora'],
-        videos: ['videos'],
         calculadora: ['calculadora'],
       };
       // A que opcion del menu pertenece una seccion (los enlaces a experiencia, logros, etc. abren Sobre mi)
