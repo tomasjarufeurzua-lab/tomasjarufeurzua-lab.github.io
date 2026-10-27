@@ -1498,13 +1498,6 @@
         return e;
       };
 
-      // Promedio de pares [peso, nota] ignorando las partes sin nota; null si no hay ninguna
-      function promedioPonderado(partes) {
-        const con = partes.filter(([, x]) => x != null);
-        if (!con.length) return null;
-        return con.reduce((t, [w, x]) => t + w * x, 0) / con.reduce((t, [w]) => t + w, 0);
-      }
-
       // Claves de los n peores controles, cuando ya estan todos ingresados (si no, ninguno)
       function peoresControles(v, claves, n) {
         if (n < 1 || claves.length <= n || claves.some((k) => v[k] == null)) return [];
@@ -1527,14 +1520,6 @@
             if (!ge(ns, 45)) return { ns, estado: 'reprobado' };
             return { ns, estado: ge(ns, 55) && cert.every((c) => ge(c, 40)) ? 'aprobado' : 'global' };
           },
-          // Promedio con las notas que ya hay: cada parte pesa lo suyo, repartido entre las que tienen notas
-          parcial(v) {
-            const ok = (a) => a.filter((x) => x != null);
-            const cert = ok([v.c1, v.c2, v.c3]);
-            let ctrl = ok([v.k1, v.k2, v.k3, v.k4]);
-            if (ctrl.length === 4) ctrl = ctrl.sort((a, b) => b - a).slice(0, 3);
-            return promedioPonderado([[0.75, cert.length ? prom(cert) : null], [0.15, ctrl.length ? prom(ctrl) : null], [0.10, v.lab]]);
-          },
           descartados: (v) => peoresControles(v, ['k1', 'k2', 'k3', 'k4'], 1),
           globalTitulo: 'Examen global',
           globalEtiqueta: 'Nota del global',
@@ -1556,12 +1541,6 @@
             const ns = 0.75 * prom(cert) + 0.25 * prom([v.k1, v.k2, v.k3]);
             return { ns, estado: ge(ns, 55) ? 'aprobado' : 'reprobado' };
           },
-          parcial(v) {
-            const ok = (a) => a.filter((x) => x != null);
-            const cert = ok([v.c1, v.c2, v.c3]);
-            const ctrl = ok([v.k1, v.k2, v.k3]);
-            return promedioPonderado([[0.75, cert.length ? prom(cert) : null], [0.25, ctrl.length ? prom(ctrl) : null]]);
-          },
           globalTitulo: 'Certamen global',
           globalEtiqueta: 'Nota del certamen global',
           reemplazaPeor: true,
@@ -1576,7 +1555,7 @@
         const rellenar = (x) => { const r = { ...v, g: null }; faltan.forEach((k) => { r[k] = x; }); return r; };
         const lo = m.evaluar(rellenar(0));
         const hi = m.evaluar(rellenar(100));
-        const res = { faltan, completo: !faltan.length, ns: faltan.length ? null : lo.ns, estado: null, necesita: null };
+        const res = { faltan, completo: !faltan.length, ns: faltan.length ? null : lo.ns, conCeros: lo.ns, estado: null, necesita: null };
         if (res.completo) { res.estado = lo.estado; return res; }
         if (hi.estado === 'reprobado' && !m.reemplazaPeor) res.estado = 'reprobado';
         else if (m.globalSeguro && m.globalSeguro(lo, hi, v)) res.estado = 'global';
@@ -1737,10 +1716,9 @@
             });
           }
           if (!r.completo) {
-            const parcial = m.parcial(v);
-            if (parcial != null) {
-              resultado.appendChild(el('p', 'grande', 'Por ahora tu promedio es ' + fmt(Math.min(parcial, 100), 2) + '.'));
-              avisoTope(resultado, parcial);
+            // Nota que llevas si te sacases 0 en todo lo que falta
+            if (Object.keys(campos).some((k) => k !== 'g' && v[k] != null)) {
+              resultado.appendChild(el('p', 'grande', 'Llevas ' + fmt(r.conCeros, 2) + ' si te sacas 0 en todo lo que falta.'));
             }
             resultado.appendChild(el('p', '', (r.faltan.length === 1 ? 'Falta 1 nota' : 'Faltan ' + r.faltan.length + ' notas') + ' para el resultado final.'));
           }
@@ -1983,14 +1961,6 @@
           evaluar(v) {
             const ns = o.lab === 'mult' ? base(v) * mult(v.lab) : base(v);
             return { ns, estado: ge(ns, 55) ? 'aprobado' : 'reprobado' };
-          },
-          parcial(v) {
-            const ok = (a) => a.filter((x) => x != null);
-            const ctrl = ok(lista(v, 'k', o.nk)), cert = ok(lista(v, 'c', o.nc));
-            const partes = [[pk, ctrl.length ? promControles(ctrl) : null], [pc, cert.length ? prom(cert) : null]];
-            if (o.lab === 'pondera') partes.push([pl, v.lab]);
-            const b = promedioPonderado(partes);
-            return b != null && o.lab === 'mult' && v.lab != null ? b * mult(v.lab) : b;
           },
           extra(v) {
             if (o.lab !== 'mult' || v.lab == null) return '';
