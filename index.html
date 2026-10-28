@@ -174,6 +174,14 @@
     .go-material:hover .arrow { transform: translateY(3px); }
     .go-material:active { transform: translateY(0); }
     .go-desktop { display: none; }
+    /* Fila de botones de la portada (ver material + aviso temporal) */
+    .go-fila { display: flex; flex-wrap: wrap; gap: 12px; }
+    .go-fila .go-material { margin: 0; }
+    .go-fila.go-mobile { margin: 24px 0 16px; }
+    .go-fila.go-desktop { display: none; }
+    .go-predict[hidden] { display: none; }
+    .go-predict { border-color: rgba(94, 234, 212, 0.55); box-shadow: 0 0 10px rgba(94, 234, 212, 0.35); }
+    .go-predict svg, .go-predict .arrow { color: var(--accent); }
     .go-sobre { display: none; }
     .go-sobre:hover .arrow { transform: translateX(4px); }
 
@@ -651,6 +659,7 @@
       .go-mobile { display: none; }
       .footer-social { display: none; }
       .go-desktop { display: inline-flex; margin: 24px 0 0; }
+      .go-fila.go-desktop { display: flex; }
       main { width: 52%; padding: 96px 0; }
       .sec-title {
         position: absolute;
@@ -800,7 +809,10 @@
         <h2>Estudiante de Ingeniería Civil Industrial</h2>
         <p class="tagline">Ayudante en la Universidad Técnica Federico Santa María. Me interesa usar la inteligencia artificial para optimizar procesos y apoyar la toma de decisiones. Además, me apasiona entender la matemática de forma didáctica e intuitiva, más que mecanizarla, algo en lo que hoy solemos pecar.</p>
         <p class="location">Valparaíso, Chile · <a class="mail" href="mailto:tjarufe@usm.cl">tjarufe@usm.cl</a></p>
-        <a class="go-material go-desktop" href="#material"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>Ver apuntes y material <span class="arrow" aria-hidden="true">↓</span></a>
+        <div class="go-fila go-desktop">
+        <a class="go-material" href="#material"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>Ver apuntes y material <span class="arrow" aria-hidden="true">↓</span></a>
+        <a class="go-material go-predict" hidden href="material/Electricidad%20y%20Magnetismo/1%20-%20Certamen%202/1%20-%20Predict%20Certamen%202.pdf" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>Ver Predict Certamen 2 <span class="arrow" aria-hidden="true">↗</span></a>
+        </div>
 
         <nav class="toc" aria-label="Secciones">
           <ul>
@@ -833,7 +845,10 @@
         </li>
       </ul>
 
-      <a class="go-material go-mobile" href="#material"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>Ver apuntes y material <span class="arrow" aria-hidden="true">↓</span></a>
+      <div class="go-fila go-mobile">
+      <a class="go-material" href="#material"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>Ver apuntes y material <span class="arrow" aria-hidden="true">↓</span></a>
+      <a class="go-material go-predict" hidden href="material/Electricidad%20y%20Magnetismo/1%20-%20Certamen%202/1%20-%20Predict%20Certamen%202.pdf" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>Ver Predict Certamen 2 <span class="arrow" aria-hidden="true">↗</span></a>
+      </div>
     </header>
 
     <main>
@@ -1436,6 +1451,25 @@
       return true;
     }
 
+    // Boton temporal "Ver Predict Certamen 2": se muestra hasta el 29 de octubre de 2026 a las 12:00 (hora de Chile)
+    (function () {
+      const LIMITE = Date.parse('2026-10-29T12:00:00-03:00');
+      const botones = document.querySelectorAll('.go-predict');
+      const ocultar = () => botones.forEach((b) => { b.hidden = true; });
+      if (Date.now() >= LIMITE) return;
+      botones.forEach((b) => {
+        b.hidden = false;
+        b.addEventListener('click', () => {
+          if (window.goatcounter && window.goatcounter.count) {
+            window.goatcounter.count({ path: 'descarga/portada/Predict Certamen 2', title: 'Predict Certamen 2 (portada)', event: true });
+          }
+        });
+      });
+      // Si la pagina sigue abierta cuando llega la hora, desaparece sola (setTimeout no admite plazos muy largos)
+      const falta = LIMITE - Date.now();
+      if (falta < 2147483000) setTimeout(ocultar, falta);
+    })();
+
     // Lista de rutas de todo lo que hay en material/. Primero usa material.json,
     // que GitHub Pages genera al publicar; si no esta, le pregunta a la API de GitHub.
     // material.json tambien trae la fecha de la ultima publicacion: se agrega a los enlaces
@@ -1456,6 +1490,7 @@
 
     (async () => {
       const rutas = (await todasLasRutas()).filter((ruta) => ruta.startsWith('material/'));
+      if (versionMaterial) document.querySelectorAll('.go-predict').forEach((b) => { b.href += '?v=' + versionMaterial; });
       // Estas secciones van primero y en este orden; las demas, alfabeticamente
       const PRIMERAS = ['Ayudantía Laboratorio Álgebra Lineal', 'Electricidad y Magnetismo'];
       const posicion = (c) => { const i = PRIMERAS.indexOf(c); return i < 0 ? PRIMERAS.length : i; };
