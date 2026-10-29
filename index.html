@@ -811,7 +811,7 @@
         <p class="location">Valparaíso, Chile · <a class="mail" href="mailto:tjarufe@usm.cl">tjarufe@usm.cl</a></p>
         <div class="go-fila go-desktop">
         <a class="go-material" href="#material"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>Ver apuntes y material <span class="arrow" aria-hidden="true">↓</span></a>
-        <a class="go-material go-predict" hidden href="material/Electricidad%20y%20Magnetismo/1%20-%20Certamen%202/1%20-%20Predict%20Certamen%202.pdf" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>Predict Certamen 2 Física <span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="go-material go-predict" hidden href="material/Electricidad%20y%20Magnetismo/1%20-%20Certamen%202/3%20-%20Pauta%20Certamen%202.pdf" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>Pauta Certamen 2 Física <span class="arrow" aria-hidden="true">↗</span></a>
         </div>
 
         <nav class="toc" aria-label="Secciones">
@@ -847,7 +847,7 @@
 
       <div class="go-fila go-mobile">
       <a class="go-material" href="#material"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>Ver apuntes y material <span class="arrow" aria-hidden="true">↓</span></a>
-      <a class="go-material go-predict" hidden href="material/Electricidad%20y%20Magnetismo/1%20-%20Certamen%202/1%20-%20Predict%20Certamen%202.pdf" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>Predict Certamen 2 Física <span class="arrow" aria-hidden="true">↗</span></a>
+      <a class="go-material go-predict" hidden href="material/Electricidad%20y%20Magnetismo/1%20-%20Certamen%202/3%20-%20Pauta%20Certamen%202.pdf" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>Pauta Certamen 2 Física <span class="arrow" aria-hidden="true">↗</span></a>
       </div>
     </header>
 
@@ -1451,23 +1451,16 @@
       return true;
     }
 
-    // Boton temporal "Ver Predict Certamen 2": se muestra hasta el 29 de octubre de 2026 a las 12:00 (hora de Chile)
+    // Boton de portada "Pauta Certamen 2 Física": sin fecha limite (para ponerle una, ver el historial de git)
     (function () {
-      const LIMITE = Date.parse('2026-10-29T12:00:00-03:00');
-      const botones = document.querySelectorAll('.go-predict');
-      const ocultar = () => botones.forEach((b) => { b.hidden = true; });
-      if (Date.now() >= LIMITE) return;
-      botones.forEach((b) => {
+      document.querySelectorAll('.go-predict').forEach((b) => {
         b.hidden = false;
         b.addEventListener('click', () => {
           if (window.goatcounter && window.goatcounter.count) {
-            window.goatcounter.count({ path: 'descarga/portada/Predict Certamen 2', title: 'Predict Certamen 2 (portada)', event: true });
+            window.goatcounter.count({ path: 'descarga/portada/Pauta Certamen 2 Fisica', title: 'Pauta Certamen 2 Física (portada)', event: true });
           }
         });
       });
-      // Si la pagina sigue abierta cuando llega la hora, desaparece sola (setTimeout no admite plazos muy largos)
-      const falta = LIMITE - Date.now();
-      if (falta < 2147483000) setTimeout(ocultar, falta);
     })();
 
     // Lista de rutas de todo lo que hay en material/. Primero usa material.json,
