@@ -1,0 +1,10 @@
+// Configuración de la copia en Cloudflare (para redes como eduroam que bloquean tomasjarufe.site).
+// Cloudflare ejecuta "python3 _cloudflare_build.py" y publica la carpeta _cf.
+{
+  "name": "tomasjarufe",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./_cf",
+    "not_found_handling": "404-page"
+  }
+}
