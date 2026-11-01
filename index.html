@@ -347,8 +347,36 @@
       text-transform: uppercase;
       margin: 32px 0 8px;
     }
+    /* Pestanas por ramo: se ve un ramo a la vez */
+    .ramos-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 24px; }
+    .ramo-tab {
+      padding: 7px 15px;
+      border: 1px solid var(--metal-borde);
+      border-radius: 999px;
+      background: var(--metal);
+      box-shadow: var(--metal-glow);
+      color: var(--text);
+      font: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: box-shadow 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .ramo-tab:hover { color: var(--heading); box-shadow: var(--metal-glow-fuerte); }
+    .ramo-tab[aria-selected="true"] { color: var(--heading); border-color: rgba(94, 234, 212, 0.65); box-shadow: 0 0 10px rgba(94, 234, 212, 0.4); }
+    .ramo-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .ramo-panel[hidden] { display: none; }
+    .material .ramo-panel > h3 { margin: 0 0 6px; }
+    /* Proxima evaluacion del ramo (sale de EVALUACIONES) */
+    .proxima { margin: 0 0 8px !important; font-size: 0.85rem; color: var(--dim); }
+    .proxima strong { color: var(--heading); font-weight: 600; }
+    .proxima .cuenta-proxima { margin-left: 8px; }
+    .subgroup.actual { border-left-color: var(--accent); }
+    .proxima-sin { margin: 0 0 8px !important; font-size: 0.85rem; }
+    .material details.pasadas { margin: 28px 0 8px; }
     .material details.grupo { margin: 32px 0 8px; }
-    .material details.grupo > summary {
+    .material details.grupo > summary,
+    .material details.pasadas > summary {
       display: block;
       padding: 4px 0;
       cursor: pointer;
@@ -360,8 +388,10 @@
       text-transform: uppercase;
       user-select: none;
     }
-    .material details.grupo > summary::-webkit-details-marker { display: none; }
-    .material details.grupo > summary::before {
+    .material details.grupo > summary::-webkit-details-marker,
+    .material details.pasadas > summary::-webkit-details-marker { display: none; }
+    .material details.grupo > summary::before,
+    .material details.pasadas > summary::before {
       content: "";
       display: inline-block;
       width: 6px;
@@ -372,8 +402,12 @@
       transform: rotate(-45deg);
       transition: transform 0.2s;
     }
-    .material details.grupo[open] > summary::before { transform: rotate(45deg); }
-    .material details.grupo > summary:hover { color: var(--accent); }
+    .material details.grupo[open] > summary::before,
+    .material details.pasadas[open] > summary::before { transform: rotate(45deg); }
+    .material details.grupo > summary:hover,
+    .material details.pasadas > summary:hover { color: var(--accent); }
+    .material details.pasadas > summary:not(:hover) { color: var(--dim); }
+    .material details.pasadas > summary:focus-visible,
     .material details.grupo > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
     /* Letrero dentro del titulo: no agranda la linea del titulo */
     .material summary .cuenta-regresiva:not(.sola) { line-height: 1.2; padding-top: 2px; padding-bottom: 2px; margin-top: -4px; margin-bottom: -4px; vertical-align: middle; }
@@ -536,7 +570,7 @@
     .privado-estado.emoji { font-size: 1.8rem; line-height: 1.2; }
     .privado-notas { white-space: pre-wrap; margin: 12px 0; padding: 12px 14px; border-radius: 8px; background: rgba(255, 255, 255, 0.04); }
     .privado-cabeza { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 16px; font-size: 0.85rem; color: var(--dim); }
-    .cuenta-regresiva {
+    .cuenta-regresiva, .cuenta-proxima {
       display: inline-block;
       margin-left: 12px;
       padding: 3px 11px;
@@ -1313,9 +1347,6 @@
       '3 - Ensayo Certamen 2': { clase: 'dificil', etiqueta: 'Más difícil' },
     };
 
-    // Categorias que se muestran siempre abiertas y sin poder plegarse (nombre de la carpeta);
-    // todas las demas categorias y subcategorias son desplegables y empiezan cerradas
-    const ABIERTAS = [];
     // Categorias plegables cuyas subcarpetas se ven directo (como subtitulo), sin plegarse otra vez
     const SUBCARPETAS_VISIBLES = ['Ayudantía Laboratorio Álgebra Lineal'];
 
@@ -1423,32 +1454,165 @@
       vaciarArchivos();
     }
 
-    function grupo(nombre, carpeta, lista) {
-      lista = lista.filter(visible);
-      if (!lista.length) return false;
+    // Nombre corto de cada ramo en su pestana (nombre de la carpeta → texto de la pestana)
+    const NOMBRES_CORTOS = {
+      'Ayudantía Laboratorio Álgebra Lineal': 'Lab Álgebra',
+      'Electricidad y Magnetismo': 'Física',
+      'Ecuaciones Diferenciales': 'EDO',
+      'Probabilidad y Estadística': 'Probabilidad',
+    };
+
+    // Dias que faltan para una evaluacion (hora de Chile) y si sigue vigente
+    function hoyChile() {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());
+    }
+    const diasPara = (e) => Math.round((Date.parse(e.fecha || e.semana) - Date.parse(hoyChile())) / 86400000);
+    // Una evaluacion por semana sigue vigente hasta el domingo (lunes + 6 dias)
+    const vigente = (e) => diasPara(e) + (e.semana ? 6 : 0) >= 0;
+    const proximaDe = (ramo) => (EVALUACIONES[ramo] || []).find(vigente) || null;
+
+    // "Unidad 3 Certamen 2" → "certamen 2"; null si el nombre no habla de un control o certamen
+    function claveEvaluacion(nombre) {
+      const m = nombre.match(/\b(control|certamen)\s*(\d+)/i);
+      return m ? m[1].toLowerCase() + ' ' + m[2] : null;
+    }
+    // Clasifica una carpeta o archivo del ramo: 'actual' (es la proxima evaluacion),
+    // 'pasada' (evaluacion que ya paso) o 'resto'. Una evaluacion que no esta en la lista
+    // cuenta como pasada si en la lista ya hay una del mismo tipo con numero mayor.
+    function estadoDe(ramo, nombre) {
+      const clave = claveEvaluacion(nombre);
+      if (!clave) return 'resto';
+      const lista = EVALUACIONES[ramo] || [];
+      const prox = proximaDe(ramo);
+      if (prox && claveEvaluacion(prox.nombre) === clave) return 'actual';
+      const misma = lista.find((e) => claveEvaluacion(e.nombre) === clave);
+      if (misma) return vigente(misma) ? 'resto' : 'pasada';
+      const [tipo, n] = clave.split(' ');
+      return lista.some((e) => { const c = claveEvaluacion(e.nombre); return c && c.split(' ')[0] === tipo && Number(c.split(' ')[1]) > Number(n); }) ? 'pasada' : 'resto';
+    }
+
+    // Texto de la proxima evaluacion: "Control 4 · jueves 12 de noviembre" y el cartel "Faltan 11 dias"
+    function textoProxima(e) {
+      const d = diasPara(e);
+      if (e.semana) return [e.nombre + ' · semana del ' + new Date(e.semana + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'long' }), d > 0 ? 'Próxima semana' : 'Esta semana'];
+      const dia = new Date(e.fecha + 'T12:00:00').toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
+      return [e.nombre + ' · ' + dia, d === 0 ? 'Hoy' : d === 1 ? 'Mañana' : 'Faltan ' + d + ' días'];
+    }
+
+    // Arma el panel de un ramo: proxima evaluacion arriba y abierta, luego el resto del material,
+    // y al final, plegado, lo de evaluaciones que ya pasaron.
+    function panelRamo(nombre, carpeta, lista) {
       const nivel = carpeta ? carpeta.split('/').length : 1;
-      const fijo = ABIERTAS.includes(nombre);
-      // Categoria fija: titulo normal. Las demas: bloque desplegable cerrado con el titulo como cabecera.
-      const h = document.createElement(fijo ? 'h3' : 'summary');
+      const panel = document.createElement('div');
+      panel.className = 'ramo-panel';
+      panel.setAttribute('role', 'tabpanel');
+      const h = document.createElement('h3');
       h.textContent = nombre;
-      const cuenta = textosCuentaRegresiva(nombre);
-      if (cuenta) {
-        const aviso = document.createElement('span');
-        aviso.className = 'cuenta-regresiva';
-        aviso.dataset.textos = JSON.stringify(cuenta);
-        h.appendChild(aviso);
+      panel.appendChild(h);
+      const prox = proximaDe(nombre);
+      if (prox) {
+        const [texto, cartel] = textoProxima(prox);
+        const p = document.createElement('p');
+        p.className = 'proxima';
+        p.append('Próxima evaluación: ');
+        const fuerte = document.createElement('strong');
+        fuerte.textContent = texto;
+        p.appendChild(fuerte);
+        const c = document.createElement('span');
+        c.className = 'cuenta-proxima';
+        c.textContent = cartel;
+        p.appendChild(c);
+        panel.appendChild(p);
       }
-      if (fijo) {
-        caja.appendChild(h);
-        dibujarNivel(caja, lista, nivel, true);
-        return true;
+      const partes = { actual: [], resto: [], pasada: [] };
+      const nombreEn = (ruta) => titulo(ruta.split('/')[nivel].replace(/\.[^.]+$/, ''));
+      lista.forEach((ruta) => partes[estadoDe(nombre, nombreEn(ruta))].push(ruta));
+      const fijo = SUBCARPETAS_VISIBLES.includes(nombre);
+      if (partes.actual.length) {
+        dibujarNivel(panel, partes.actual, nivel, fijo);
+        panel.querySelectorAll(':scope > details.subgroup, :scope > div.subgroup').forEach((d) => {
+          d.classList.add('actual');
+          if (d.tagName === 'DETAILS') d.open = true;
+        });
       }
-      const bloque = document.createElement('details');
-      bloque.className = 'grupo';
-      bloque.appendChild(h);
-      dibujarNivel(bloque, lista, nivel, SUBCARPETAS_VISIBLES.includes(nombre));
-      caja.appendChild(bloque);
-      return true;
+      if (prox && !partes.actual.length) {
+        const nada = document.createElement('p');
+        nada.className = 'muted proxima-sin';
+        nada.textContent = 'Pronto subiré material para el ' + prox.nombre + '.';
+        panel.appendChild(nada);
+      }
+      if (partes.resto.length) dibujarNivel(panel, partes.resto, nivel, fijo);
+      if (partes.pasada.length) {
+        const pasadas = document.createElement('details');
+        pasadas.className = 'pasadas';
+        const s = document.createElement('summary');
+        s.textContent = 'Evaluaciones pasadas';
+        pasadas.appendChild(s);
+        dibujarNivel(pasadas, partes.pasada, nivel, false);
+        // Lo que ya paso deja de llevar la etiqueta "Importante" (las de nivel de los ensayos se quedan)
+        pasadas.querySelectorAll('.marca-importante:not(.pasado):not(.medio):not(.dificil)').forEach((m) => m.remove());
+        pasadas.querySelectorAll('a.importante').forEach((a) => a.classList.remove('importante'));
+        // Si el ramo no tiene nada mas, se muestra abierto
+        if (!partes.actual.length && !partes.resto.length) pasadas.open = true;
+        panel.appendChild(pasadas);
+      }
+      return panel;
+    }
+
+    // Pestanas: una por ramo. Se recuerda la ultima elegida; si no hay, se abre el ramo
+    // con la evaluacion mas cercana.
+    function dibujarPestanas(ramos) {
+      const barra = document.createElement('div');
+      barra.className = 'ramos-tabs';
+      barra.setAttribute('role', 'tablist');
+      barra.setAttribute('aria-label', 'Ramos');
+      caja.appendChild(barra);
+      const tabs = ramos.map((r, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'ramo-tab';
+        b.id = 'tab-ramo-' + i;
+        b.setAttribute('role', 'tab');
+        b.textContent = NOMBRES_CORTOS[r.nombre] || r.nombre;
+        if (NOMBRES_CORTOS[r.nombre]) b.title = r.nombre;
+        r.panel.id = 'panel-ramo-' + i;
+        r.panel.setAttribute('aria-labelledby', b.id);
+        b.setAttribute('aria-controls', r.panel.id);
+        barra.appendChild(b);
+        caja.appendChild(r.panel);
+        return b;
+      });
+      const elegir = (i, foco) => {
+        tabs.forEach((b, j) => {
+          const si = i === j;
+          b.setAttribute('aria-selected', si ? 'true' : 'false');
+          b.tabIndex = si ? 0 : -1;
+          ramos[j].panel.hidden = !si;
+        });
+        if (foco) tabs[i].focus();
+        try { localStorage.setItem('material-ramo', ramos[i].nombre); } catch (e) { /* sin almacenamiento */ }
+        reajustar();
+      };
+      tabs.forEach((b, i) => {
+        b.addEventListener('click', () => elegir(i, false));
+        b.addEventListener('keydown', (ev) => {
+          const n = tabs.length;
+          const destino = { ArrowRight: (i + 1) % n, ArrowLeft: (i - 1 + n) % n, Home: 0, End: n - 1 }[ev.key];
+          if (destino === undefined) return;
+          ev.preventDefault();
+          elegir(destino, true);
+        });
+      });
+      let inicial = -1;
+      try { inicial = ramos.findIndex((r) => r.nombre === localStorage.getItem('material-ramo')); } catch (e) { /* sin almacenamiento */ }
+      if (inicial < 0) {
+        let mejor = Infinity;
+        ramos.forEach((r, i) => {
+          const p = proximaDe(r.nombre);
+          if (p && diasPara(p) < mejor) { mejor = diasPara(p); inicial = i; }
+        });
+      }
+      elegir(Math.max(inicial, 0), false);
     }
 
     // Boton de portada "Pauta Certamen 2 Física": sin fecha limite (para ponerle una, ver el historial de git)
@@ -1491,15 +1655,15 @@
         .sort((x, y) => posicion(x) - posicion(y) || x.localeCompare(y, 'es', { numeric: true }));
       const sueltos = rutas.filter((r) => r.split('/').length === 2);
       caja.innerHTML = '';
-      let hayAlgo = false;
-      carpetas.forEach((c) => {
-        const lista = rutas.filter((r) => r.split('/')[1] === c && r.split('/').length > 2);
-        if (grupo(titulo(c), 'material/' + c, lista)) hayAlgo = true;
-      });
-      if (grupo('Otro material', '', sueltos)) hayAlgo = true;
+      const ramos = carpetas
+        .map((c) => ({ nombre: titulo(c), lista: rutas.filter((r) => r.split('/')[1] === c && r.split('/').length > 2).filter(visible), carpeta: 'material/' + c }))
+        .concat([{ nombre: 'Otro material', lista: sueltos.filter(visible), carpeta: '' }])
+        .filter((r) => r.lista.length);
+      if (!ramos.length) { caja.innerHTML = '<p class="muted">Pronto subiré material aquí.</p>'; return; }
+      ramos.forEach((r) => { r.panel = panelRamo(r.nombre, r.carpeta, r.lista); });
+      dibujarPestanas(ramos);
       ajustarCuentas();
       ajustarMarcas();
-      if (!hayAlgo) caja.innerHTML = '<p class="muted">Pronto subiré material aquí.</p>';
     })().catch(() => {
       caja.innerHTML = '<p class="muted">No se pudo cargar el material. Intenta recargar la página en unos minutos.</p>';
     });
