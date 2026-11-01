@@ -385,6 +385,33 @@
       transition: background 0.2s;
     }
     .files a:hover { background: var(--card-hover); }
+    /* Fila con su pauta: el ensayo a la izquierda y un boton "Pauta" a la derecha */
+    .files li.con-pauta { display: flex; align-items: center; gap: 8px; }
+    .files li.con-pauta > a:first-child { flex: 1; min-width: 0; margin-right: 0; }
+    .files a.pauta, .files .pauta-hueco { flex-shrink: 0; width: 78px; justify-content: center; }
+    .files .pauta-hueco { margin-right: -4px; }
+    .files a.pauta {
+      gap: 6px;
+      margin: 0 -4px 0 0;
+      padding: 5px 11px;
+      border: 1px solid var(--metal-borde);
+      border-radius: 999px;
+      background: var(--metal);
+      box-shadow: var(--metal-glow);
+      color: var(--heading);
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: box-shadow 0.2s, color 0.2s;
+    }
+    .files a.pauta:hover, .files a.pauta:focus-visible { background: var(--metal); box-shadow: var(--metal-glow-fuerte); color: var(--accent); outline: none; }
+    .files a.pauta .arrow { color: inherit; }
+    @media (max-width: 480px) {
+      .files a.pauta, .files .pauta-hueco { width: 60px; }
+      .files a.pauta { padding: 4px 8px; }
+      .files a.pauta .arrow { display: none; }
+    }
+    .marca-importante.nuevo { background: var(--oro); color: #2a2300; }
     .files a.importante {
       background: linear-gradient(90deg, rgba(45, 212, 191, 0.16), rgba(45, 212, 191, 0.04));
       box-shadow: inset 3px 0 0 var(--accent);
@@ -1127,21 +1154,46 @@
     function bonito(archivo) {
       return titulo(archivo.replace(/\.[^.]+$/, ''));
     }
-    function fila(ruta) {
-      const partes = ruta.split('/');
-      const archivo = partes[partes.length - 1];
-      const ext = archivo.includes('.') ? archivo.split('.').pop().toUpperCase() : '';
-      const li = document.createElement('li');
+    // Enlace de descarga de un archivo; cuenta la descarga en GoatCounter (aparece como evento en el panel)
+    function enlaceDescarga(ruta) {
+      const archivo = ruta.split('/').pop();
       const a = document.createElement('a');
       a.href = ruta.split('/').map(encodeURIComponent).join('/') + (versionMaterial ? '?v=' + versionMaterial : '');
       a.target = '_blank';
       a.rel = 'noopener';
-      // Cuenta la descarga en GoatCounter (aparece como evento en el panel)
       a.addEventListener('click', () => {
         if (window.goatcounter && window.goatcounter.count) {
           window.goatcounter.count({ path: 'descarga/' + ruta.replace(/^material\//, ''), title: bonito(archivo), event: true });
         }
       });
+      return a;
+    }
+
+    // Etiqueta "Nuevo": lo subido o cambiado en los ultimos DIAS_NUEVO dias (fechas de material-fechas.json,
+    // que se genera con _fechas_material.py)
+    const DIAS_NUEVO = 5;
+    let fechasMaterial = {};
+    function esNuevo(ruta) {
+      const f = fechasMaterial[ruta];
+      if (!f) return false;
+      const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());
+      return (Date.parse(hoy) - Date.parse(f)) / 86400000 <= DIAS_NUEVO;
+    }
+    function marcarNuevo(a) {
+      if (a.querySelector('.marca-importante.nuevo')) return;
+      const marca = document.createElement('span');
+      marca.className = 'marca-importante nuevo';
+      marca.textContent = 'Nuevo';
+      marca.title = 'Subido hace poco';
+      a.insertBefore(marca, a.querySelector('.name'));
+    }
+
+    function fila(ruta) {
+      const partes = ruta.split('/');
+      const archivo = partes[partes.length - 1];
+      const ext = archivo.includes('.') ? archivo.split('.').pop().toUpperCase() : '';
+      const li = document.createElement('li');
+      const a = enlaceDescarga(ruta);
       const nombre = document.createElement('span');
       nombre.className = 'name';
       nombre.textContent = bonito(archivo);
@@ -1173,6 +1225,7 @@
       flecha.className = 'arrow';
       flecha.textContent = '↓';
       a.appendChild(flecha);
+      if (esNuevo(ruta)) marcarNuevo(a);
       li.appendChild(a);
       return li;
     }
@@ -1341,10 +1394,49 @@
       return lista.sort((x, y) => n(x).localeCompare(n(y), 'es', { numeric: true }));
     }
 
+    // Cada "X (Pauta)" va como boton "Pauta" en la misma fila que "X" (si "X" esta en la misma carpeta)
     function listaArchivos(rutas) {
       const ul = document.createElement('ul');
       ul.className = 'files';
-      ordenar(rutas).forEach((ruta) => ul.appendChild(fila(ruta)));
+      const lista = ordenar(rutas);
+      const nombre = (ruta) => bonito(ruta.split('/').pop());
+      const pautas = new Map();
+      lista.forEach((ruta) => {
+        const m = nombre(ruta).match(/^(.*) \(Pauta\)$/);
+        if (m && lista.some((otra) => nombre(otra) === m[1])) pautas.set(m[1], ruta);
+      });
+      const enPar = new Set(pautas.values());
+      lista.forEach((ruta) => {
+        if (enPar.has(ruta)) return;
+        const li = fila(ruta);
+        const pauta = pautas.get(nombre(ruta));
+        if (pauta) {
+          const b = enlaceDescarga(pauta);
+          b.className = 'pauta';
+          b.title = nombre(pauta);
+          b.setAttribute('aria-label', nombre(pauta));
+          b.append('Pauta ');
+          const f = document.createElement('span');
+          f.className = 'arrow';
+          f.setAttribute('aria-hidden', 'true');
+          f.textContent = '↓';
+          b.appendChild(f);
+          li.classList.add('con-pauta');
+          li.appendChild(b);
+          if (esNuevo(pauta)) marcarNuevo(li.querySelector('a'));
+        }
+        ul.appendChild(li);
+      });
+      // Si en la lista hay pautas, las demas filas reservan ese espacio para que "PDF ↓" quede alineado
+      if (pautas.size) {
+        ul.querySelectorAll(':scope > li:not(.con-pauta)').forEach((li) => {
+          const hueco = document.createElement('span');
+          hueco.className = 'pauta-hueco';
+          hueco.setAttribute('aria-hidden', 'true');
+          li.classList.add('con-pauta');
+          li.appendChild(hueco);
+        });
+      }
       return ul;
     }
 
@@ -1464,7 +1556,12 @@
     }
 
     (async () => {
-      const rutas = (await todasLasRutas()).filter((ruta) => ruta.startsWith('material/'));
+      const [todas, fechas] = await Promise.all([
+        todasLasRutas(),
+        fetch('material-fechas.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : {})).catch(() => ({})),
+      ]);
+      fechasMaterial = fechas && typeof fechas === 'object' ? fechas : {};
+      const rutas = todas.filter((ruta) => ruta.startsWith('material/'));
       // Estas secciones van primero y en este orden; las demas, alfabeticamente
       const PRIMERAS = ['Ayudantía Laboratorio Álgebra Lineal', 'Electricidad y Magnetismo'];
       const posicion = (c) => { const i = PRIMERAS.indexOf(c); return i < 0 ? PRIMERAS.length : i; };

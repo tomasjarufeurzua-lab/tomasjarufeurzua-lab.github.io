@@ -8,3 +8,9 @@ Truncated results state their recovery path in their own output. Re-run a
 command as `rtk proxy <cmd>` only when its result is unusable: empty when
 output was clearly expected, contradicting its exit code, or garbled.
 <!-- /rtk-instructions -->
+
+# Material del sitio
+
+Después de agregar, reemplazar o mover PDFs en `material/`, corre `python3 _fechas_material.py`
+antes del commit: actualiza `material-fechas.json`, que la página usa para la etiqueta "Nuevo"
+(dura 5 días, `DIAS_NUEVO` en `index.html`). Mover un archivo no lo marca como nuevo.
