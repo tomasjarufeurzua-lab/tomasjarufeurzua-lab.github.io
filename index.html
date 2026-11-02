@@ -521,6 +521,8 @@
     .privado > summary:hover { color: var(--accent); }
     .privado > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
     .privado form { margin-top: 12px; }
+    /* Los candados van juntos dentro de la categoria Candado */
+    .candado > .privado { margin: 12px 0 0; padding-left: 16px; border-left: 1px solid rgba(148, 163, 184, 0.2); }
     .privado label { display: block; margin-bottom: 4px; color: var(--dim); font-size: 0.8rem; }
     .privado-fila { display: flex; gap: 8px; }
     .privado-fila input {
@@ -994,30 +996,33 @@
         </p>
         <div id="material-list" class="material"><p class="muted">Cargando material…</p></div>
 
-        <details class="privado skills" id="skills">
-          <summary aria-label="Skills"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Skills</summary>
-          <form id="skills-form" autocomplete="off">
-            <label for="skills-clave">Clave</label>
-            <div class="privado-fila">
-              <input id="skills-clave" type="password" autocomplete="off" spellcheck="false">
-              <button class="calc-boton" type="submit">Abrir</button>
-            </div>
-            <p id="skills-estado" class="privado-estado" role="status"></p>
-          </form>
-          <div id="skills-contenido" hidden></div>
-        </details>
+        <details class="privado candado" id="candado">
+          <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Candado</summary>
+          <details class="privado skills" id="skills">
+            <summary aria-label="Skills"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Skills</summary>
+            <form id="skills-form" autocomplete="off">
+              <label for="skills-clave">Clave</label>
+              <div class="privado-fila">
+                <input id="skills-clave" type="password" autocomplete="off" spellcheck="false">
+                <button class="calc-boton" type="submit">Abrir</button>
+              </div>
+              <p id="skills-estado" class="privado-estado" role="status"></p>
+            </form>
+            <div id="skills-contenido" hidden></div>
+          </details>
 
-        <details class="privado" id="privado">
-          <summary aria-label="Seccion privada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></summary>
-          <form id="privado-form" autocomplete="off">
-            <label for="privado-clave">Clave</label>
-            <div class="privado-fila">
-              <input id="privado-clave" type="password" autocomplete="off" spellcheck="false">
-              <button class="calc-boton" type="submit">Abrir</button>
-            </div>
-            <p id="privado-estado" class="privado-estado" role="status"></p>
-          </form>
-          <div id="privado-contenido" hidden></div>
+          <details class="privado" id="privado">
+            <summary aria-label="Seccion privada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></summary>
+            <form id="privado-form" autocomplete="off">
+              <label for="privado-clave">Clave</label>
+              <div class="privado-fila">
+                <input id="privado-clave" type="password" autocomplete="off" spellcheck="false">
+                <button class="calc-boton" type="submit">Abrir</button>
+              </div>
+              <p id="privado-estado" class="privado-estado" role="status"></p>
+            </form>
+            <div id="privado-contenido" hidden></div>
+          </details>
         </details>
       </section>
 
@@ -2247,6 +2252,10 @@
     }
     iniciarPrivado('privado', 'privado.enc.json');
     iniciarPrivado('skills', 'skills.enc.json');
+    // Al cerrar la categoria Candado se cierran (y se bloquean) los dos de adentro
+    document.getElementById('candado').addEventListener('toggle', (e) => {
+      if (!e.target.open) e.target.querySelectorAll('details.privado[open]').forEach((d) => { d.open = false; });
+    });
   </script>
 </body>
 </html>
