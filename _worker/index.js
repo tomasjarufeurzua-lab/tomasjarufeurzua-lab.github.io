@@ -82,13 +82,14 @@ async function suscribir(request, env) {
     await env.DB.prepare('INSERT INTO suscriptores (correo, token, confirmado, creado, confirmacion_enviada) VALUES (?, ?, 1, ?, ?)')
       .bind(correo, token, ahora, ahora).run();
   }
-  const salir = `${COPIA}/api/baja?t=${token}`;
+  const salir = `${SITIO}/baja.html?t=${token}`;
+  const salirUnClic = `${COPIA}/api/baja?t=${token}`;
   try {
     await enviar(env, [{
       from: REMITENTE,
       to: [correo],
       subject: 'Listo: te avisaré cuando suba material nuevo',
-      headers: { 'List-Unsubscribe': `<${salir}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
+      headers: { 'List-Unsubscribe': `<${salirUnClic}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
       html: plantilla({
         previa: 'Te avisaré cada vez que suba material nuevo.',
         titulo: '¡Listo, quedaste inscrito!',
@@ -139,6 +140,8 @@ async function baja(request, url, env) {
       `<form method="post" action="/api/baja?t=${encodeURIComponent(t)}"><button type="submit" style="padding:10px 20px;border-radius:999px;border:1px solid #8a7f57;background:#42464b;color:#f1f3f5;font:inherit;font-weight:600;cursor:pointer">Sí, darme de baja</button></form>`);
   }
   await env.DB.prepare('DELETE FROM suscriptores WHERE token = ?').bind(t).run();
+  // Desde la pagina baja.html de tomasjarufe.site se responde en JSON (con CORS)
+  if (request.headers.get('Origin')) return json({ ok: true }, 200, request);
   return pagina('Te diste de baja', 'Ya no recibirás más correos de avisos de material. Tu correo fue borrado de la lista.');
 }
 
@@ -168,12 +171,13 @@ async function aviso(request, env) {
   const texto = lista.map((x) => `- ${x.nombre} (${x.ramo}): ${x.href}`).join('\n');
   const asunto = lista.length === 1 ? `Material nuevo: ${lista[0].nombre}` : `Material nuevo: ${lista.length} archivos`;
   const mensajes = results.map((s) => {
-    const salir = `${COPIA}/api/baja?t=${s.token}`;
+    const salir = `${SITIO}/baja.html?t=${s.token}`;
+    const salirUnClic = `${COPIA}/api/baja?t=${s.token}`;
     return {
       from: REMITENTE,
       to: [s.correo],
       subject: asunto,
-      headers: { 'List-Unsubscribe': `<${salir}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
+      headers: { 'List-Unsubscribe': `<${salirUnClic}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
       html: plantilla({
         previa: lista.map((x) => x.nombre).join(' · '),
         titulo: lista.length === 1 ? 'Subí material nuevo' : `Subí ${lista.length} archivos nuevos`,
