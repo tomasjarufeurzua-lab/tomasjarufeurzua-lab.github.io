@@ -31,7 +31,7 @@ export default {
       return json({ error: 'No encontrado' }, 404, request);
     } catch (e) {
       console.error(e);
-      return json({ error: 'Algo falló. Intenta de nuevo en unos minutos.' }, 500, request);
+      return json({ error: 'Algo falló. Intenta de nuevo en unos minutos. (código: ' + codigoError(e) + ')' }, 500, request);
     }
   },
 };
@@ -154,6 +154,19 @@ async function aviso(request, env) {
 }
 
 // ---------- utilidades ----------
+// Codigo corto del error para mostrar en la pagina (sin datos secretos), para saber que arreglar
+function codigoError(e) {
+  const m = String((e && e.message) || e);
+  if (m.includes('Falta RESEND_API_KEY')) return 'falta-clave-resend';
+  if (/^Resend 401/.test(m)) return 'clave-resend-invalida';
+  if (/^Resend 403/.test(m)) return /domain|verify/i.test(m) ? 'dominio-no-verificado-en-resend' : 'resend-sin-permiso';
+  if (/^Resend 422/.test(m)) return 'resend-rechazo-el-correo';
+  if (/^Resend 429/.test(m)) return 'limite-de-envios-resend';
+  if (/^Resend/.test(m)) return 'resend-' + m.slice(7, 10);
+  if (/D1|SQL/i.test(m)) return 'base-de-datos';
+  return 'otro';
+}
+
 async function enviar(env, mensajes) {
   if (!env.RESEND_API_KEY) throw new Error('Falta RESEND_API_KEY');
   const r = await fetch('https://api.resend.com/emails/batch', {
