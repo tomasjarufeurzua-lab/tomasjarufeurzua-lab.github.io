@@ -1,10 +1,17 @@
 // Configuración de la copia en Cloudflare (para redes como eduroam que bloquean tomasjarufe.site).
 // Cloudflare ejecuta "python3 _cloudflare_build.py" y publica la carpeta _cf.
+// El Worker (_worker/index.js) atiende /api/* (avisos por correo); todo lo demás son archivos de _cf.
 {
   "name": "tomasjarufe",
+  "main": "_worker/index.js",
   "compatibility_date": "2026-10-01",
   "assets": {
     "directory": "./_cf",
-    "not_found_handling": "404-page"
-  }
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "avisos", "database_id": "55a6a9fe-e746-443a-bf08-055cb26b4af9" }
+  ]
 }

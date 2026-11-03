@@ -2276,8 +2276,8 @@
     // Avisos por correo: el formulario se muestra solo cuando estan los datos de Cloudflare.
     // AVISOS_API: direccion del Worker (_worker/index.js). TURNSTILE_SITEKEY: clave publica de Turnstile.
     (function () {
-      const AVISOS_API = '';
-      const TURNSTILE_SITEKEY = '';
+      const AVISOS_API = 'https://tomasjarufe.tomasjarufeurzua.workers.dev/api';
+      const TURNSTILE_SITEKEY = '0x4AAAAAAFyXfhrMhfG9maUV';
       if (!AVISOS_API || !TURNSTILE_SITEKEY) return;
       const form = document.getElementById('avisos');
       const campo = document.getElementById('avisos-correo');

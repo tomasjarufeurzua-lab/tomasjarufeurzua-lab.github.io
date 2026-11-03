@@ -24,10 +24,10 @@ export default {
       await crearTabla(env);
       const ruta = url.pathname.replace(/\/+$/, '');
       if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(request) });
-      if (ruta === '/api/suscribir' && request.method === 'POST') return suscribir(request, env);
-      if (ruta === '/api/confirmar' && request.method === 'GET') return confirmar(url, env);
-      if (ruta === '/api/baja' && (request.method === 'GET' || request.method === 'POST')) return baja(url, env);
-      if (ruta === '/api/aviso' && request.method === 'POST') return aviso(request, env);
+      if (ruta === '/api/suscribir' && request.method === 'POST') return await suscribir(request, env);
+      if (ruta === '/api/confirmar' && request.method === 'GET') return await confirmar(url, env);
+      if (ruta === '/api/baja' && (request.method === 'GET' || request.method === 'POST')) return await baja(url, env);
+      if (ruta === '/api/aviso' && request.method === 'POST') return await aviso(request, env);
       return json({ error: 'No encontrado' }, 404, request);
     } catch (e) {
       console.error(e);
@@ -73,6 +73,8 @@ async function suscribir(request, env) {
       .bind(correo, token, ahora, ahora).run();
   }
   const enlace = `${COPIA}/api/confirmar?t=${token}`;
+  // Si el correo no sale, se puede volver a intentar altiro
+  const deshacer = () => env.DB.prepare('UPDATE suscriptores SET confirmacion_enviada = NULL WHERE correo = ?').bind(correo).run();
   await enviar(env, [{
     from: REMITENTE,
     to: [correo],
@@ -82,7 +84,7 @@ async function suscribir(request, env) {
        <p><a href="${enlace}" style="display:inline-block;padding:10px 18px;border-radius:999px;background:#2dd4bf;color:#0f2f2b;font-weight:600;text-decoration:none">Confirmar suscripción</a></p>
        <p style="color:#6b7280;font-size:13px">Si no fuiste tú, ignora este correo y no recibirás nada más.</p>`),
     text: `Para recibir avisos cuando suba material nuevo a tomasjarufe.site, confirma aquí: ${enlace}\n\nSi no fuiste tú, ignora este correo.`,
-  }]);
+  }]).catch(async (e) => { await deshacer(); throw e; });
   return listo;
 }
 
