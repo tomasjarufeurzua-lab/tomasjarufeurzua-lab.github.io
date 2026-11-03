@@ -156,9 +156,13 @@ async function aviso(request, env) {
   if (!archivos.length) return json({ ok: true, enviados: 0 }, 200, request);
   // "solo": manda el aviso a un solo inscrito (para probar sin molestar a los demas)
   const solo = datos.solo ? String(datos.solo).trim().toLowerCase() : '';
-  const { results } = solo
-    ? await env.DB.prepare('SELECT correo, token FROM suscriptores WHERE confirmado = 1 AND correo = ?').bind(solo).all()
-    : await env.DB.prepare('SELECT correo, token FROM suscriptores WHERE confirmado = 1').all();
+  // Si "solo" empieza con @ (por ejemplo @usm.cl) va a todos los de ese dominio y sus subdominios
+  const dominio = solo.startsWith('@') ? solo.slice(1) : '';
+  const { results } = dominio
+    ? await env.DB.prepare("SELECT correo, token FROM suscriptores WHERE confirmado = 1 AND (correo LIKE ? OR correo LIKE ?)").bind('%@' + dominio, '%.' + dominio).all()
+    : solo
+      ? await env.DB.prepare('SELECT correo, token FROM suscriptores WHERE confirmado = 1 AND correo = ?').bind(solo).all()
+      : await env.DB.prepare('SELECT correo, token FROM suscriptores WHERE confirmado = 1').all();
   const lista = archivos.map((ruta) => {
     const partes = ruta.split('/');
     const ramo = titulo(partes[1]);

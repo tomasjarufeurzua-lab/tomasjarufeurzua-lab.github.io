@@ -524,7 +524,8 @@
     /* Avisos por correo de material nuevo */
     .avisos { margin: 0 0 8px; padding: 14px 16px; border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 10px; background: rgba(255, 255, 255, 0.04); }
     .avisos[hidden] { display: none; }
-    .avisos label { display: block; margin-bottom: 8px; color: var(--heading); font-size: 0.9rem; }
+    .avisos label { display: block; margin-bottom: 4px; color: var(--heading); font-size: 0.9rem; }
+    .avisos-nota { margin: 0 0 10px !important; color: var(--dim); font-size: 0.8rem; }
     .avisos .privado-estado.bien { color: var(--accent); }
     #avisos-turnstile:not(:empty) { margin-top: 10px; }
     /* Los candados van juntos dentro de la categoria Candado */
@@ -1002,8 +1003,9 @@
         </p>
         <form class="avisos" id="avisos" hidden novalidate>
           <label for="avisos-correo">¿Quieres un correo cuando suba material nuevo?</label>
+          <p class="avisos-nota">Mejor usa un correo personal (Gmail, Hotmail…): el de la USM a veces no recibe estos avisos.</p>
           <div class="privado-fila">
-            <input id="avisos-correo" type="email" autocomplete="email" placeholder="tu@correo.cl" required>
+            <input id="avisos-correo" type="email" autocomplete="email" placeholder="tucorreo@gmail.com" required>
             <button class="calc-boton" type="submit">Avisarme</button>
           </div>
           <div id="avisos-turnstile"></div>
