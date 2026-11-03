@@ -5,6 +5,8 @@
   "name": "tomasjarufe",
   "main": "_worker/index.js",
   "compatibility_date": "2026-10-01",
+  // No borrar las variables puestas a mano en el panel de Cloudflare al publicar
+  "keep_vars": true,
   "assets": {
     "directory": "./_cf",
     "binding": "ASSETS",
