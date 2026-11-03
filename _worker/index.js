@@ -19,6 +19,17 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
+    // Diagnostico: que configuracion ve el Worker (solo nombres, nunca valores)
+    if (url.pathname === '/api/estado') {
+      const tiene = (k) => typeof env[k] === 'string' && env[k].length > 0;
+      return json({
+        base_de_datos: !!env.DB,
+        RESEND_API_KEY: tiene('RESEND_API_KEY'),
+        TURNSTILE_SECRET: tiene('TURNSTILE_SECRET'),
+        AVISO_TOKEN: tiene('AVISO_TOKEN'),
+        nombres_recibidos: Object.keys(env).sort(),
+      }, 200, request);
+    }
     try {
       if (!env.DB) return json({ error: 'Los avisos por correo aún no están configurados.' }, 503, request);
       await crearTabla(env);
