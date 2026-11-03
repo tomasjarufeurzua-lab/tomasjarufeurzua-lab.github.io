@@ -1,7 +1,7 @@
 // Worker de la copia en Cloudflare: sirve el sitio (carpeta _cf) y la lista de avisos por correo.
 //
-//   POST /api/suscribir  { correo, turnstile }  → guarda el correo y manda un mail para confirmar
-//   GET  /api/confirmar?t=TOKEN                 → confirma la suscripcion
+//   POST /api/suscribir  { correo, turnstile }  → inscribe el correo y manda una bienvenida con enlace de baja
+//   GET  /api/confirmar?t=TOKEN                 → confirma (para enlaces de confirmacion antiguos)
 //   GET  /api/baja?t=TOKEN (o POST, un clic)    → borra el correo de la lista
 //   POST /api/aviso      { archivos: [...] }    → avisa a los confirmados (solo con AVISO_TOKEN)
 //
@@ -12,8 +12,6 @@ const SITIO = 'https://tomasjarufe.site';
 const COPIA = 'https://tomasjarufe.tomasjarufeurzua.workers.dev';
 const REMITENTE = 'Tomás Jarufe <material@tomasjarufe.site>';
 const ORIGENES = [SITIO, 'https://www.tomasjarufe.site', COPIA];
-// No se manda otro mail de confirmacion al mismo correo antes de este tiempo
-const ESPERA_CONFIRMACION_MS = 10 * 60 * 1000;
 
 export default {
   async fetch(request, env) {
@@ -71,31 +69,36 @@ async function suscribir(request, env) {
     return json({ error: 'No pudimos verificar que no eres un robot. Recarga la página e intenta de nuevo.' }, 400, request);
   }
   const ahora = new Date().toISOString();
-  const fila = await env.DB.prepare('SELECT token, confirmado, confirmacion_enviada FROM suscriptores WHERE correo = ?').bind(correo).first();
+  const fila = await env.DB.prepare('SELECT token, confirmado FROM suscriptores WHERE correo = ?').bind(correo).first();
   // Misma respuesta en todos los casos, para no revelar quien esta inscrito
-  const listo = json({ ok: true, mensaje: 'Revisa tu correo y confirma con el enlace que te mandé.' }, 200, request);
+  const listo = json({ ok: true, mensaje: '¡Listo! Te avisaré por correo cuando suba material nuevo.' }, 200, request);
   if (fila && fila.confirmado) return listo;
-  if (fila && fila.confirmacion_enviada && Date.now() - Date.parse(fila.confirmacion_enviada) < ESPERA_CONFIRMACION_MS) return listo;
+  // Inscripcion inmediata (sin confirmar); llega un correo de bienvenida con el enlace para darse de baja,
+  // por si alguien inscribio un correo ajeno
   const token = fila ? fila.token : crypto.randomUUID();
   if (fila) {
-    await env.DB.prepare('UPDATE suscriptores SET confirmacion_enviada = ? WHERE correo = ?').bind(ahora, correo).run();
+    await env.DB.prepare('UPDATE suscriptores SET confirmado = 1, confirmacion_enviada = ? WHERE correo = ?').bind(ahora, correo).run();
   } else {
-    await env.DB.prepare('INSERT INTO suscriptores (correo, token, confirmado, creado, confirmacion_enviada) VALUES (?, ?, 0, ?, ?)')
+    await env.DB.prepare('INSERT INTO suscriptores (correo, token, confirmado, creado, confirmacion_enviada) VALUES (?, ?, 1, ?, ?)')
       .bind(correo, token, ahora, ahora).run();
   }
-  const enlace = `${COPIA}/api/confirmar?t=${token}`;
-  // Si el correo no sale, se puede volver a intentar altiro
-  const deshacer = () => env.DB.prepare('UPDATE suscriptores SET confirmacion_enviada = NULL WHERE correo = ?').bind(correo).run();
-  await enviar(env, [{
-    from: REMITENTE,
-    to: [correo],
-    subject: 'Confirma tu suscripción a los avisos de material',
-    html: plantilla('Confirma tu suscripción',
-      `<p>Alguien (ojalá tú) pidió recibir un correo cada vez que suba material nuevo a <a href="${SITIO}/#material">tomasjarufe.site</a>.</p>
-       <p><a href="${enlace}" style="display:inline-block;padding:10px 18px;border-radius:999px;background:#2dd4bf;color:#0f2f2b;font-weight:600;text-decoration:none">Confirmar suscripción</a></p>
-       <p style="color:#6b7280;font-size:13px">Si no fuiste tú, ignora este correo y no recibirás nada más.</p>`),
-    text: `Para recibir avisos cuando suba material nuevo a tomasjarufe.site, confirma aquí: ${enlace}\n\nSi no fuiste tú, ignora este correo.`,
-  }]).catch(async (e) => { await deshacer(); throw e; });
+  const salir = `${COPIA}/api/baja?t=${token}`;
+  try {
+    await enviar(env, [{
+      from: REMITENTE,
+      to: [correo],
+      subject: 'Listo: te avisaré cuando suba material nuevo',
+      headers: { 'List-Unsubscribe': `<${salir}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
+      html: plantilla('¡Listo!',
+        `<p>Desde ahora te llegará un correo cada vez que suba material nuevo a <a href="${SITIO}/#material">tomasjarufe.site</a>.</p>
+         <p style="color:#6b7280;font-size:13px">¿No fuiste tú quien se inscribió? <a href="${salir}" style="color:#6b7280">Darme de baja</a> y no recibirás nada más.</p>`),
+      text: `Desde ahora te llegará un correo cada vez que suba material nuevo a tomasjarufe.site.\n\n¿No fuiste tú? Date de baja aquí: ${salir}`,
+    }]);
+  } catch (e) {
+    // Si la bienvenida no sale (por ejemplo, correo inexistente), la inscripcion se deshace
+    await env.DB.prepare('DELETE FROM suscriptores WHERE correo = ?').bind(correo).run();
+    throw e;
+  }
   return listo;
 }
 
