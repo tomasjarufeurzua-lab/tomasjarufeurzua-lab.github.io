@@ -521,6 +521,12 @@
     .privado > summary:hover { color: var(--accent); }
     .privado > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
     .privado form { margin-top: 12px; }
+    /* Avisos por correo de material nuevo */
+    .avisos { margin: 0 0 8px; padding: 14px 16px; border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 10px; background: rgba(255, 255, 255, 0.04); }
+    .avisos[hidden] { display: none; }
+    .avisos label { display: block; margin-bottom: 8px; color: var(--heading); font-size: 0.9rem; }
+    .avisos .privado-estado.bien { color: var(--accent); }
+    #avisos-turnstile:not(:empty) { margin-top: 10px; }
     /* Los candados van juntos dentro de la categoria Candado */
     .candado > .privado { margin: 12px 0 0; padding-left: 16px; border-left: 1px solid rgba(148, 163, 184, 0.2); }
     .privado label { display: block; margin-bottom: 4px; color: var(--dim); font-size: 0.8rem; }
@@ -994,6 +1000,15 @@
           <span>¿No carga desde <strong>eduroam</strong>? Usa esta dirección:
           <a class="inline" href="https://tomasjarufe.tomasjarufeurzua.workers.dev/">tomasjarufe.tomasjarufeurzua.workers.dev</a></span>
         </p>
+        <form class="avisos" id="avisos" hidden novalidate>
+          <label for="avisos-correo">¿Quieres un correo cuando suba material nuevo?</label>
+          <div class="privado-fila">
+            <input id="avisos-correo" type="email" autocomplete="email" placeholder="tu@correo.cl" required>
+            <button class="calc-boton" type="submit">Avisarme</button>
+          </div>
+          <div id="avisos-turnstile"></div>
+          <p id="avisos-estado" class="privado-estado" role="status"></p>
+        </form>
         <div id="material-list" class="material"><p class="muted">Cargando material…</p></div>
 
         <details class="privado candado" id="candado">
@@ -2256,6 +2271,49 @@
     document.getElementById('candado').addEventListener('toggle', (e) => {
       if (!e.target.open) e.target.querySelectorAll('details.privado[open]').forEach((d) => { d.open = false; });
     });
+  </script>
+  <script>
+    // Avisos por correo: el formulario se muestra solo cuando estan los datos de Cloudflare.
+    // AVISOS_API: direccion del Worker (_worker/index.js). TURNSTILE_SITEKEY: clave publica de Turnstile.
+    (function () {
+      const AVISOS_API = '';
+      const TURNSTILE_SITEKEY = '';
+      if (!AVISOS_API || !TURNSTILE_SITEKEY) return;
+      const form = document.getElementById('avisos');
+      const campo = document.getElementById('avisos-correo');
+      const estado = document.getElementById('avisos-estado');
+      const boton = form.querySelector('button');
+      let widget = null;
+      const decir = (t, bien) => { estado.textContent = t; estado.classList.toggle('mal', !bien); estado.classList.toggle('bien', !!bien); };
+      window.onTurnstileListo = () => {
+        widget = window.turnstile.render('#avisos-turnstile', { sitekey: TURNSTILE_SITEKEY, theme: 'dark', size: 'flexible', appearance: 'interaction-only' });
+      };
+      const s = document.createElement('script');
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileListo&render=explicit';
+      s.async = true;
+      document.head.appendChild(s);
+      form.hidden = false;
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const correo = campo.value.trim();
+        if (!campo.checkValidity() || !correo) return decir('Escribe un correo válido.');
+        const token = widget !== null && window.turnstile ? window.turnstile.getResponse(widget) : '';
+        if (!token) return decir('Espera un segundo a que termine la verificación y vuelve a intentar.');
+        boton.disabled = true;
+        decir('Enviando…', true);
+        try {
+          const r = await fetch(AVISOS_API + '/suscribir', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ correo, turnstile: token }) });
+          const d = await r.json().catch(() => ({}));
+          if (r.ok) { decir(d.mensaje || 'Revisa tu correo para confirmar.', true); campo.value = ''; }
+          else decir(d.error || 'No se pudo. Intenta de nuevo en unos minutos.');
+        } catch (err) {
+          decir('No se pudo conectar. Intenta de nuevo en unos minutos.');
+        } finally {
+          boton.disabled = false;
+          if (window.turnstile && widget !== null) window.turnstile.reset(widget);
+        }
+      });
+    })();
   </script>
 </body>
 </html>

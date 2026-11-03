@@ -1,0 +1,35 @@
+# Cuando se sube un archivo NUEVO a material/, avisa por correo a los suscritos.
+# Llama a /api/aviso del Worker de Cloudflare (ver _worker/index.js).
+# Necesita el secreto AVISO_TOKEN en GitHub (Settings → Secrets and variables → Actions);
+# sin el secreto no hace nada.
+name: Aviso de material nuevo
+
+on:
+  push:
+    branches: [claude/youthful-mayer-nwoi6w]
+    paths: ['material/**']
+
+jobs:
+  aviso:
+    runs-on: ubuntu-latest
+    env:
+      AVISO_TOKEN: ${{ secrets.AVISO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Archivos nuevos y aviso
+        if: env.AVISO_TOKEN != ''
+        env:
+          ANTES: ${{ github.event.before }}
+          AHORA: ${{ github.sha }}
+        run: |
+          # Solo archivos agregados (mover o reemplazar no cuenta como nuevo)
+          git -c core.quotePath=false diff --name-only --diff-filter=A -M "$ANTES" "$AHORA" -- material/ > nuevos.txt || true
+          cat nuevos.txt
+          if [ ! -s nuevos.txt ]; then echo "Nada nuevo"; exit 0; fi
+          # Espera a que las paginas se publiquen para que los enlaces del correo funcionen
+          sleep 180
+          python3 -c "import json,sys; print(json.dumps({'archivos':[l.strip() for l in open('nuevos.txt',encoding='utf-8') if l.strip()]}))" > cuerpo.json
+          curl --fail-with-body -sS -X POST "https://tomasjarufe.tomasjarufeurzua.workers.dev/api/aviso" \
+            -H "Authorization: Bearer $AVISO_TOKEN" -H "Content-Type: application/json" --data @cuerpo.json
