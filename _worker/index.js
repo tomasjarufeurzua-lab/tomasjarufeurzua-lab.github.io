@@ -89,9 +89,13 @@ async function suscribir(request, env) {
       to: [correo],
       subject: 'Listo: te avisaré cuando suba material nuevo',
       headers: { 'List-Unsubscribe': `<${salir}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
-      html: plantilla('¡Listo!',
-        `<p>Desde ahora te llegará un correo cada vez que suba material nuevo a <a href="${SITIO}/#material">tomasjarufe.site</a>.</p>
-         <p style="color:#6b7280;font-size:13px">¿No fuiste tú quien se inscribió? <a href="${salir}" style="color:#6b7280">Darme de baja</a> y no recibirás nada más.</p>`),
+      html: plantilla({
+        previa: 'Te avisaré cada vez que suba material nuevo.',
+        titulo: '¡Listo, quedaste inscrito!',
+        intro: 'Desde ahora te llegará un correo cada vez que suba material nuevo: apuntes, ensayos y pautas de los ramos que ayudo.',
+        boton: { texto: 'Ver el material', href: `${SITIO}/#material` },
+        pie: `¿No fuiste tú quien se inscribió? <a href="${salir}" style="color:${C.tenue};text-decoration:underline">Darme de baja</a> y no recibirás nada más.`,
+      }),
       text: `Desde ahora te llegará un correo cada vez que suba material nuevo a tomasjarufe.site.\n\n¿No fuiste tú? Date de baja aquí: ${salir}`,
     }]);
   } catch (e) {
@@ -144,10 +148,10 @@ async function aviso(request, env) {
     const ramo = titulo(partes[1]);
     const nombre = titulo(partes[partes.length - 1].replace(/\.[^.]+$/, ''));
     const href = `${SITIO}/${partes.map(encodeURIComponent).join('/')}`;
-    return { ramo, nombre, href };
+    const carpeta = partes.slice(2, -1).map(titulo).join(' · ');
+    return { ramo, nombre, href, carpeta };
   });
-  const html = '<ul style="padding-left:18px">' + lista.map((x) =>
-    `<li style="margin:6px 0"><a href="${x.href}">${esc(x.nombre)}</a> <span style="color:#6b7280">· ${esc(x.ramo)}</span></li>`).join('') + '</ul>';
+  const cuerpo = filasArchivos(lista);
   const texto = lista.map((x) => `- ${x.nombre} (${x.ramo}): ${x.href}`).join('\n');
   const asunto = lista.length === 1 ? `Material nuevo: ${lista[0].nombre}` : `Material nuevo: ${lista.length} archivos`;
   const mensajes = results.map((s) => {
@@ -157,9 +161,14 @@ async function aviso(request, env) {
       to: [s.correo],
       subject: asunto,
       headers: { 'List-Unsubscribe': `<${salir}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
-      html: plantilla('Subí material nuevo',
-        `${html}<p><a href="${SITIO}/#material">Ver todo el material</a></p>
-         <p style="color:#6b7280;font-size:13px">Recibes esto porque te inscribiste en tomasjarufe.site. <a href="${salir}" style="color:#6b7280">Darme de baja</a></p>`),
+      html: plantilla({
+        previa: lista.map((x) => x.nombre).join(' · '),
+        titulo: lista.length === 1 ? 'Subí material nuevo' : `Subí ${lista.length} archivos nuevos`,
+        intro: 'Ya está disponible en la página. Toca un archivo para descargarlo.',
+        cuerpo,
+        boton: { texto: 'Ver todo el material', href: `${SITIO}/#material` },
+        pie: `Recibes esto porque te inscribiste en tomasjarufe.site. <a href="${salir}" style="color:${C.tenue};text-decoration:underline">Darme de baja</a>`,
+      }),
       text: `Subí material nuevo:\n\n${texto}\n\nTodo el material: ${SITIO}/#material\n\nDarme de baja: ${salir}`,
     };
   });
@@ -200,10 +209,50 @@ function esc(t) {
   return String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-function plantilla(titulo, cuerpo) {
-  return `<div style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;max-width:520px;margin:0 auto;color:#1f2937;line-height:1.5">
-    <h2 style="font-size:18px;margin:0 0 12px">${esc(titulo)}</h2>${cuerpo}
-    <p style="color:#9ca3af;font-size:12px;margin-top:24px">Tomás Jarufe · <a href="${SITIO}" style="color:#9ca3af">tomasjarufe.site</a></p></div>`;
+// Colores de la pagina (gris metalizado, turquesa y dorado)
+const C = { fondo: '#2b2e32', tarjeta: '#34383c', fila: '#3c4045', borde: '#4a4f55', titulo: '#f1f3f5', texto: '#c3c8cd', tenue: '#a3a9af', turquesa: '#5eead4', oro: '#e9d58f' };
+const FUENTE = "'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
+
+// Correo con la estetica de la pagina. Se arma con tablas y estilos en linea para que se vea igual en Gmail, Outlook y el celular.
+function plantilla({ previa, titulo, intro, cuerpo = '', boton, pie }) {
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark light"><meta name="supported-color-schemes" content="dark light"><title>${esc(titulo)}</title></head>
+<body style="margin:0;padding:0;background:${C.fondo}">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(previa || '')}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.fondo};padding:32px 12px">
+<tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:${C.tarjeta};background-image:linear-gradient(135deg,#3a3e43 0%,#34383c 50%,#2f3337 100%);border:1px solid ${C.borde};border-radius:16px;font-family:${FUENTE}">
+<tr><td style="padding:28px 28px 8px">
+  <p style="margin:0 0 18px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${C.tenue}">Tomás Jarufe Urzúa <span style="color:${C.turquesa}">·</span> Material</p>
+  <h1 style="margin:0 0 10px;font-size:24px;line-height:1.25;font-weight:700;color:${C.titulo}">${esc(titulo)}</h1>
+  <div style="width:48px;height:3px;border-radius:3px;background:${C.turquesa};margin:0 0 18px"></div>
+  <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:${C.texto}">${intro}</p>
+</td></tr>
+${cuerpo ? `<tr><td style="padding:0 28px">${cuerpo}</td></tr>` : ''}
+${boton ? `<tr><td style="padding:12px 28px 8px">
+  <a href="${boton.href}" style="display:inline-block;padding:12px 22px;border-radius:999px;border:1px solid #8a7f57;background:#42464b;background-image:linear-gradient(135deg,#5d6268 0%,#42464b 45%,#30343a 70%,#52575d 100%);box-shadow:0 0 9px rgba(212,175,55,.4);color:${C.titulo};font-size:15px;font-weight:600;text-decoration:none">${esc(boton.texto)} <span style="color:${C.oro}">→</span></a>
+</td></tr>` : ''}
+<tr><td style="padding:24px 28px 26px">
+  <div style="height:1px;background:${C.borde};margin:0 0 16px"></div>
+  <p style="margin:0;font-size:12px;line-height:1.6;color:${C.tenue}">${pie}</p>
+  <p style="margin:8px 0 0;font-size:12px;color:${C.tenue}"><a href="${SITIO}" style="color:${C.tenue};text-decoration:underline">tomasjarufe.site</a> · Valparaíso, Chile</p>
+</td></tr>
+</table>
+</td></tr></table></body></html>`;
+}
+
+// Lista de archivos agrupada por ramo, con filas como las de la pagina
+function filasArchivos(lista) {
+  const ramos = [...new Set(lista.map((x) => x.ramo))];
+  return ramos.map((ramo) => `
+  <p style="margin:6px 0 8px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:${C.titulo}">${esc(ramo)}</p>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 14px">${lista.filter((x) => x.ramo === ramo).map((x) => `
+    <tr><td style="padding:0 0 8px"><a href="${x.href}" style="display:block;text-decoration:none">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.fila};border-radius:10px;border-left:3px solid ${C.turquesa}"><tr>
+        <td style="padding:12px 14px;font-size:15px;line-height:1.4;color:${C.titulo}">${esc(x.nombre)}${x.carpeta ? `<br><span style="font-size:12px;color:${C.tenue}">${esc(x.carpeta)}</span>` : ''}</td>
+        <td align="right" style="padding:12px 14px 12px 0;white-space:nowrap"><span style="display:inline-block;padding:3px 9px;border-radius:5px;background:#2f4a47;color:${C.turquesa};font-size:11px;font-weight:700">PDF</span> <span style="color:${C.tenue};font-size:15px">↓</span></td>
+      </tr></table></a></td></tr>`).join('')}
+  </table>`).join('');
 }
 
 function cors(request) {
