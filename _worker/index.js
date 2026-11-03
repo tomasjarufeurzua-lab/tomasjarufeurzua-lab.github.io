@@ -71,7 +71,7 @@ async function suscribir(request, env) {
   const ahora = new Date().toISOString();
   const fila = await env.DB.prepare('SELECT token, confirmado FROM suscriptores WHERE correo = ?').bind(correo).first();
   // Misma respuesta en todos los casos, para no revelar quien esta inscrito
-  const listo = json({ ok: true, mensaje: '¡Listo! Te avisaré por correo cuando suba material nuevo.' }, 200, request);
+  const listo = json({ ok: true, mensaje: '¡Listo! Te avisaré por correo cuando suba material nuevo. Te mandé un correo de bienvenida: si no lo ves, revisa Spam o Correo no deseado y márcalo como «No es spam».' }, 200, request);
   if (fila && fila.confirmado) return listo;
   // Inscripcion inmediata (sin confirmar); llega un correo de bienvenida con el enlace para darse de baja,
   // por si alguien inscribio un correo ajeno
