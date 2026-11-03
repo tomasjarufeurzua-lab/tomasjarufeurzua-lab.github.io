@@ -35,7 +35,7 @@ export default {
       if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(request) });
       if (ruta === '/api/suscribir' && request.method === 'POST') return await suscribir(request, env);
       if (ruta === '/api/confirmar' && request.method === 'GET') return await confirmar(url, env);
-      if (ruta === '/api/baja' && (request.method === 'GET' || request.method === 'POST')) return await baja(url, env);
+      if (ruta === '/api/baja' && (request.method === 'GET' || request.method === 'POST')) return await baja(request, url, env);
       if (ruta === '/api/aviso' && request.method === 'POST') return await aviso(request, env);
       return json({ error: 'No encontrado' }, 404, request);
     } catch (e) {
@@ -127,8 +127,17 @@ async function confirmar(url, env) {
   return pagina('¡Listo!', 'Desde ahora te llegará un correo cada vez que suba material nuevo. Cada correo trae un enlace para darte de baja.');
 }
 
-async function baja(url, env) {
+// Abrir el enlace (GET) solo muestra un boton; la baja se hace con POST. Asi los antivirus de correo
+// (como el de Microsoft en @usm.cl), que abren todos los enlaces de un mail, no dan de baja a nadie.
+// El boton "Cancelar suscripcion" de Gmail/Outlook usa POST (List-Unsubscribe-Post) y da de baja altiro.
+async function baja(request, url, env) {
   const t = url.searchParams.get('t') || '';
+  if (request.method === 'GET') {
+    const fila = await env.DB.prepare('SELECT 1 FROM suscriptores WHERE token = ?').bind(t).first();
+    if (!fila) return pagina('Ya no estás inscrito', 'Este correo ya no está en la lista de avisos.');
+    return pagina('¿Darte de baja?', 'Dejarás de recibir los correos de material nuevo.',
+      `<form method="post" action="/api/baja?t=${encodeURIComponent(t)}"><button type="submit" style="padding:10px 20px;border-radius:999px;border:1px solid #8a7f57;background:#42464b;color:#f1f3f5;font:inherit;font-weight:600;cursor:pointer">Sí, darme de baja</button></form>`);
+  }
   await env.DB.prepare('DELETE FROM suscriptores WHERE token = ?').bind(t).run();
   return pagina('Te diste de baja', 'Ya no recibirás más correos de avisos de material. Tu correo fue borrado de la lista.');
 }
@@ -266,10 +275,10 @@ function json(datos, status, request) {
   return new Response(JSON.stringify(datos), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', ...cors(request) } });
 }
 
-function pagina(titulo, texto) {
+function pagina(titulo, texto, extra = '') {
   const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(titulo)}</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#2e3135;color:#d1d5db;font-family:system-ui,sans-serif;padding:24px}
 main{max-width:420px}h1{color:#f3f4f6;font-size:1.4rem}a{color:#5eead4}</style></head>
-<body><main><h1>${esc(titulo)}</h1><p>${esc(texto)}</p><p><a href="${SITIO}/#material">Volver al material</a></p></main></body></html>`;
+<body><main><h1>${esc(titulo)}</h1><p>${esc(texto)}</p>${extra}<p><a href="${SITIO}/#material">Volver al material</a></p></main></body></html>`;
   return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
 }
