@@ -151,7 +151,11 @@ async function aviso(request, env) {
   const archivos = (Array.isArray(datos.archivos) ? datos.archivos : [])
     .map(String).filter((r) => r.startsWith('material/') && !r.split('/').pop().startsWith('.'));
   if (!archivos.length) return json({ ok: true, enviados: 0 }, 200, request);
-  const { results } = await env.DB.prepare('SELECT correo, token FROM suscriptores WHERE confirmado = 1').all();
+  // "solo": manda el aviso a un solo inscrito (para probar sin molestar a los demas)
+  const solo = datos.solo ? String(datos.solo).trim().toLowerCase() : '';
+  const { results } = solo
+    ? await env.DB.prepare('SELECT correo, token FROM suscriptores WHERE confirmado = 1 AND correo = ?').bind(solo).all()
+    : await env.DB.prepare('SELECT correo, token FROM suscriptores WHERE confirmado = 1').all();
   const lista = archivos.map((ruta) => {
     const partes = ruta.split('/');
     const ramo = titulo(partes[1]);
@@ -218,33 +222,52 @@ function esc(t) {
   return String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-// Colores de la pagina (gris metalizado, turquesa y dorado)
-const C = { fondo: '#2b2e32', tarjeta: '#34383c', fila: '#3c4045', borde: '#4a4f55', titulo: '#f1f3f5', texto: '#c3c8cd', tenue: '#a3a9af', turquesa: '#5eead4', oro: '#e9d58f' };
+// Colores del correo. La base es clara a proposito: Gmail en modo oscuro invierte los colores, y un diseno
+// claro queda bien al invertirse. Los clientes que respetan el modo oscuro (Apple Mail, Outlook) usan los
+// colores oscuros de la pagina (bloque @media de abajo).
+const C = { fondo: '#e9ebee', tarjeta: '#ffffff', fila: '#f3f4f6', borde: '#d9dde1', titulo: '#1f2328', texto: '#454b52', tenue: '#6b7178', turquesa: '#14b8a6', pdfFondo: '#ccfbf1', pdfTexto: '#0f766e', oro: '#b8962e' };
 const FUENTE = "'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
+const ESTILO_OSCURO = `
+  :root { color-scheme: light dark; supported-color-schemes: light dark; }
+  @media (prefers-color-scheme: dark) {
+    .c-fondo { background: #2b2e32 !important; }
+    .c-tarjeta { background: #34383c !important; border-color: #4a4f55 !important; }
+    .c-fila { background: #3c4045 !important; border-left-color: #5eead4 !important; }
+    .c-titulo { color: #f1f3f5 !important; }
+    .c-texto { color: #c3c8cd !important; }
+    .c-tenue, .c-tenue a { color: #a3a9af !important; }
+    .c-acento { color: #5eead4 !important; }
+    .c-barra { background: #5eead4 !important; }
+    .c-pdf { background: #2f4a47 !important; color: #5eead4 !important; }
+    .c-linea { background: #4a4f55 !important; }
+    .c-boton { background: #42464b !important; border-color: #8a7f57 !important; color: #f1f3f5 !important; }
+    .c-oro { color: #e9d58f !important; }
+  }`;
 
-// Correo con la estetica de la pagina. Se arma con tablas y estilos en linea para que se vea igual en Gmail, Outlook y el celular.
+// Correo con la estetica de la pagina. Tablas y estilos en linea para que se vea igual en Gmail, Outlook y el celular.
 function plantilla({ previa, titulo, intro, cuerpo = '', boton, pie }) {
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="dark light"><meta name="supported-color-schemes" content="dark light"><title>${esc(titulo)}</title></head>
-<body style="margin:0;padding:0;background:${C.fondo}">
+<meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"><title>${esc(titulo)}</title>
+<style>${ESTILO_OSCURO}</style></head>
+<body class="c-fondo" style="margin:0;padding:0;background:${C.fondo}">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(previa || '')}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.fondo};padding:32px 12px">
+<table role="presentation" class="c-fondo" width="100%" cellpadding="0" cellspacing="0" style="background:${C.fondo};padding:28px 12px">
 <tr><td align="center">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:${C.tarjeta};background-image:linear-gradient(135deg,#3a3e43 0%,#34383c 50%,#2f3337 100%);border:1px solid ${C.borde};border-radius:16px;font-family:${FUENTE}">
+<table role="presentation" class="c-tarjeta" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:${C.tarjeta};border:1px solid ${C.borde};border-radius:16px;font-family:${FUENTE}">
 <tr><td style="padding:28px 28px 8px">
-  <p style="margin:0 0 18px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${C.tenue}">Tomás Jarufe Urzúa <span style="color:${C.turquesa}">·</span> Material</p>
-  <h1 style="margin:0 0 10px;font-size:24px;line-height:1.25;font-weight:700;color:${C.titulo}">${esc(titulo)}</h1>
-  <div style="width:48px;height:3px;border-radius:3px;background:${C.turquesa};margin:0 0 18px"></div>
-  <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:${C.texto}">${intro}</p>
+  <p class="c-tenue" style="margin:0 0 18px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${C.tenue}">Tomás Jarufe Urzúa <span class="c-acento" style="color:${C.turquesa}">·</span> Material</p>
+  <h1 class="c-titulo" style="margin:0 0 10px;font-size:24px;line-height:1.25;font-weight:700;color:${C.titulo}">${esc(titulo)}</h1>
+  <div class="c-barra" style="width:48px;height:3px;border-radius:3px;background:${C.turquesa};margin:0 0 18px"></div>
+  <p class="c-texto" style="margin:0 0 20px;font-size:15px;line-height:1.6;color:${C.texto}">${intro}</p>
 </td></tr>
 ${cuerpo ? `<tr><td style="padding:0 28px">${cuerpo}</td></tr>` : ''}
 ${boton ? `<tr><td style="padding:12px 28px 8px">
-  <a href="${boton.href}" style="display:inline-block;padding:12px 22px;border-radius:999px;border:1px solid #8a7f57;background:#42464b;background-image:linear-gradient(135deg,#5d6268 0%,#42464b 45%,#30343a 70%,#52575d 100%);box-shadow:0 0 9px rgba(212,175,55,.4);color:${C.titulo};font-size:15px;font-weight:600;text-decoration:none">${esc(boton.texto)} <span style="color:${C.oro}">→</span></a>
+  <a href="${boton.href}" class="c-boton" style="display:inline-block;padding:12px 22px;border-radius:999px;border:1px solid #2b2e32;background:#34383c;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none">${esc(boton.texto)} <span class="c-oro" style="color:#e9d58f">→</span></a>
 </td></tr>` : ''}
 <tr><td style="padding:24px 28px 26px">
-  <div style="height:1px;background:${C.borde};margin:0 0 16px"></div>
-  <p style="margin:0;font-size:12px;line-height:1.6;color:${C.tenue}">${pie}</p>
-  <p style="margin:8px 0 0;font-size:12px;color:${C.tenue}"><a href="${SITIO}" style="color:${C.tenue};text-decoration:underline">tomasjarufe.site</a> · Valparaíso, Chile</p>
+  <div class="c-linea" style="height:1px;background:${C.borde};margin:0 0 16px"></div>
+  <p class="c-tenue" style="margin:0;font-size:12px;line-height:1.6;color:${C.tenue}">${pie}</p>
+  <p class="c-tenue" style="margin:8px 0 0;font-size:12px;color:${C.tenue}"><a href="${SITIO}" style="color:${C.tenue};text-decoration:underline">tomasjarufe.site</a> · Valparaíso, Chile</p>
 </td></tr>
 </table>
 </td></tr></table></body></html>`;
@@ -254,12 +277,12 @@ ${boton ? `<tr><td style="padding:12px 28px 8px">
 function filasArchivos(lista) {
   const ramos = [...new Set(lista.map((x) => x.ramo))];
   return ramos.map((ramo) => `
-  <p style="margin:6px 0 8px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:${C.titulo}">${esc(ramo)}</p>
+  <p class="c-titulo" style="margin:6px 0 8px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:${C.titulo}">${esc(ramo)}</p>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 14px">${lista.filter((x) => x.ramo === ramo).map((x) => `
     <tr><td style="padding:0 0 8px"><a href="${x.href}" style="display:block;text-decoration:none">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.fila};border-radius:10px;border-left:3px solid ${C.turquesa}"><tr>
-        <td style="padding:12px 14px;font-size:15px;line-height:1.4;color:${C.titulo}">${esc(x.nombre)}${x.carpeta ? `<br><span style="font-size:12px;color:${C.tenue}">${esc(x.carpeta)}</span>` : ''}</td>
-        <td align="right" style="padding:12px 14px 12px 0;white-space:nowrap"><span style="display:inline-block;padding:3px 9px;border-radius:5px;background:#2f4a47;color:${C.turquesa};font-size:11px;font-weight:700">PDF</span> <span style="color:${C.tenue};font-size:15px">↓</span></td>
+      <table role="presentation" class="c-fila" width="100%" cellpadding="0" cellspacing="0" style="background:${C.fila};border-radius:10px;border-left:3px solid ${C.turquesa}"><tr>
+        <td class="c-titulo" style="padding:12px 14px;font-size:15px;line-height:1.4;color:${C.titulo}">${esc(x.nombre)}${x.carpeta ? `<br><span class="c-tenue" style="font-size:12px;color:${C.tenue}">${esc(x.carpeta)}</span>` : ''}</td>
+        <td align="right" style="padding:12px 14px 12px 0;white-space:nowrap"><span class="c-pdf" style="display:inline-block;padding:3px 9px;border-radius:5px;background:${C.pdfFondo};color:${C.pdfTexto};font-size:11px;font-weight:700">PDF</span> <span class="c-tenue" style="color:${C.tenue};font-size:15px">↓</span></td>
       </tr></table></a></td></tr>`).join('')}
   </table>`).join('');
 }
