@@ -2593,7 +2593,7 @@
           d.lista.forEach((x) => {
             const tr = el('tr');
             const td = el('td', '', x.correo);
-            td.appendChild(el('span', 'sub', (x.ramos ? x.ramos.map(titulo).join(', ') : 'Todos los ramos') + ' · ' + fecha(x.creado)));
+            td.appendChild(el('span', 'sub', (x.ramos ? x.ramos.map(titulo).join(', ') : 'Todos los ramos') + ' · ' + fecha(x.creado) + ' · IP ' + (x.ip || 'sin registro')));
             tr.appendChild(td);
             tl.appendChild(tr);
           });

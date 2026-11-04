@@ -87,6 +87,8 @@ async function crearTabla(env) {
   // Ramos elegidos por cada inscrito (JSON con nombres de carpeta; NULL = todos los ramos)
   const { results } = await env.DB.prepare('PRAGMA table_info(suscriptores)').all();
   if (!results.some((c) => c.name === 'ramos')) await env.DB.prepare('ALTER TABLE suscriptores ADD COLUMN ramos TEXT').run();
+  // IP desde donde se inscribio el correo (la ultima vez que se inscribio)
+  if (!results.some((c) => c.name === 'ip')) await env.DB.prepare('ALTER TABLE suscriptores ADD COLUMN ip TEXT').run();
   tablasListas = true;
 }
 
@@ -107,22 +109,23 @@ async function suscribir(request, env) {
     : [];
   const ramosJson = ramos.length ? JSON.stringify(ramos) : null;
   const ahora = new Date().toISOString();
+  const ip = request.headers.get('CF-Connecting-IP') || null;
   const fila = await env.DB.prepare('SELECT token, confirmado FROM suscriptores WHERE correo = ?').bind(correo).first();
   // Misma respuesta en todos los casos, para no revelar quien esta inscrito
   const listo = json({ ok: true, mensaje: '¡Listo! Te avisaré por correo cuando suba material nuevo. Te mandé un correo de bienvenida: si no lo ves, revisa Spam o Correo no deseado y márcalo como «No es spam».' }, 200, request);
   if (fila && fila.confirmado) {
     // Ya inscrito: inscribirse de nuevo solo actualiza los ramos elegidos (sin mandar otro correo)
-    await env.DB.prepare('UPDATE suscriptores SET ramos = ? WHERE correo = ?').bind(ramosJson, correo).run();
+    await env.DB.prepare('UPDATE suscriptores SET ramos = ?, ip = ? WHERE correo = ?').bind(ramosJson, ip, correo).run();
     return listo;
   }
   // Inscripcion inmediata (sin confirmar); llega un correo de bienvenida con el enlace para darse de baja,
   // por si alguien inscribio un correo ajeno
   const token = fila ? fila.token : crypto.randomUUID();
   if (fila) {
-    await env.DB.prepare('UPDATE suscriptores SET confirmado = 1, confirmacion_enviada = ?, ramos = ? WHERE correo = ?').bind(ahora, ramosJson, correo).run();
+    await env.DB.prepare('UPDATE suscriptores SET confirmado = 1, confirmacion_enviada = ?, ramos = ?, ip = ? WHERE correo = ?').bind(ahora, ramosJson, ip, correo).run();
   } else {
-    await env.DB.prepare('INSERT INTO suscriptores (correo, token, confirmado, creado, confirmacion_enviada, ramos) VALUES (?, ?, 1, ?, ?, ?)')
-      .bind(correo, token, ahora, ahora, ramosJson).run();
+    await env.DB.prepare('INSERT INTO suscriptores (correo, token, confirmado, creado, confirmacion_enviada, ramos, ip) VALUES (?, ?, 1, ?, ?, ?, ?)')
+      .bind(correo, token, ahora, ahora, ramosJson, ip).run();
   }
   const queRamos = ramos.length ? 'de ' + ramos.map(titulo).join(', ') : 'de los ramos que ayudo';
   const salir = `${SITIO}/baja.html?t=${token}`;
@@ -334,7 +337,7 @@ async function panel(request, env) {
   }
   const hace30 = new Date(Date.now() - 30 * 86400000).toISOString();
   const [ins, ev, votos, reportes] = await env.DB.batch([
-    env.DB.prepare('SELECT correo, ramos, creado FROM suscriptores WHERE confirmado = 1 ORDER BY creado DESC'),
+    env.DB.prepare('SELECT correo, ramos, creado, ip FROM suscriptores WHERE confirmado = 1 ORDER BY creado DESC'),
     env.DB.prepare('SELECT tipo, COUNT(*) AS n FROM eventos WHERE creado >= ? GROUP BY tipo').bind(hace30),
     env.DB.prepare(`SELECT ruta, SUM(voto = 1) AS si, SUM(voto = -1) AS no FROM votos GROUP BY ruta ORDER BY (SUM(voto = 1) + SUM(voto = -1)) DESC, ruta`),
     env.DB.prepare('SELECT id, ruta, texto, creado FROM reportes ORDER BY id DESC LIMIT 100'),
@@ -354,7 +357,7 @@ async function panel(request, env) {
     por_ramo: porRamo,
     altas_30_dias: evento('alta'),
     bajas_30_dias: evento('baja'),
-    lista: ins.results.map((s) => ({ correo: s.correo, ramos: s.ramos ? JSON.parse(s.ramos) : null, creado: s.creado })),
+    lista: ins.results.map((s) => ({ correo: s.correo, ramos: s.ramos ? JSON.parse(s.ramos) : null, creado: s.creado, ip: s.ip || null })),
     votos: votos.results,
     reportes: reportes.results,
   }, 200, request);
