@@ -528,6 +528,55 @@
     .avisos-nota { margin: 0 0 10px !important; color: var(--dim); font-size: 0.8rem; }
     .avisos .privado-estado.bien { color: var(--accent); }
     #avisos-turnstile:not(:empty) { margin-top: 10px; }
+    .avisos-ramos { margin: 12px 0 0; padding: 0; border: 0; }
+    .avisos-ramos[hidden] { display: none; }
+    .avisos-ramos legend { padding: 0; margin-bottom: 6px; color: var(--dim); font-size: 0.8rem; }
+    #avisos-ramos-lista { display: flex; flex-wrap: wrap; gap: 6px; }
+    .ramo-check { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px 5px 10px; border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 999px; font-size: 0.8rem; color: var(--text); cursor: pointer; user-select: none; }
+    .ramo-check input { margin: 0; accent-color: var(--accent); }
+    .ramo-check:has(input:checked) { border-color: rgba(94, 234, 212, 0.6); color: var(--heading); background: var(--accent-bg); }
+    .ramo-check:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+    /* "¿Te sirvio?": aparece abajo despues de descargar un PDF */
+    .opinion {
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      z-index: 60;
+      width: min(440px, calc(100% - 32px));
+      transform: translateX(-50%);
+      padding: 14px 16px;
+      border: 1px solid var(--metal-borde);
+      border-radius: 14px;
+      background: #2e3135;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), var(--metal-glow);
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+    .opinion[hidden] { display: none; }
+    .opinion-cabeza { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 10px; color: var(--heading); }
+    .opinion-cabeza span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+    .opinion-cerrar { padding: 0 4px; border: 0; background: none; color: var(--dim); font-size: 1.2rem; line-height: 1; cursor: pointer; }
+    .opinion-cerrar:hover { color: var(--heading); }
+    .opinion-botones { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .opinion-reportar { margin-left: auto; padding: 0; border: 0; background: none; color: var(--dim); font: inherit; font-size: 0.8rem; text-decoration: underline; cursor: pointer; }
+    .opinion-reportar:hover { color: var(--accent); }
+    .opinion textarea { box-sizing: border-box; width: 100%; min-height: 80px; margin: 10px 0 0; padding: 8px 10px; border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; background: rgba(0, 0, 0, 0.2); color: var(--heading); font: inherit; resize: vertical; }
+    .opinion textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .opinion .opinion-enviar { margin-top: 8px; }
+    .opinion .privado-estado.bien { color: var(--accent); }
+    /* Panel privado */
+    .panel-datos h4 { margin: 20px 0 8px; color: var(--heading); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; }
+    .panel-datos p, .panel-datos li { font-size: 0.85rem; }
+    .panel-datos ul { margin: 0; padding-left: 18px; }
+    .panel-tabla { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .panel-tabla td, .panel-tabla th { padding: 6px 4px; border-bottom: 1px solid rgba(148, 163, 184, 0.15); text-align: left; vertical-align: top; }
+    .panel-tabla th { color: var(--dim); font-weight: 500; }
+    .panel-tabla td.num { text-align: right; white-space: nowrap; }
+    .panel-tabla .sub { display: block; color: var(--dim); font-size: 0.75rem; }
+    .panel-reporte { margin: 0 0 10px; padding: 10px 12px; border-radius: 8px; background: rgba(255, 255, 255, 0.04); }
+    .panel-reporte .sub { color: var(--dim); font-size: 0.75rem; }
+    .panel-reporte p { margin: 6px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .panel-datos details summary { cursor: pointer; color: var(--dim); font-size: 0.85rem; }
     /* Los candados van juntos dentro de la categoria Candado */
     .candado > .privado { margin: 12px 0 0; padding-left: 16px; border-left: 1px solid rgba(148, 163, 184, 0.2); }
     .privado label { display: block; margin-bottom: 4px; color: var(--dim); font-size: 0.8rem; }
@@ -1008,6 +1057,10 @@
             <input id="avisos-correo" type="email" autocomplete="email" placeholder="tucorreo@gmail.com" required>
             <button class="calc-boton" type="submit">Avisarme</button>
           </div>
+          <fieldset class="avisos-ramos" id="avisos-ramos" hidden>
+            <legend>¿De qué ramos?</legend>
+            <div id="avisos-ramos-lista"></div>
+          </fieldset>
           <div id="avisos-turnstile"></div>
           <p id="avisos-estado" class="privado-estado" role="status"></p>
         </form>
@@ -1039,6 +1092,19 @@
               <p id="privado-estado" class="privado-estado" role="status"></p>
             </form>
             <div id="privado-contenido" hidden></div>
+          </details>
+
+          <details class="privado" id="panel">
+            <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>Panel</summary>
+            <form id="panel-form" autocomplete="off">
+              <label for="panel-clave">Clave</label>
+              <div class="privado-fila">
+                <input id="panel-clave" type="password" autocomplete="off" spellcheck="false">
+                <button class="calc-boton" type="submit">Abrir</button>
+              </div>
+              <p id="panel-estado" class="privado-estado" role="status"></p>
+            </form>
+            <div id="panel-contenido" class="panel-datos" hidden></div>
           </details>
         </details>
       </section>
@@ -1166,6 +1232,8 @@
         if (window.goatcounter && window.goatcounter.count) {
           window.goatcounter.count({ path: 'descarga/' + ruta.replace(/^material\//, ''), title: bonito(archivo), event: true });
         }
+        // Despues de descargar se pregunta "¿Te sirvio?" (ver el script de servicios al final)
+        if (window.pedirOpinion) window.pedirOpinion(ruta, bonito(archivo));
       });
       return a;
     }
@@ -1542,6 +1610,9 @@
       const posicion = (c) => { const i = PRIMERAS.indexOf(c); return i < 0 ? PRIMERAS.length : i; };
       const carpetas = [...new Set(rutas.filter((r) => r.split('/').length > 2).map((r) => r.split('/')[1]))]
         .sort((x, y) => posicion(x) - posicion(y) || x.localeCompare(y, 'es', { numeric: true }));
+      // Los ramos (carpetas) se usan tambien en el formulario de avisos
+      window.carpetasMaterial = carpetas;
+      document.dispatchEvent(new CustomEvent('material-listo'));
       const sueltos = rutas.filter((r) => r.split('/').length === 2);
       caja.innerHTML = '';
       let hayAlgo = false;
@@ -2275,46 +2346,300 @@
     });
   </script>
   <script>
-    // Avisos por correo: el formulario se muestra solo cuando estan los datos de Cloudflare.
-    // AVISOS_API: direccion del Worker (_worker/index.js). TURNSTILE_SITEKEY: clave publica de Turnstile.
+    // Servicios del Worker de Cloudflare (_worker/index.js): avisos por correo, "¿Te sirvio?" y el panel privado.
+    // API: direccion del Worker. TURNSTILE_SITEKEY: clave publica del captcha de Cloudflare (Turnstile).
     (function () {
-      const AVISOS_API = 'https://tomasjarufe.tomasjarufeurzua.workers.dev/api';
+      const API = 'https://tomasjarufe.tomasjarufeurzua.workers.dev/api';
       const TURNSTILE_SITEKEY = '0x4AAAAAAFyXfhrMhfG9maUV';
-      if (!AVISOS_API || !TURNSTILE_SITEKEY) return;
-      const form = document.getElementById('avisos');
-      const campo = document.getElementById('avisos-correo');
-      const estado = document.getElementById('avisos-estado');
-      const boton = form.querySelector('button');
-      let widget = null;
-      const decir = (t, bien) => { estado.textContent = t; estado.classList.toggle('mal', !bien); estado.classList.toggle('bien', !!bien); };
-      window.onTurnstileListo = () => {
-        widget = window.turnstile.render('#avisos-turnstile', { sitekey: TURNSTILE_SITEKEY, theme: 'dark', size: 'flexible', appearance: 'interaction-only' });
-      };
+      const el = (tag, clase, texto) => { const e = document.createElement(tag); if (clase) e.className = clase; if (texto != null) e.textContent = texto; return e; };
+      const titulo = (n) => n.replace(/^\d+\s*-\s+/, '').replace(/\s+-\s+/g, ' — ').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+      const nombreArchivo = (ruta) => titulo(ruta.split('/').pop().replace(/\.[^.]+$/, ''));
+      const lugarArchivo = (ruta) => ruta.split('/').slice(1, -1).map(titulo).join(' · ');
+      const guardar = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* sin almacenamiento */ } };
+      const leer = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+      async function llamar(ruta, cuerpo) {
+        const r = await fetch(API + ruta, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.error || 'No se pudo. Intenta de nuevo en unos minutos.');
+        return d;
+      }
+
+      // Captcha de Cloudflare: se carga una vez y sirve para el formulario de avisos y los reportes
+      let resolverTurnstile;
+      const turnstileListo = new Promise((r) => { resolverTurnstile = r; });
+      window.onTurnstileListo = () => resolverTurnstile(window.turnstile);
       const s = document.createElement('script');
       s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileListo&render=explicit';
       s.async = true;
       document.head.appendChild(s);
-      form.hidden = false;
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const correo = campo.value.trim();
-        if (!campo.checkValidity() || !correo) return decir('Escribe un correo válido.');
-        const token = widget !== null && window.turnstile ? window.turnstile.getResponse(widget) : '';
-        if (!token) return decir('Espera un segundo a que termine la verificación y vuelve a intentar.');
-        boton.disabled = true;
-        decir('Enviando…', true);
-        try {
-          const r = await fetch(AVISOS_API + '/suscribir', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ correo, turnstile: token }) });
-          const d = await r.json().catch(() => ({}));
-          if (r.ok) { decir(d.mensaje || 'Revisa tu correo para confirmar.', true); campo.value = ''; }
-          else decir(d.error || 'No se pudo. Intenta de nuevo en unos minutos.');
-        } catch (err) {
-          decir('No se pudo conectar. Intenta de nuevo en unos minutos.');
-        } finally {
-          boton.disabled = false;
-          if (window.turnstile && widget !== null) window.turnstile.reset(widget);
+      const opcionesTurnstile = { sitekey: TURNSTILE_SITEKEY, theme: 'dark', size: 'flexible', appearance: 'interaction-only' };
+
+      // ---------- avisos por correo, eligiendo ramos ----------
+      (function () {
+        const form = document.getElementById('avisos');
+        const campo = document.getElementById('avisos-correo');
+        const estado = document.getElementById('avisos-estado');
+        const boton = form.querySelector('button[type="submit"]');
+        const caja = document.getElementById('avisos-ramos');
+        const listaRamos = document.getElementById('avisos-ramos-lista');
+        let widget = null;
+        const decir = (t, bien) => { estado.textContent = t; estado.classList.toggle('mal', !bien); estado.classList.toggle('bien', !!bien); };
+        turnstileListo.then((t) => { widget = t.render('#avisos-turnstile', opcionesTurnstile); });
+        form.hidden = false;
+
+        // Casillas: "Todos" (por defecto, incluye ramos futuros) o algunos ramos
+        function armarRamos() {
+          const carpetas = window.carpetasMaterial || [];
+          if (!carpetas.length || listaRamos.childElementCount) return;
+          const casilla = (valor, texto, marcada) => {
+            const l = el('label', 'ramo-check');
+            const c = el('input');
+            c.type = 'checkbox';
+            c.value = valor;
+            c.checked = marcada;
+            l.append(c, texto);
+            listaRamos.appendChild(l);
+            return c;
+          };
+          const todos = casilla('', 'Todos', true);
+          const cada = carpetas.map((c) => casilla(c, titulo(c), false));
+          todos.addEventListener('change', () => { if (todos.checked) cada.forEach((c) => { c.checked = false; }); else if (!cada.some((c) => c.checked)) todos.checked = true; });
+          cada.forEach((c) => c.addEventListener('change', () => { todos.checked = !cada.some((x) => x.checked); }));
+          caja.hidden = false;
         }
-      });
+        if (window.carpetasMaterial) armarRamos();
+        document.addEventListener('material-listo', armarRamos);
+
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const correo = campo.value.trim();
+          if (!campo.checkValidity() || !correo) return decir('Escribe un correo válido.');
+          const token = widget !== null && window.turnstile ? window.turnstile.getResponse(widget) : '';
+          if (!token) return decir('Espera un segundo a que termine la verificación y vuelve a intentar.');
+          const ramos = [...listaRamos.querySelectorAll('input:checked')].map((c) => c.value).filter(Boolean);
+          boton.disabled = true;
+          decir('Enviando…', true);
+          try {
+            const d = await llamar('/suscribir', { correo, turnstile: token, ramos });
+            decir(d.mensaje || '¡Listo!', true);
+            campo.value = '';
+          } catch (err) {
+            decir(err.message === 'Failed to fetch' ? 'No se pudo conectar. Intenta de nuevo en unos minutos.' : err.message);
+          } finally {
+            boton.disabled = false;
+            if (window.turnstile && widget !== null) window.turnstile.reset(widget);
+          }
+        });
+      })();
+
+      // ---------- "¿Te sirvio?" despues de descargar un PDF ----------
+      (function () {
+        const caja = el('div', 'opinion');
+        caja.hidden = true;
+        caja.setAttribute('role', 'dialog');
+        caja.setAttribute('aria-label', 'Opinión sobre el material');
+        document.body.appendChild(caja);
+        let actual = null;
+        let reloj = null;
+        let widget = null;
+        const cerrar = () => {
+          caja.hidden = true;
+          if (widget !== null && window.turnstile) window.turnstile.remove(widget);
+          widget = null;
+          actual = null;
+        };
+        const yaVista = (ruta) => leer('opinion:' + ruta);
+
+        function mostrar(ruta, nombre) {
+          if (widget !== null && window.turnstile) window.turnstile.remove(widget);
+          widget = null;
+          actual = ruta;
+          caja.replaceChildren();
+          const cabeza = el('p', 'opinion-cabeza');
+          cabeza.append(el('span', '', '¿Te sirvió «' + nombre + '»?'));
+          const x = el('button', 'opinion-cerrar', '×');
+          x.type = 'button';
+          x.setAttribute('aria-label', 'Cerrar');
+          x.addEventListener('click', () => { guardar('opinion:' + ruta, 'cerrada'); cerrar(); });
+          cabeza.appendChild(x);
+          const botones = el('div', 'opinion-botones');
+          const estado = el('p', 'privado-estado');
+          const voto = (v, texto) => {
+            const b = el('button', 'calc-boton', texto);
+            b.type = 'button';
+            b.addEventListener('click', async () => {
+              botones.querySelectorAll('button').forEach((x) => { x.disabled = true; });
+              try {
+                await llamar('/voto', { ruta, voto: v });
+                guardar('opinion:' + ruta, String(v));
+                estado.textContent = '¡Gracias!';
+                estado.className = 'privado-estado bien';
+                setTimeout(() => { if (actual === ruta) cerrar(); }, 1800);
+              } catch (err) {
+                estado.textContent = 'No se pudo guardar. Intenta de nuevo.';
+                estado.className = 'privado-estado mal';
+                botones.querySelectorAll('button').forEach((x) => { x.disabled = false; });
+              }
+            });
+            return b;
+          };
+          const reportar = el('button', 'opinion-reportar', 'Reportar un error');
+          reportar.type = 'button';
+          reportar.addEventListener('click', () => abrirReporte(ruta, estado));
+          botones.append(voto(1, '👍 Sí'), voto(-1, '👎 No'), reportar);
+          caja.append(cabeza, botones, estado);
+          caja.hidden = false;
+        }
+
+        function abrirReporte(ruta, estado) {
+          if (caja.querySelector('textarea')) return;
+          const area = el('textarea');
+          area.maxLength = 1000;
+          area.placeholder = '¿Qué está mal? Por ejemplo: "En la pregunta 2 de la pauta el resultado debería ser 0,35".';
+          area.setAttribute('aria-label', 'Describe el error');
+          const t = el('div');
+          const enviar = el('button', 'calc-boton opinion-enviar', 'Enviar reporte');
+          enviar.type = 'button';
+          caja.insertBefore(area, estado);
+          caja.insertBefore(t, estado);
+          caja.insertBefore(enviar, estado);
+          area.focus();
+          turnstileListo.then((ts) => { if (actual === ruta && t.isConnected) widget = ts.render(t, opcionesTurnstile); });
+          enviar.addEventListener('click', async () => {
+            const texto = area.value.trim();
+            if (texto.length < 3) { estado.textContent = 'Cuéntame cuál es el error.'; estado.className = 'privado-estado mal'; return; }
+            const token = widget !== null && window.turnstile ? window.turnstile.getResponse(widget) : '';
+            if (!token) { estado.textContent = 'Espera un segundo a que termine la verificación.'; estado.className = 'privado-estado mal'; return; }
+            enviar.disabled = true;
+            try {
+              await llamar('/reporte', { ruta, texto, turnstile: token });
+              guardar('opinion:' + ruta, 'reporte');
+              area.remove(); t.remove(); enviar.remove();
+              if (widget !== null && window.turnstile) window.turnstile.remove(widget);
+              widget = null;
+              estado.textContent = '¡Gracias! Ya me llegó el reporte.';
+              estado.className = 'privado-estado bien';
+              setTimeout(() => { if (actual === ruta) cerrar(); }, 2500);
+            } catch (err) {
+              estado.textContent = err.message === 'Failed to fetch' ? 'No se pudo conectar. Intenta de nuevo.' : err.message;
+              estado.className = 'privado-estado mal';
+              enviar.disabled = false;
+              if (window.turnstile && widget !== null) window.turnstile.reset(widget);
+            }
+          });
+        }
+
+        // Se pregunta un momento despues de abrir el PDF (que se abre en otra pestaña), una vez por archivo
+        window.pedirOpinion = (ruta, nombre) => {
+          if (yaVista(ruta)) return;
+          clearTimeout(reloj);
+          reloj = setTimeout(() => mostrar(ruta, nombre), 1200);
+        };
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !caja.hidden) cerrar(); });
+      })();
+
+      // ---------- panel privado (inscritos, votos y reportes) ----------
+      (function () {
+        const det = document.getElementById('panel');
+        const form = document.getElementById('panel-form');
+        const campo = document.getElementById('panel-clave');
+        const estado = document.getElementById('panel-estado');
+        const cont = document.getElementById('panel-contenido');
+        let clave = '';
+        let reloj = null;
+        const decir = (t, mal) => { estado.textContent = t; estado.classList.toggle('mal', !!mal); };
+        const fecha = (iso) => new Date(iso).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'America/Santiago' });
+
+        function cerrar() {
+          clave = '';
+          campo.value = '';
+          cont.replaceChildren();
+          cont.hidden = true;
+          form.hidden = false;
+          decir('');
+          clearTimeout(reloj);
+        }
+
+        function dibujar(d) {
+          cont.replaceChildren();
+          cont.appendChild(el('h4', '', 'Inscritos'));
+          cont.appendChild(el('p', '', `${d.inscritos} inscritos · +${d.altas_30_dias} altas y −${d.bajas_30_dias} bajas en los últimos 30 días`));
+          const ul = el('ul');
+          ul.appendChild(el('li', '', `Todos los ramos: ${d.todos_los_ramos}`));
+          Object.entries(d.por_ramo).sort((a, b) => b[1] - a[1]).forEach(([r, n]) => ul.appendChild(el('li', '', `${titulo(r)}: ${n}`)));
+          cont.appendChild(ul);
+          const lista = el('details');
+          lista.appendChild(el('summary', '', `Ver correos (${d.lista.length})`));
+          const tl = el('table', 'panel-tabla');
+          d.lista.forEach((x) => {
+            const tr = el('tr');
+            const td = el('td', '', x.correo);
+            td.appendChild(el('span', 'sub', (x.ramos ? x.ramos.map(titulo).join(', ') : 'Todos los ramos') + ' · ' + fecha(x.creado)));
+            tr.appendChild(td);
+            tl.appendChild(tr);
+          });
+          lista.appendChild(tl);
+          cont.appendChild(lista);
+
+          cont.appendChild(el('h4', '', '¿Te sirvió?'));
+          if (!d.votos.length) cont.appendChild(el('p', 'muted', 'Aún no hay votos.'));
+          else {
+            const t = el('table', 'panel-tabla');
+            const cab = el('tr');
+            cab.append(el('th', '', 'Archivo'), el('th', 'num', '👍'), el('th', 'num', '👎'));
+            t.appendChild(cab);
+            d.votos.forEach((v) => {
+              const tr = el('tr');
+              const td = el('td', '', nombreArchivo(v.ruta));
+              td.appendChild(el('span', 'sub', lugarArchivo(v.ruta)));
+              tr.append(td, el('td', 'num', String(v.si)), el('td', 'num', String(v.no)));
+              t.appendChild(tr);
+            });
+            cont.appendChild(t);
+          }
+
+          cont.appendChild(el('h4', '', `Reportes de errores (${d.reportes.length})`));
+          if (!d.reportes.length) cont.appendChild(el('p', 'muted', 'No hay reportes.'));
+          d.reportes.forEach((r) => {
+            const caja = el('div', 'panel-reporte');
+            caja.appendChild(el('span', 'sub', `${fecha(r.creado)} · ${lugarArchivo(r.ruta)}`));
+            caja.appendChild(el('p', '', `${nombreArchivo(r.ruta)}: ${r.texto}`));
+            const b = el('button', 'calc-boton', 'Borrar');
+            b.type = 'button';
+            b.addEventListener('click', async () => {
+              b.disabled = true;
+              try { dibujar(await llamar('/panel', { clave, accion: 'borrar-reporte', id: r.id })); } catch (err) { b.disabled = false; }
+            });
+            caja.appendChild(b);
+            cont.appendChild(caja);
+          });
+        }
+
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          if (!campo.value) return;
+          const boton = form.querySelector('button');
+          boton.disabled = true;
+          decir('Abriendo…');
+          try {
+            const d = await llamar('/panel', { clave: campo.value });
+            clave = campo.value;
+            campo.value = '';
+            form.hidden = true;
+            decir('');
+            dibujar(d);
+            cont.hidden = false;
+            // Se cierra solo a los 10 minutos
+            clearTimeout(reloj);
+            reloj = setTimeout(() => { det.open = false; cerrar(); }, 10 * 60 * 1000);
+          } catch (err) {
+            decir(err.message === 'Failed to fetch' ? 'No se pudo conectar.' : err.message, true);
+          } finally {
+            boton.disabled = false;
+          }
+        });
+        det.addEventListener('toggle', () => { if (!det.open) cerrar(); });
+      })();
     })();
   </script>
 </body>
