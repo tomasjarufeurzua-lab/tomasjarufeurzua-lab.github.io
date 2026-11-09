@@ -1265,7 +1265,7 @@
       nombre.className = 'name';
       nombre.textContent = bonito(archivo);
       a.appendChild(nombre);
-      if (ARCHIVOS_IMPORTANTES.includes(bonito(archivo))) {
+      if (ARCHIVOS_IMPORTANTES.includes(bonito(archivo)) || ARCHIVOS_IMPORTANTES.includes(ruta)) {
         a.classList.add('importante');
         const marca = document.createElement('span');
         marca.className = 'marca-importante';
@@ -1413,7 +1413,12 @@
     // (titulo tal como se ve en la pagina, sin el numero inicial)
     // Subcarpetas que llevan la etiqueta "Importante" en su titulo (ruta completa de la carpeta)
     const SECCIONES_IMPORTANTES = [];
-    const ARCHIVOS_IMPORTANTES = ['Ejercicios de práctica 1 para el Control 1 (Mathematica)', 'Corrección Certamen 2'];
+    // (o la ruta completa del archivo, cuando el titulo se repite en otros ramos, como "Ensayo 1")
+    const ARCHIVOS_IMPORTANTES = [
+      'Ejercicios de práctica 1 para el Control 1 (Mathematica)',
+      'Corrección Certamen 2',
+      'material/Electricidad y Magnetismo/1 - Control 3/1 - Ensayo 1.pdf',
+    ];
 
     // Ensayos con nivel: turquesa "Certamen pasado", amarillo "Nivel medio" y rojo "Mas dificil"
     // (clave = ruta dentro de material/, sin extension y con los numeros iniciales)
