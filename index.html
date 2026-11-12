@@ -521,40 +521,6 @@
     .privado > summary:hover { color: var(--accent); }
     .privado > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
     .privado form { margin-top: 12px; }
-    /* Avisos por correo de material nuevo */
-    .avisos { margin: 0 0 8px; padding: 14px 16px; border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 10px; background: rgba(255, 255, 255, 0.04); }
-    .avisos[hidden] { display: none; }
-    .avisos label { display: block; margin-bottom: 4px; color: var(--heading); font-size: 0.9rem; }
-    .avisos-nota { margin: 0 0 10px !important; color: var(--dim); font-size: 0.8rem; }
-    .avisos .privado-estado.bien { color: var(--accent); }
-    #avisos-turnstile:not(:empty) { margin-top: 10px; }
-    .avisos-ramos { margin: 12px 0 0; padding: 0; border: 0; }
-    .avisos-ramos[hidden] { display: none; }
-    .avisos-ramos legend { padding: 0; margin-bottom: 6px; color: var(--dim); font-size: 0.8rem; }
-    #avisos-ramos-lista { display: flex; flex-wrap: wrap; gap: 6px; }
-    /* Botones de ramos: misma estetica metalizada que los demas botones; la casilla queda oculta */
-    .ramo-check {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      padding: 7px 15px;
-      border: 1px solid var(--metal-borde);
-      border-radius: 999px;
-      background: var(--metal);
-      box-shadow: var(--metal-glow);
-      color: var(--text);
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      user-select: none;
-      transition: transform 0.15s, box-shadow 0.2s, border-color 0.2s, color 0.2s;
-    }
-    .ramo-check input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
-    .ramo-check:hover { color: var(--heading); box-shadow: var(--metal-glow-fuerte); transform: translateY(-1px); }
-    .ramo-check:active { transform: scale(0.96); }
-    .ramo-check:has(input:checked) { color: var(--heading); border-color: rgba(94, 234, 212, 0.7); box-shadow: 0 0 10px rgba(94, 234, 212, 0.45); }
-    .ramo-check:has(input:checked) span::before { content: "✓"; margin-right: 6px; color: var(--accent); }
-    .ramo-check:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
     /* "¿Te sirvio?": aparece abajo despues de descargar un PDF */
     .opinion {
       position: fixed;
@@ -1067,20 +1033,6 @@
           <span>¿No carga desde <strong>eduroam</strong>? Usa esta dirección:
           <a class="inline" href="https://tomasjarufe.tomasjarufeurzua.workers.dev/">tomasjarufe.tomasjarufeurzua.workers.dev</a></span>
         </p>
-        <form class="avisos" id="avisos" hidden novalidate>
-          <label for="avisos-correo">¿Quieres un correo cuando suba material nuevo?</label>
-          <p class="avisos-nota">Mejor usa un correo personal (Gmail, Hotmail…): el de la USM a veces no recibe estos avisos.</p>
-          <div class="privado-fila">
-            <input id="avisos-correo" type="email" autocomplete="email" placeholder="tucorreo@gmail.com" required>
-            <button class="calc-boton" type="submit">Avisarme</button>
-          </div>
-          <fieldset class="avisos-ramos" id="avisos-ramos" hidden>
-            <legend>¿De qué ramos?</legend>
-            <div id="avisos-ramos-lista"></div>
-          </fieldset>
-          <div id="avisos-turnstile"></div>
-          <p id="avisos-estado" class="privado-estado" role="status"></p>
-        </form>
         <div id="material-list" class="material"><p class="muted">Cargando material…</p></div>
 
         <details class="privado candado" id="candado">
@@ -1418,6 +1370,7 @@
       'Ejercicios de práctica 1 para el Control 1 (Mathematica)',
       'Corrección Certamen 2',
       'material/Electricidad y Magnetismo/1 - Control 3/1 - Ensayo 1.pdf',
+      'material/Electricidad y Magnetismo/1 - Control 3/3 - Ejercicios control.pdf',
     ];
 
     // Ensayos con nivel: turquesa "Certamen pasado", amarillo "Nivel medio" y rojo "Mas dificil"
@@ -1630,9 +1583,6 @@
       const posicion = (c) => { const i = PRIMERAS.indexOf(c); return i < 0 ? PRIMERAS.length : i; };
       const carpetas = [...new Set(rutas.filter((r) => r.split('/').length > 2).map((r) => r.split('/')[1]))]
         .sort((x, y) => posicion(x) - posicion(y) || x.localeCompare(y, 'es', { numeric: true }));
-      // Los ramos (carpetas) se usan tambien en el formulario de avisos
-      window.carpetasMaterial = carpetas;
-      document.dispatchEvent(new CustomEvent('material-listo'));
       const sueltos = rutas.filter((r) => r.split('/').length === 2);
       caja.innerHTML = '';
       let hayAlgo = false;
@@ -2366,7 +2316,7 @@
     });
   </script>
   <script>
-    // Servicios del Worker de Cloudflare (_worker/index.js): avisos por correo, "¿Te sirvio?" y el panel privado.
+    // Servicios del Worker de Cloudflare (_worker/index.js): "¿Te sirvio?" y el panel privado.
     // API: direccion del Worker. TURNSTILE_SITEKEY: clave publica del captcha de Cloudflare (Turnstile).
     (function () {
       const API = 'https://tomasjarufe.tomasjarufeurzua.workers.dev/api';
@@ -2384,7 +2334,7 @@
         return d;
       }
 
-      // Captcha de Cloudflare: se carga una vez y sirve para el formulario de avisos y los reportes
+      // Captcha de Cloudflare: se carga una vez y sirve para los reportes de errores
       let resolverTurnstile;
       const turnstileListo = new Promise((r) => { resolverTurnstile = r; });
       window.onTurnstileListo = () => resolverTurnstile(window.turnstile);
@@ -2393,64 +2343,6 @@
       s.async = true;
       document.head.appendChild(s);
       const opcionesTurnstile = { sitekey: TURNSTILE_SITEKEY, theme: 'dark', size: 'flexible', appearance: 'interaction-only' };
-
-      // ---------- avisos por correo, eligiendo ramos ----------
-      (function () {
-        const form = document.getElementById('avisos');
-        const campo = document.getElementById('avisos-correo');
-        const estado = document.getElementById('avisos-estado');
-        const boton = form.querySelector('button[type="submit"]');
-        const caja = document.getElementById('avisos-ramos');
-        const listaRamos = document.getElementById('avisos-ramos-lista');
-        let widget = null;
-        const decir = (t, bien) => { estado.textContent = t; estado.classList.toggle('mal', !bien); estado.classList.toggle('bien', !!bien); };
-        turnstileListo.then((t) => { widget = t.render('#avisos-turnstile', opcionesTurnstile); });
-        form.hidden = false;
-
-        // Casillas: "Todos" (por defecto, incluye ramos futuros) o algunos ramos
-        function armarRamos() {
-          const carpetas = window.carpetasMaterial || [];
-          if (!carpetas.length || listaRamos.childElementCount) return;
-          const casilla = (valor, texto, marcada) => {
-            const l = el('label', 'ramo-check');
-            const c = el('input');
-            c.type = 'checkbox';
-            c.value = valor;
-            c.checked = marcada;
-            l.append(c, el('span', '', texto));
-            listaRamos.appendChild(l);
-            return c;
-          };
-          const todos = casilla('', 'Todos', true);
-          const cada = carpetas.map((c) => casilla(c, titulo(c), false));
-          todos.addEventListener('change', () => { if (todos.checked) cada.forEach((c) => { c.checked = false; }); else if (!cada.some((c) => c.checked)) todos.checked = true; });
-          cada.forEach((c) => c.addEventListener('change', () => { todos.checked = !cada.some((x) => x.checked); }));
-          caja.hidden = false;
-        }
-        if (window.carpetasMaterial) armarRamos();
-        document.addEventListener('material-listo', armarRamos);
-
-        form.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const correo = campo.value.trim();
-          if (!campo.checkValidity() || !correo) return decir('Escribe un correo válido.');
-          const token = widget !== null && window.turnstile ? window.turnstile.getResponse(widget) : '';
-          if (!token) return decir('Espera un segundo a que termine la verificación y vuelve a intentar.');
-          const ramos = [...listaRamos.querySelectorAll('input:checked')].map((c) => c.value).filter(Boolean);
-          boton.disabled = true;
-          decir('Enviando…', true);
-          try {
-            const d = await llamar('/suscribir', { correo, turnstile: token, ramos });
-            decir(d.mensaje || '¡Listo!', true);
-            campo.value = '';
-          } catch (err) {
-            decir(err.message === 'Failed to fetch' ? 'No se pudo conectar. Intenta de nuevo en unos minutos.' : err.message);
-          } finally {
-            boton.disabled = false;
-            if (window.turnstile && widget !== null) window.turnstile.reset(widget);
-          }
-        });
-      })();
 
       // ---------- "¿Te sirvio?" despues de descargar un PDF ----------
       (function () {
@@ -2558,7 +2450,7 @@
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !caja.hidden) cerrar(); });
       })();
 
-      // ---------- panel privado (inscritos, votos y reportes) ----------
+      // ---------- panel privado (votos y reportes) ----------
       (function () {
         const det = document.getElementById('panel');
         const form = document.getElementById('panel-form');
@@ -2582,25 +2474,6 @@
 
         function dibujar(d) {
           cont.replaceChildren();
-          cont.appendChild(el('h4', '', 'Inscritos'));
-          cont.appendChild(el('p', '', `${d.inscritos} inscritos · +${d.altas_30_dias} altas y −${d.bajas_30_dias} bajas en los últimos 30 días`));
-          const ul = el('ul');
-          ul.appendChild(el('li', '', `Todos los ramos: ${d.todos_los_ramos}`));
-          Object.entries(d.por_ramo).sort((a, b) => b[1] - a[1]).forEach(([r, n]) => ul.appendChild(el('li', '', `${titulo(r)}: ${n}`)));
-          cont.appendChild(ul);
-          const lista = el('details');
-          lista.appendChild(el('summary', '', `Ver correos (${d.lista.length})`));
-          const tl = el('table', 'panel-tabla');
-          d.lista.forEach((x) => {
-            const tr = el('tr');
-            const td = el('td', '', x.correo);
-            td.appendChild(el('span', 'sub', (x.ramos ? x.ramos.map(titulo).join(', ') : 'Todos los ramos') + ' · ' + fecha(x.creado) + ' · IP ' + (x.ip || 'sin registro')));
-            tr.appendChild(td);
-            tl.appendChild(tr);
-          });
-          lista.appendChild(tl);
-          cont.appendChild(lista);
-
           cont.appendChild(el('h4', '', '¿Te sirvió?'));
           if (!d.votos.length) cont.appendChild(el('p', 'muted', 'Aún no hay votos.'));
           else {

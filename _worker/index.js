@@ -1,16 +1,12 @@
-// Worker de la copia en Cloudflare: sirve el sitio (carpeta _cf) y la lista de avisos por correo.
+// Worker de la copia en Cloudflare: sirve el sitio (carpeta _cf) y unas pocas funciones con base de datos.
 //
-//   POST /api/suscribir  { correo, turnstile }  → inscribe el correo y manda una bienvenida con enlace de baja
-//   GET  /api/confirmar?t=TOKEN                 → confirma (para enlaces de confirmacion antiguos)
-//   GET  /api/baja?t=TOKEN (o POST, un clic)    → borra el correo de la lista
-//   POST /api/aviso      { archivos: [...] }    → avisa a los confirmados (solo con AVISO_TOKEN)
-//   POST /api/voto       { ruta, voto: 1|-1 }   → "¿Te sirvio?" de un PDF (un voto por persona y archivo)
+//   POST /api/voto       { ruta, voto: 1|-1 }       → "¿Te sirvio?" de un PDF (un voto por persona y archivo)
 //   POST /api/reporte    { ruta, texto, turnstile } → reporte de un error en un PDF
-//   POST /api/panel      { clave, accion? }     → numeros para el panel privado (solo con ADMIN_CLAVE)
+//   POST /api/panel      { clave, accion? }         → numeros para el panel privado (solo con ADMIN_CLAVE)
 //
 // Configuracion (Cloudflare → Workers → tomasjarufe → Settings → Variables and Secrets):
-//   base D1 "DB" (en wrangler.jsonc); secretos RESEND_API_KEY, TURNSTILE_SECRET, AVISO_TOKEN,
-//   ADMIN_CLAVE (clave del panel) y, opcional, ADMIN_CORREO (recibe los reportes de errores).
+//   base D1 "DB" (en wrangler.jsonc); secretos TURNSTILE_SECRET, AVISO_TOKEN (se usa como sal de las huellas),
+//   ADMIN_CLAVE (clave del panel) y, opcional, ADMIN_CORREO + RESEND_API_KEY (te llegan los reportes por correo).
 
 const SITIO = 'https://tomasjarufe.site';
 const COPIA = 'https://tomasjarufe.tomasjarufeurzua.workers.dev';
@@ -21,26 +17,11 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
-    // Diagnostico: que configuracion ve el Worker (solo nombres, nunca valores)
-    if (url.pathname === '/api/estado') {
-      const tiene = (k) => typeof env[k] === 'string' && env[k].length > 0;
-      return json({
-        base_de_datos: !!env.DB,
-        RESEND_API_KEY: tiene('RESEND_API_KEY'),
-        TURNSTILE_SECRET: tiene('TURNSTILE_SECRET'),
-        AVISO_TOKEN: tiene('AVISO_TOKEN'),
-        nombres_recibidos: Object.keys(env).sort(),
-      }, 200, request);
-    }
     try {
-      if (!env.DB) return json({ error: 'Los avisos por correo aún no están configurados.' }, 503, request);
+      if (!env.DB) return json({ error: 'La base de datos no está configurada.' }, 503, request);
       await crearTabla(env);
       const ruta = url.pathname.replace(/\/+$/, '');
       if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(request) });
-      if (ruta === '/api/suscribir' && request.method === 'POST') return await suscribir(request, env);
-      if (ruta === '/api/confirmar' && request.method === 'GET') return await confirmar(url, env);
-      if (ruta === '/api/baja' && (request.method === 'GET' || request.method === 'POST')) return await baja(request, url, env);
-      if (ruta === '/api/aviso' && request.method === 'POST') return await aviso(request, env);
       if (ruta === '/api/voto' && request.method === 'POST') return await votar(request, env);
       if (ruta === '/api/reporte' && request.method === 'POST') return await reportar(request, env);
       if (ruta === '/api/panel' && request.method === 'POST') return await panel(request, env);
@@ -57,13 +38,6 @@ let tablasListas = false;
 async function crearTabla(env) {
   if (tablasListas) return;
   await env.DB.batch([
-    env.DB.prepare(`CREATE TABLE IF NOT EXISTS suscriptores (
-      correo TEXT PRIMARY KEY,
-      token TEXT NOT NULL UNIQUE,
-      confirmado INTEGER NOT NULL DEFAULT 0,
-      creado TEXT NOT NULL,
-      confirmacion_enviada TEXT
-    )`),
     // Votos "¿Te sirvio?": uno por persona (huella anonima) y archivo; se puede cambiar
     env.DB.prepare(`CREATE TABLE IF NOT EXISTS votos (
       ruta TEXT NOT NULL,
@@ -78,80 +52,8 @@ async function crearTabla(env) {
       texto TEXT NOT NULL,
       creado TEXT NOT NULL
     )`),
-    // Altas y bajas de la lista, para el panel (sin correos)
-    env.DB.prepare(`CREATE TABLE IF NOT EXISTS eventos (
-      tipo TEXT NOT NULL,
-      creado TEXT NOT NULL
-    )`),
   ]);
-  // Ramos elegidos por cada inscrito (JSON con nombres de carpeta; NULL = todos los ramos)
-  const { results } = await env.DB.prepare('PRAGMA table_info(suscriptores)').all();
-  if (!results.some((c) => c.name === 'ramos')) await env.DB.prepare('ALTER TABLE suscriptores ADD COLUMN ramos TEXT').run();
-  // IP desde donde se inscribio el correo (la ultima vez que se inscribio)
-  if (!results.some((c) => c.name === 'ip')) await env.DB.prepare('ALTER TABLE suscriptores ADD COLUMN ip TEXT').run();
   tablasListas = true;
-}
-
-// ---------- suscribirse ----------
-async function suscribir(request, env) {
-  let datos;
-  try { datos = await request.json(); } catch { return json({ error: 'Datos inválidos.' }, 400, request); }
-  const correo = String(datos.correo || '').trim().toLowerCase();
-  if (correo.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(correo)) {
-    return json({ error: 'Ese correo no parece válido.' }, 400, request);
-  }
-  if (!(await turnstileOk(datos.turnstile, request, env))) {
-    return json({ error: 'No pudimos verificar que no eres un robot. Recarga la página e intenta de nuevo.' }, 400, request);
-  }
-  // Ramos elegidos: nombres de carpeta de material/ (vacio o ausente = todos)
-  const ramos = Array.isArray(datos.ramos)
-    ? [...new Set(datos.ramos.map((r) => String(r).trim()).filter((r) => r && r.length <= 80 && !/[\/]/.test(r)))].slice(0, 20)
-    : [];
-  const ramosJson = ramos.length ? JSON.stringify(ramos) : null;
-  const ahora = new Date().toISOString();
-  const ip = request.headers.get('CF-Connecting-IP') || null;
-  const fila = await env.DB.prepare('SELECT token, confirmado FROM suscriptores WHERE correo = ?').bind(correo).first();
-  // Misma respuesta en todos los casos, para no revelar quien esta inscrito
-  const listo = json({ ok: true, mensaje: '¡Listo! Te avisaré por correo cuando suba material nuevo. Te mandé un correo de bienvenida: si no lo ves, revisa Spam o Correo no deseado y márcalo como «No es spam».' }, 200, request);
-  if (fila && fila.confirmado) {
-    // Ya inscrito: inscribirse de nuevo solo actualiza los ramos elegidos (sin mandar otro correo)
-    await env.DB.prepare('UPDATE suscriptores SET ramos = ?, ip = ? WHERE correo = ?').bind(ramosJson, ip, correo).run();
-    return listo;
-  }
-  // Inscripcion inmediata (sin confirmar); llega un correo de bienvenida con el enlace para darse de baja,
-  // por si alguien inscribio un correo ajeno
-  const token = fila ? fila.token : crypto.randomUUID();
-  if (fila) {
-    await env.DB.prepare('UPDATE suscriptores SET confirmado = 1, confirmacion_enviada = ?, ramos = ?, ip = ? WHERE correo = ?').bind(ahora, ramosJson, ip, correo).run();
-  } else {
-    await env.DB.prepare('INSERT INTO suscriptores (correo, token, confirmado, creado, confirmacion_enviada, ramos, ip) VALUES (?, ?, 1, ?, ?, ?, ?)')
-      .bind(correo, token, ahora, ahora, ramosJson, ip).run();
-  }
-  const queRamos = ramos.length ? 'de ' + ramos.map(titulo).join(', ') : 'de los ramos que ayudo';
-  const salir = `${SITIO}/baja.html?t=${token}`;
-  const salirUnClic = `${COPIA}/api/baja?t=${token}`;
-  try {
-    await enviar(env, [{
-      from: REMITENTE,
-      to: [correo],
-      subject: 'Listo: te avisaré cuando suba material nuevo',
-      headers: { 'List-Unsubscribe': `<${salirUnClic}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
-      html: plantilla({
-        previa: 'Te avisaré cada vez que suba material nuevo.',
-        titulo: '¡Listo, quedaste inscrito!',
-        intro: `Desde ahora te llegará un correo cada vez que suba material nuevo ${esc(queRamos)}: apuntes, ensayos y pautas. Para cambiar de ramos, vuelve a inscribirte en la página con el mismo correo.`,
-        boton: { texto: 'Ver el material', href: `${SITIO}/#material` },
-        pie: `¿No fuiste tú quien se inscribió? <a href="${salir}" style="color:${C.tenue};text-decoration:underline">Darme de baja</a> y no recibirás nada más.`,
-      }),
-      text: `Desde ahora te llegará un correo cada vez que suba material nuevo ${queRamos} a tomasjarufe.site.\n\n¿No fuiste tú? Date de baja aquí: ${salir}`,
-    }]);
-    await env.DB.prepare("INSERT INTO eventos (tipo, creado) VALUES ('alta', ?)").bind(ahora).run();
-  } catch (e) {
-    // Si la bienvenida no sale (por ejemplo, correo inexistente), la inscripcion se deshace
-    await env.DB.prepare('DELETE FROM suscriptores WHERE correo = ?').bind(correo).run();
-    throw e;
-  }
-  return listo;
 }
 
 async function turnstileOk(respuesta, request, env) {
@@ -165,93 +67,6 @@ async function turnstileOk(respuesta, request, env) {
   const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: cuerpo });
   const d = await r.json();
   return !!d.success;
-}
-
-// ---------- confirmar y darse de baja ----------
-async function confirmar(url, env) {
-  const t = url.searchParams.get('t') || '';
-  const r = await env.DB.prepare('UPDATE suscriptores SET confirmado = 1 WHERE token = ?').bind(t).run();
-  if (!r.meta.changes) return pagina('Enlace no válido', 'Este enlace no es válido o ya te diste de baja. Puedes inscribirte de nuevo en la página.');
-  return pagina('¡Listo!', 'Desde ahora te llegará un correo cada vez que suba material nuevo. Cada correo trae un enlace para darte de baja.');
-}
-
-// Abrir el enlace (GET) solo muestra un boton; la baja se hace con POST. Asi los antivirus de correo
-// (como el de Microsoft en @usm.cl), que abren todos los enlaces de un mail, no dan de baja a nadie.
-// El boton "Cancelar suscripcion" de Gmail/Outlook usa POST (List-Unsubscribe-Post) y da de baja altiro.
-async function baja(request, url, env) {
-  const t = url.searchParams.get('t') || '';
-  if (request.method === 'GET') {
-    const fila = await env.DB.prepare('SELECT 1 FROM suscriptores WHERE token = ?').bind(t).first();
-    if (!fila) return pagina('Ya no estás inscrito', 'Este correo ya no está en la lista de avisos.');
-    return pagina('¿Darte de baja?', 'Dejarás de recibir los correos de material nuevo.',
-      `<form method="post" action="/api/baja?t=${encodeURIComponent(t)}"><button type="submit" style="padding:10px 20px;border-radius:999px;border:1px solid #8a7f57;background:#42464b;color:#f1f3f5;font:inherit;font-weight:600;cursor:pointer">Sí, darme de baja</button></form>`);
-  }
-  const borrado = await env.DB.prepare('DELETE FROM suscriptores WHERE token = ?').bind(t).run();
-  if (borrado.meta.changes) await env.DB.prepare("INSERT INTO eventos (tipo, creado) VALUES ('baja', ?)").bind(new Date().toISOString()).run();
-  // Desde la pagina baja.html de tomasjarufe.site se responde en JSON (con CORS)
-  if (request.headers.get('Origin')) return json({ ok: true }, 200, request);
-  return pagina('Te diste de baja', 'Ya no recibirás más correos de avisos de material. Tu correo fue borrado de la lista.');
-}
-
-// ---------- aviso de material nuevo ----------
-async function aviso(request, env) {
-  const auth = request.headers.get('Authorization') || '';
-  if (!env.AVISO_TOKEN || auth !== `Bearer ${env.AVISO_TOKEN}`) return json({ error: 'No autorizado' }, 401, request);
-  let datos;
-  try { datos = await request.json(); } catch { return json({ error: 'Datos inválidos.' }, 400, request); }
-  const archivos = (Array.isArray(datos.archivos) ? datos.archivos : [])
-    .map(String).filter((r) => r.startsWith('material/') && !r.split('/').pop().startsWith('.'));
-  if (!archivos.length) return json({ ok: true, enviados: 0 }, 200, request);
-  // "solo": manda el aviso a un solo inscrito (para probar sin molestar a los demas)
-  const solo = datos.solo ? String(datos.solo).trim().toLowerCase() : '';
-  // Si "solo" empieza con @ (por ejemplo @usm.cl) va a todos los de ese dominio y sus subdominios
-  const dominio = solo.startsWith('@') ? solo.slice(1) : '';
-  const { results } = dominio
-    ? await env.DB.prepare("SELECT correo, token, ramos FROM suscriptores WHERE confirmado = 1 AND (correo LIKE ? OR correo LIKE ?)").bind('%@' + dominio, '%.' + dominio).all()
-    : solo
-      ? await env.DB.prepare('SELECT correo, token, ramos FROM suscriptores WHERE confirmado = 1 AND correo = ?').bind(solo).all()
-      : await env.DB.prepare('SELECT correo, token, ramos FROM suscriptores WHERE confirmado = 1').all();
-  const lista = archivos.map((ruta) => {
-    const partes = ruta.split('/');
-    const ramo = titulo(partes[1]);
-    const nombre = titulo(partes[partes.length - 1].replace(/\.[^.]+$/, ''));
-    const href = `${SITIO}/${partes.map(encodeURIComponent).join('/')}`;
-    const carpeta = partes.slice(2, -1).map(titulo).join(' · ');
-    return { ramo, nombre, href, carpeta, carpetaRamo: partes[1] };
-  });
-  // Cada inscrito recibe solo los archivos de los ramos que eligio (sin eleccion = todos)
-  const mensajes = results.map((s) => {
-    let elegidos = null;
-    try { elegidos = s.ramos ? JSON.parse(s.ramos) : null; } catch { elegidos = null; }
-    const suyos = elegidos && elegidos.length ? lista.filter((x) => elegidos.includes(x.carpetaRamo)) : lista;
-    if (!suyos.length) return null;
-    return mensajeAviso(s, suyos);
-  }).filter(Boolean);
-  for (let i = 0; i < mensajes.length; i += 100) await enviar(env, mensajes.slice(i, i + 100));
-  return json({ ok: true, enviados: mensajes.length }, 200, request);
-}
-
-function mensajeAviso(s, lista) {
-  const cuerpo = filasArchivos(lista);
-  const texto = lista.map((x) => `- ${x.nombre} (${x.ramo}): ${x.href}`).join('\n');
-  const asunto = lista.length === 1 ? `Material nuevo: ${lista[0].nombre}` : `Material nuevo: ${lista.length} archivos`;
-  const salir = `${SITIO}/baja.html?t=${s.token}`;
-  const salirUnClic = `${COPIA}/api/baja?t=${s.token}`;
-  return {
-    from: REMITENTE,
-    to: [s.correo],
-    subject: asunto,
-    headers: { 'List-Unsubscribe': `<${salirUnClic}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
-    html: plantilla({
-      previa: lista.map((x) => x.nombre).join(' · '),
-      titulo: lista.length === 1 ? 'Subí material nuevo' : `Subí ${lista.length} archivos nuevos`,
-      intro: 'Ya está disponible en la página. Toca un archivo para descargarlo.',
-      cuerpo,
-      boton: { texto: 'Ver todo el material', href: `${SITIO}/#material` },
-      pie: `Recibes esto porque te inscribiste en tomasjarufe.site. <a href="${salir}" style="color:${C.tenue};text-decoration:underline">Darme de baja</a>`,
-    }),
-    text: `Subí material nuevo:\n\n${texto}\n\nTodo el material: ${SITIO}/#material\n\nDarme de baja: ${salir}`,
-  };
 }
 
 // ---------- "¿Te sirvio?" y reportes de errores ----------
@@ -335,29 +150,11 @@ async function panel(request, env) {
   if (datos.accion === 'borrar-reporte') {
     await env.DB.prepare('DELETE FROM reportes WHERE id = ?').bind(Number(datos.id) || 0).run();
   }
-  const hace30 = new Date(Date.now() - 30 * 86400000).toISOString();
-  const [ins, ev, votos, reportes] = await env.DB.batch([
-    env.DB.prepare('SELECT correo, ramos, creado, ip FROM suscriptores WHERE confirmado = 1 ORDER BY creado DESC'),
-    env.DB.prepare('SELECT tipo, COUNT(*) AS n FROM eventos WHERE creado >= ? GROUP BY tipo').bind(hace30),
+  const [votos, reportes] = await env.DB.batch([
     env.DB.prepare(`SELECT ruta, SUM(voto = 1) AS si, SUM(voto = -1) AS no FROM votos GROUP BY ruta ORDER BY (SUM(voto = 1) + SUM(voto = -1)) DESC, ruta`),
     env.DB.prepare('SELECT id, ruta, texto, creado FROM reportes ORDER BY id DESC LIMIT 100'),
   ]);
-  const porRamo = {};
-  let todos = 0;
-  for (const s of ins.results) {
-    let r = null;
-    try { r = s.ramos ? JSON.parse(s.ramos) : null; } catch { r = null; }
-    if (!r || !r.length) { todos++; continue; }
-    for (const x of r) porRamo[x] = (porRamo[x] || 0) + 1;
-  }
-  const evento = (t) => (ev.results.find((e) => e.tipo === t) || { n: 0 }).n;
   return json({
-    inscritos: ins.results.length,
-    todos_los_ramos: todos,
-    por_ramo: porRamo,
-    altas_30_dias: evento('alta'),
-    bajas_30_dias: evento('baja'),
-    lista: ins.results.map((s) => ({ correo: s.correo, ramos: s.ramos ? JSON.parse(s.ramos) : null, creado: s.creado, ip: s.ip || null })),
     votos: votos.results,
     reportes: reportes.results,
   }, 200, request);
@@ -447,20 +244,6 @@ ${boton ? `<tr><td style="padding:12px 28px 8px">
 </td></tr></table></body></html>`;
 }
 
-// Lista de archivos agrupada por ramo, con filas como las de la pagina
-function filasArchivos(lista) {
-  const ramos = [...new Set(lista.map((x) => x.ramo))];
-  return ramos.map((ramo) => `
-  <p class="c-titulo" style="margin:6px 0 8px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:${C.titulo}">${esc(ramo)}</p>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 14px">${lista.filter((x) => x.ramo === ramo).map((x) => `
-    <tr><td style="padding:0 0 8px"><a href="${x.href}" style="display:block;text-decoration:none">
-      <table role="presentation" class="c-fila" width="100%" cellpadding="0" cellspacing="0" style="background:${C.fila};border-radius:10px;border-left:3px solid ${C.turquesa}"><tr>
-        <td class="c-titulo" style="padding:12px 14px;font-size:15px;line-height:1.4;color:${C.titulo}">${esc(x.nombre)}${x.carpeta ? `<br><span class="c-tenue" style="font-size:12px;color:${C.tenue}">${esc(x.carpeta)}</span>` : ''}</td>
-        <td align="right" style="padding:12px 14px 12px 0;white-space:nowrap"><span class="c-pdf" style="display:inline-block;padding:3px 9px;border-radius:5px;background:${C.pdfFondo};color:${C.pdfTexto};font-size:11px;font-weight:700">PDF</span> <span class="c-tenue" style="color:${C.tenue};font-size:15px">↓</span></td>
-      </tr></table></a></td></tr>`).join('')}
-  </table>`).join('');
-}
-
 function cors(request) {
   const origen = request.headers.get('Origin');
   const h = { 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', Vary: 'Origin' };
@@ -470,12 +253,4 @@ function cors(request) {
 
 function json(datos, status, request) {
   return new Response(JSON.stringify(datos), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', ...cors(request) } });
-}
-
-function pagina(titulo, texto, extra = '') {
-  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(titulo)}</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#2e3135;color:#d1d5db;font-family:system-ui,sans-serif;padding:24px}
-main{max-width:420px}h1{color:#f3f4f6;font-size:1.4rem}a{color:#5eead4}</style></head>
-<body><main><h1>${esc(titulo)}</h1><p>${esc(texto)}</p>${extra}<p><a href="${SITIO}/#material">Volver al material</a></p></main></body></html>`;
-  return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
 }
