@@ -1194,15 +1194,19 @@
     function enlaceDescarga(ruta) {
       const archivo = ruta.split('/').pop();
       const a = document.createElement('a');
+      // Una pagina .html dentro de material/ es una actividad interactiva: se abre en la misma pestana
+      const esPagina = /\.html$/i.test(archivo);
       a.href = ruta.split('/').map(encodeURIComponent).join('/') + (versionMaterial ? '?v=' + versionMaterial : '');
-      a.target = '_blank';
-      a.rel = 'noopener';
+      if (!esPagina) {
+        a.target = '_blank';
+        a.rel = 'noopener';
+      }
       a.addEventListener('click', () => {
         if (window.goatcounter && window.goatcounter.count) {
-          window.goatcounter.count({ path: 'descarga/' + ruta.replace(/^material\//, ''), title: bonito(archivo), event: true });
+          window.goatcounter.count({ path: (esPagina ? 'pagina/' : 'descarga/') + ruta.replace(/^material\//, ''), title: bonito(archivo), event: true });
         }
         // Despues de descargar se pregunta "¿Te sirvio?" (ver el script de servicios al final)
-        if (window.pedirOpinion) window.pedirOpinion(ruta, bonito(archivo));
+        if (!esPagina && window.pedirOpinion) window.pedirOpinion(ruta, bonito(archivo));
       });
       return a;
     }
@@ -1237,12 +1241,12 @@
       if (ext) {
         const e = document.createElement('span');
         e.className = 'ext';
-        e.textContent = ext;
+        e.textContent = ext === 'HTML' ? 'Interactivo' : ext;
         a.appendChild(e);
       }
       const flecha = document.createElement('span');
       flecha.className = 'arrow';
-      flecha.textContent = '↓';
+      flecha.textContent = ext === 'HTML' ? '→' : '↓';
       a.appendChild(flecha);
       li.appendChild(a);
       return li;
