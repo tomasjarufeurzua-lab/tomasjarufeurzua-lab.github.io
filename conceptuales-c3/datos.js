@@ -1,6 +1,6 @@
-// Contenido de las 24 preguntas conceptuales (FIS121 · Certamen 3), en el orden en que salen:
+// Contenido de las 20 preguntas conceptuales (FIS121 · Certamen 3), en el orden en que salen:
 // primero la Parte A (las más probables) y después la Parte B.
-// Para editar una pregunta basta con cambiar este archivo: las animaciones viven en sims.js
+// Para editar una pregunta basta con cambiar este archivo: las animaciones viven en anim-*.js
 // y se eligen por el campo "animacion".
 // Texto: los párrafos se separan con una línea en blanco, "- " al inicio de línea es un punto
 // de lista, **así** es negrita y las fórmulas van entre $...$ (en línea) o $$...$$ (bloque).
@@ -36,7 +36,7 @@ Con monopolos habría una "carga magnética" $q_m$ y Gauss magnético quedaría 
     respuesta: String.raw`$\vec B$ se crea de dos formas: con **corriente** (cargas en movimiento) y con un **$\vec E$ que cambia**. Para el $\vec E$ que da vueltas solo existe la segunda forma: un **$\vec B$ que cambia**. El término equivalente a la corriente sería una "corriente magnética" de **monopolos en movimiento**, que no existen. Si existieran:
 $$\oint\vec E\cdot d\vec l=-\mu_0 I_m-\frac{d\phi_B}{dt}$$
 **Simetría:** un $\vec B$ variable crea $\vec E$ (Faraday) y un $\vec E$ variable crea $\vec B$ (Maxwell). Uno alimenta al otro, y por eso existen las **ondas electromagnéticas** (la luz), que viajan sin necesitar cargas ni corrientes.`,
-    animacion: 'maxwell-onda', animTitulo: 'Las cuatro ecuaciones y la onda',
+    animacion: null,
     ideaClave: String.raw`$\vec E$ que cambia ⇄ $\vec B$ que cambia: así viaja la luz.`,
   },
   {
@@ -57,6 +57,7 @@ El **núcleo de hierro** guía las líneas de campo de una bobina a la otra: cas
 
 Se transmite en **alta tensión** porque, para la misma potencia, la corriente es menor, y las pérdidas en los cables son $I^2R$: con $10$ veces menos corriente se pierde **$100$ veces menos**.`,
     animacion: 'potencia-linea', animTitulo: 'Balanza de potencia y línea de transmisión',
+    notaAnim: String.raw`Para el certamen **no es necesario** saber calcular la potencia que se disipa en los cables ($I^2R$): basta con entender que pierde mucho menos cuando la corriente es menor.`,
     ideaClave: String.raw`Más voltaje, menos corriente, mucho menos pérdida ($\propto I^2$).`,
   },
   {
@@ -68,17 +69,7 @@ Se transmite en **alta tensión** porque, para la misma potencia, la corriente e
     ideaClave: 'Lado de alta tensión = más vueltas.',
   },
   {
-    id: 7, parte: 'A', tema: 'Transformador',
-    titulo: 'Secundaria sin carga',
-    enunciado: String.raw`Si la secundaria de un transformador ideal se deja sin carga, ¿la red le sigue entregando potencia? ¿Qué pasa en la primaria cuando se conecta más carga?`,
-    respuesta: String.raw`Sin carga, $I_s=0$: la secundaria no crea campo y la primaria solo lleva una corriente muy pequeña para mantener el flujo, que en el caso ideal no consume energía. La red **casi no entrega potencia**.
-
-Al conectar carga circula $I_s$, cuyo campo **se opone** al cambio de flujo (Lenz). Pero la red fija $V_p=N_p\,d\phi/dt$, así que el flujo no puede cambiar: la primaria **saca más corriente** de la red, justo la necesaria para cancelar el efecto de $I_s$ ($N_pI_p\approx N_sI_s$). Así pasa la energía de la red a la carga.`,
-    animacion: 'primaria-carga', animTitulo: 'La primaria responde a la carga',
-    ideaClave: 'La secundaria "tira" y la primaria "paga".',
-  },
-  {
-    id: 8, parte: 'A', tema: 'Faraday y Lenz',
+    id: 7, parte: 'A', tema: 'Faraday y Lenz',
     titulo: '¿Qué induce una fem?',
     enunciado: String.raw`¿Qué es lo que induce una fem? Diga si se induce corriente en cada caso: (a) una espira quieta en un campo muy intenso pero constante; (b) una espira que se traslada sin girar en un campo uniforme; (c) una espira que se aleja de un alambre con corriente.`,
     respuesta: String.raw`Lo que induce es que el **flujo cambie**, $\varepsilon=-d\phi/dt$, no que el campo sea grande. Como $\phi=BA\cos\theta$, el flujo cambia si cambia $B$, $A$ o $\theta$.
@@ -86,12 +77,12 @@ Al conectar carga circula $I_s$, cuyo campo **se opone** al cambio de flujo (Len
 - (b) **No:** $B$, $A$ y $\theta$ no cambian. (Visto con barras: los dos lados opuestos tienen la misma $vBL$ en sentidos contrarios y se cancelan.)
 - (c) **Sí:** $B\propto 1/x$ no es uniforme, y al alejarse la espira entra en zonas de menos campo, así que $\phi$ disminuye.
 
-(Si la espira gira, cambia $\theta$ y sí hay fem: ver Pregunta 13.)`,
+(Si la espira gira, cambia $\theta$ y sí hay fem: ver Pregunta 11.)`,
     animacion: 'tres-escenarios', animTitulo: 'Tres escenarios',
     ideaClave: String.raw`Flujo constante → $\varepsilon=0$. Flujo que cambia → hay corriente.`,
   },
   {
-    id: 9, parte: 'A', tema: 'Faraday y Lenz',
+    id: 8, parte: 'A', tema: 'Faraday y Lenz',
     titulo: 'El signo menos y la energía',
     enunciado: String.raw`¿Por qué la ley de Faraday lleva signo menos? ¿Qué pasaría si fuera positivo? ¿De dónde sale la energía que se disipa en la espira?`,
     respuesta: String.raw`El menos (Lenz) dice que la corriente inducida **se opone al cambio** de flujo, y es una consecuencia de la **conservación de la energía**. Si fuera $+$, la corriente reforzaría el cambio: un imán que se acerca sería atraído, se aceleraría solo, induciría más corriente, y así sin fin. Se obtendría energía de la nada.
@@ -101,7 +92,7 @@ Con el menos, la espira frena al imán (o a la barra): quien lo mueve tiene que 
     ideaClave: 'El signo menos es la conservación de la energía.',
   },
   {
-    id: 10, parte: 'A', tema: 'Faraday y Lenz',
+    id: 9, parte: 'A', tema: 'Faraday y Lenz',
     titulo: 'Imán y aro (Lenz)',
     enunciado: String.raw`Se acerca el polo Norte de un imán a un aro conductor. ¿En qué sentido circula la corriente inducida (vista desde el imán)? ¿El aro atrae o repele al imán? ¿Qué cambia si el imán se aleja, o si es el polo Sur?`,
     respuesta: String.raw`Al acercarse, el flujo del imán hacia el aro ($\rightarrow$) **aumenta**. La corriente inducida crea un $\vec B_{ind}$ hacia el imán ($\leftarrow$): **vista desde el imán, la corriente es antihoraria**. Esa cara del aro se comporta como un polo **Norte** frente al Norte del imán: el aro **repele** al imán (se opone a que se acerque).
@@ -113,7 +104,7 @@ Con el menos, la espira frena al imán (o a la barra): quien lo mueve tiene que 
     ideaClave: 'Se acerca → el flujo aumenta → repele. Se aleja → el flujo disminuye → atrae.',
   },
   {
-    id: 11, parte: 'A', tema: 'Faraday y Lenz',
+    id: 10, parte: 'A', tema: 'Faraday y Lenz',
     titulo: 'Barra en movimiento sin circuito',
     enunciado: String.raw`Una barra metálica de largo $L$ se mueve con velocidad $\vec v$ hacia la derecha en un campo $\vec B$ que sale de la pantalla, **sin** estar conectada a nada. ¿Qué pasa con sus cargas? ¿Hay corriente? ¿Qué extremo queda a mayor potencial?`,
     respuesta: String.raw`Cada carga siente $\vec F=q\vec v\times\vec B$. Con $\vec v=v\hat\imath$ y $\vec B=B\hat k$: $\hat\imath\times\hat k=-\hat\jmath$, así que las cargas **positivas** son empujadas hacia **abajo** (y los electrones hacia arriba). Se acumula carga hasta que el campo eléctrico interno equilibra la fuerza magnética: $qE=qvB$.
@@ -123,19 +114,7 @@ Queda una diferencia de potencial $\Delta V=vBL$ con el extremo **inferior** a m
     ideaClave: String.raw`Sin circuito: solo $\Delta V$. Con circuito: corriente.`,
   },
   {
-    id: 12, parte: 'A', tema: 'Faraday y Lenz',
-    titulo: 'Campo eléctrico inducido',
-    enunciado: String.raw`En una región cilíndrica de radio $R_0$ hay un campo $B(t)$ que cambia. ¿Hay campo eléctrico fuera de la región, donde $B=0$? ¿En qué se diferencia este $\vec E$ del de una carga?`,
-    respuesta: String.raw`**Sí.** Por Faraday, $\oint\vec E\cdot d\vec l=-\frac{d\phi}{dt}$, y un círculo de radio $r>R_0$ encierra todo el flujo que cambia, así que $E\,2\pi r=\pi R_0^2\left|\frac{dB}{dt}\right|$ y
-$$E=\frac{R_0^2}{2r}\left|\frac{dB}{dt}\right|\neq 0.$$
-Lo que importa es el **flujo encerrado**, no el campo en el punto.
-
-**Diferencia:** el $\vec E$ de una carga sale de ella y empieza y termina en cargas (es conservativo, $\oint\vec E\cdot d\vec l=0$). El $\vec E$ inducido **da vueltas**: forma líneas cerradas y $\oint\vec E\cdot d\vec l\neq 0$. Por eso puede empujar carga alrededor de un circuito, y esa circulación es la fem.`,
-    animacion: 'campo-inducido', animTitulo: 'El campo que da vueltas',
-    ideaClave: String.raw`Lo que importa es el flujo encerrado: hay $\vec E$ donde no hay $\vec B$.`,
-  },
-  {
-    id: 13, parte: 'A', tema: 'Faraday y Lenz',
+    id: 11, parte: 'A', tema: 'Faraday y Lenz',
     titulo: 'Espira que gira (generador)',
     enunciado: String.raw`Una espira gira con rapidez angular constante en un campo uniforme. ¿En qué posición la fem es máxima? ¿Y cuándo es cero?`,
     respuesta: String.raw`$\phi=BA\cos(\omega t)$, así que $\varepsilon=BA\omega\sin(\omega t)$.
@@ -147,7 +126,7 @@ Lo que importa es el **flujo encerrado**, no el campo en el punto.
     ideaClave: 'La fem depende de qué tan rápido cambia el flujo, no de cuánto flujo hay.',
   },
   {
-    id: 14, parte: 'A', tema: 'Faraday y Lenz',
+    id: 12, parte: 'A', tema: 'Faraday y Lenz',
     titulo: 'Cocina de inducción (salió en el certamen anterior)',
     enunciado: String.raw`Una cocina de inducción calienta ollas con un campo magnético. Con dos ollas iguales, una de acero y otra de greda, ¿qué condición debe cumplir el campo y cuál calienta mejor el agua?`,
     respuesta: String.raw`El campo debe ser **variable** (corriente alterna en la bobina de la cocina): solo así cambia el flujo y se inducen fem. La olla de **acero** es conductora, así que en su base se inducen corrientes (**corrientes de Foucault**) que la calientan por efecto Joule ($I^2R$), y el calor pasa al agua. La **greda** es aislante: aunque se induzca fem, no circula corriente y no se calienta. (Con un campo constante no calentaría ninguna.)`,
@@ -155,7 +134,7 @@ Lo que importa es el **flujo encerrado**, no el campo en el punto.
     ideaClave: 'Campo variable + material conductor = calor.',
   },
   {
-    id: 15, parte: 'A', tema: 'Inductancia',
+    id: 13, parte: 'A', tema: 'Inductancia',
     titulo: 'Sentido de la fem autoinducida',
     enunciado: String.raw`Por una espira circula una corriente $I(t)$. ¿Cuál es el sentido de la fem autoinducida si (a) $I$ aumenta, (b) $I$ es constante, (c) $I$ disminuye?`,
     respuesta: String.raw`$\varepsilon_L=-L\,\frac{dI}{dt}$: la bobina se opone a que la corriente **cambie**.
@@ -168,7 +147,7 @@ Por eso una bobina actúa como la "inercia" de la corriente.`,
     ideaClave: 'La bobina no se opone a la corriente: se opone a que cambie.',
   },
   {
-    id: 16, parte: 'A', tema: 'Inductancia',
+    id: 14, parte: 'A', tema: 'Inductancia',
     titulo: '¿De qué depende $L$?',
     enunciado: String.raw`¿De qué depende la autoinductancia $L$ de una bobina? Si se duplica el número de vueltas, ¿qué pasa con $L$?`,
     respuesta: String.raw`$L=N\phi_1/I$ depende solo de la **geometría** (forma, tamaño, $N$ y el material del núcleo); la corriente siempre se cancela. Para un solenoide, $L=\mu_0 N^2 A/\ell$.
@@ -178,7 +157,7 @@ Con $2N$, $L$ se multiplica por **4**: el campo (y el flujo por vuelta) se dupli
     ideaClave: String.raw`$L$ es geometría: $L\propto N^2$.`,
   },
   {
-    id: 17, parte: 'A', tema: 'Inductancia',
+    id: 15, parte: 'A', tema: 'Inductancia',
     titulo: 'Cerrar y abrir el interruptor',
     enunciado: String.raw`Se cierra el interruptor de la bobina primaria (conectada a una batería). ¿Qué ocurre en la secundaria al cerrar, mientras el interruptor sigue cerrado y al abrir?`,
     respuesta: String.raw`**Al cerrar:** $I_1$ sube de $0$ a su valor final, el flujo aumenta y la secundaria tiene un **pulso** de corriente en sentido **contrario** al de la primaria (se opone al aumento).
@@ -190,7 +169,7 @@ Con $2N$, $L$ se multiplica por **4**: el campo (y el flujo por vuelta) se dupli
     ideaClave: 'Solo hay fem en la secundaria mientras la corriente de la primaria cambia.',
   },
   {
-    id: 18, parte: 'A', tema: 'Inductancia',
+    id: 16, parte: 'A', tema: 'Inductancia',
     titulo: String.raw`$M_{12}=M_{21}$`,
     enunciado: String.raw`Para calcular la inductancia mutua entre un alambre infinito y un toroide (o una espira rectangular), ¿conviene calcular el flujo del alambre por la bobina o el de la bobina por el alambre? ¿Por qué se puede elegir?`,
     respuesta: String.raw`Porque $M_{12}=M_{21}$: la inductancia mutua es una propiedad del **par de circuitos**, no de cuál lleva la corriente. Entonces se elige el cálculo **fácil**: el campo del alambre se conoce ($\frac{\mu_0 I}{2\pi r}$) y se integra su flujo por la bobina. Calcular el flujo del toroide "a través del alambre" no tiene sentido directo (el alambre no encierra un área definida, y fuera del toroide $B=0$).`,
@@ -200,18 +179,7 @@ Con $2N$, $L$ se multiplica por **4**: el campo (y el flujo por vuelta) se dupli
 
   // ===================== PARTE B · No creo que salgan, pero podrían =====================
   {
-    id: 19, parte: 'B', tema: 'Ley de Ampère',
-    titulo: 'Circulación con varias corrientes',
-    enunciado: String.raw`En la figura, la curva $\Gamma$ encierra $I_1$ (saliendo) e $I_2$ (entrando), mientras que $I_3$ queda afuera. ¿Cuánto vale $\oint_\Gamma\vec B\cdot d\vec l$ recorriendo $\Gamma$ en sentido antihorario? ¿Contribuye $I_3$ al campo en un punto $P$ de la curva?`,
-    dibujo: 'circulacion',
-    respuesta: String.raw`Con recorrido antihorario, $d\vec A$ sale de la pantalla: las corrientes que salen son positivas.
-$$\oint_\Gamma\vec B\cdot d\vec l=\mu_0(I_1-I_2)$$
-$I_3$ **sí** crea campo en $P$ (todas las corrientes crean campo en todas partes), pero su aporte a la **circulación** es cero: a lo largo de $\Gamma$ su campo a veces va a favor de $d\vec l$ y a veces en contra, y se cancela. Ampère dice cuánto da la integral, no cuánto vale $\vec B$ en cada punto.`,
-    animacion: 'circulacion', animTitulo: 'Recorriendo Γ',
-    ideaClave: 'Solo cuentan las corrientes encerradas, aunque todas creen campo.',
-  },
-  {
-    id: 20, parte: 'B', tema: 'Ley de Ampère',
+    id: 17, parte: 'B', tema: 'Ley de Ampère',
     titulo: 'Dos alambres paralelos',
     enunciado: String.raw`Dos alambres paralelos muy largos llevan corrientes iguales. ¿Existe un punto entre ellos donde $\vec B=0$ si las corrientes van en el mismo sentido? ¿Y si van en sentidos opuestos?`,
     respuesta: String.raw`**Mismo sentido:** sí, en el **punto medio**. Ahí cada campo vale $\frac{\mu_0 I}{2\pi(d/2)}$ y, con $\hat B=\hat u_I\times\hat r$, los vectores $\hat r$ son opuestos, así que los campos son opuestos y se anulan.
@@ -221,7 +189,7 @@ $I_3$ **sí** crea campo en $P$ (todas las corrientes crean campo en todas parte
     ideaClave: 'Mismo sentido → se cancelan entre ellos. Opuestos → se suman entre ellos.',
   },
   {
-    id: 21, parte: 'B', tema: 'Ley de Ampère',
+    id: 18, parte: 'B', tema: 'Ley de Ampère',
     titulo: '¿Cuándo sirve Ampère?',
     enunciado: String.raw`La ley de Ampère siempre se cumple. ¿Cuándo **sirve** para calcular $B$? Dé ejemplos donde sirve y donde no.`,
     respuesta: String.raw`Sirve cuando la simetría permite elegir un loop donde, en cada tramo, $\vec B\parallel d\vec l$ con módulo constante (así $B$ sale de la integral), o $\vec B\perp d\vec l$, o $B=0$.
@@ -233,7 +201,7 @@ $I_3$ **sí** crea campo en $P$ (todas las corrientes crean campo en todas parte
     ideaClave: 'Ampère siempre es verdad; solo es útil con simetría.',
   },
   {
-    id: 22, parte: 'B', tema: 'Ley de Ampère',
+    id: 19, parte: 'B', tema: 'Ley de Ampère',
     titulo: 'Solenoide: dirección y campo afuera',
     enunciado: String.raw`En un solenoide muy largo, ¿cuál es la dirección del campo adentro? ¿Por qué afuera es cero y adentro es uniforme?`,
     respuesta: String.raw`**Dirección:** por la regla de la mano derecha, con los dedos siguiendo la corriente (⊙ arriba, ⊗ abajo), el pulgar apunta a lo largo del eje (en el dibujo, hacia la derecha).
@@ -245,21 +213,7 @@ $I_3$ **sí** crea campo en $P$ (todas las corrientes crean campo en todas parte
     ideaClave: 'Adentro se suman, afuera se cancelan.',
   },
   {
-    id: 23, parte: 'B', tema: 'Ley de Ampère',
-    titulo: 'Densidad de corriente variable',
-    enunciado: String.raw`Un cilindro con densidad $J=br$ (crece hacia el borde) y otro con $J$ que **decrece** hacia el borde llevan la misma corriente total. ¿Dónde es máximo $B$ en cada uno? ¿Y cómo es el campo afuera?`,
-    respuesta: String.raw`Adentro, $B=\frac{\mu_0 I_{enl}(r)}{2\pi r}$.
-
-Con $J=br$ la corriente está cerca del borde: $I_{enl}\propto r^3$ y $B\propto r^2$, que crece hasta el máximo en $r=a$.
-
-Con $J$ decreciente la corriente está cerca del eje: un loop chico ya encierra mucha, $B$ crece rápido y su máximo queda **dentro** del cable (por ejemplo, en $\frac34 R$ para $J\propto 1-\frac rR$).
-
-**Afuera son iguales:** $B=\frac{\mu_0 I}{2\pi r}$. Solo importa la corriente total encerrada, no cómo está repartida.`,
-    animacion: 'densidad', animTitulo: '¿Dónde está la corriente?',
-    ideaClave: 'Afuera solo importa la corriente total; adentro, cómo está repartida.',
-  },
-  {
-    id: 24, parte: 'B', tema: 'Ley de Ampère',
+    id: 20, parte: 'B', tema: 'Ley de Ampère',
     titulo: 'Toroide',
     enunciado: String.raw`En un toroide, ¿por qué el campo es cero en el hueco y afuera, y por qué adentro no es uniforme?`,
     respuesta: String.raw`Un círculo en el hueco ($r<a$) no encierra corriente. Uno afuera ($r>b$) corta cada vuelta dos veces, una de subida y una de bajada, y la corriente neta es cero. Dentro del núcleo encierra $N$ vueltas: $B=\frac{\mu_0 N I}{2\pi r}$.

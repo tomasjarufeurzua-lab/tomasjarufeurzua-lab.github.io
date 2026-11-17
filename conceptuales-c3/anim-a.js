@@ -1,4 +1,4 @@
-// Animaciones de las preguntas 1 a 9 (Maxwell, transformador y el comienzo de Faraday–Lenz).
+// Animaciones de las preguntas 1 a 8 (Maxwell, transformador y el comienzo de Faraday–Lenz).
 // Convención: x a la derecha, y hacia abajo (lienzo), z sale de la pantalla (⊙).
 (function () {
   'use strict';
@@ -276,90 +276,6 @@
   // Si idea() devuelve null se usa la idea clave de la pregunta
   wrapIdea('gauss-magnetico');
 
-  // ===================== 3. Las cuatro ecuaciones y la onda =====================
-  S['maxwell-onda'] = {
-    controls: [
-      { type: 'check', key: 'mono', label: 'Monopolos (hipotético)', value: false },
-      { type: 'slider', key: 'f', label: 'Frecuencia de la onda', min: 0.2, max: 1.4, step: 0.05, value: 0.55, fmt: (v) => fmt(v, 2) + ' (u.a.)' },
-    ],
-    init(st) { st.fuente = null; },
-    html(box, st) {
-      const grid = el('div', 'ecs');
-      const info = el('p', 'ecs-info');
-      box.append(grid, info);
-      const ecs = (m) => [
-        { n: 'Gauss eléctrico', f: '\\oint \\vec E\\cdot d\\vec A=\\frac{q_{enl}}{\\varepsilon_0}',
-          t: [['\\frac{q_{enl}}{\\varepsilon_0}', 'Fuente: **cargas eléctricas**. Las líneas de $\\vec E$ empiezan y terminan en ellas.', 'E']] },
-        { n: 'Gauss magnético', f: m ? '\\oint \\vec B\\cdot d\\vec A=\\color{#9ca3af}{\\mu_0 q_m}' : '\\oint \\vec B\\cdot d\\vec A=0', hip: m,
-          t: m ? [['\\mu_0 q_m', 'Hipotético: una **carga magnética** (monopolo). Las líneas de $\\vec B$ saldrían de ella, como las de $\\vec E$ de una carga.', null, true]]
-            : [['0', 'No hay cargas magnéticas: las líneas de $\\vec B$ son **cerradas**.', 'B']] },
-        { n: 'Faraday', f: m ? '\\oint \\vec E\\cdot d\\vec l=\\color{#9ca3af}{-\\mu_0 I_m}-\\frac{d\\phi_B}{dt}' : '\\oint \\vec E\\cdot d\\vec l=-\\frac{d\\phi_B}{dt}', hip: m,
-          t: [['-\\frac{d\\phi_B}{dt}', 'Fuente: **un $\\vec B$ que cambia**. Crea un $\\vec E$ que da vueltas.', 'B']].concat(m ? [['-\\mu_0 I_m', 'Hipotético: **monopolos en movimiento** (una "corriente magnética"). No existen, por eso Faraday tiene un solo término.', null, true]] : []) },
-        { n: 'Ampère–Maxwell', f: '\\oint \\vec B\\cdot d\\vec l=\\mu_0 I_{enl}+\\mu_0\\varepsilon_0\\frac{d\\phi_E}{dt}',
-          t: [['\\mu_0 I_{enl}', 'Fuente: **cargas en movimiento** (corriente).', null], ['\\mu_0\\varepsilon_0\\frac{d\\phi_E}{dt}', 'Fuente: **un $\\vec E$ que cambia** (corriente de desplazamiento).', 'E']] },
-      ];
-      const pintarInfo = () => {
-        if (!st.fuente) { texto(info, 'Toca un término para ver qué lo produce.'); return; }
-        info.innerHTML = st.fuente.d.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-        if (window.renderMathInElement) window.renderMathInElement(info, { delimiters: [{ left: '$', right: '$', display: false }], throwOnError: false });
-      };
-      st.renderEcs = () => {
-        grid.textContent = '';
-        ecs(st.p.mono).forEach((e) => {
-          const card = el('div', 'ec' + (e.hip ? ' hip' : ''));
-          card.appendChild(el('div', 'ec-n', e.n));
-          const f = el('div', 'ec-f');
-          tex(f, e.f, true);
-          card.appendChild(f);
-          const ts = el('div', 'ec-t');
-          e.t.forEach(([src, d, campo, hip]) => {
-            const b = el('button', 'ec-term' + (hip ? ' hip' : ''));
-            b.type = 'button';
-            tex(b, src);
-            if (st.fuente && st.fuente.src === src) b.classList.add('on');
-            b.addEventListener('click', () => { st.fuente = { src, d, campo }; st.renderEcs(); });
-            ts.appendChild(b);
-          });
-          if (e.hip) ts.appendChild(el('span', 'ec-hip', 'hipotético'));
-          card.appendChild(ts);
-          grid.appendChild(card);
-        });
-        pintarInfo();
-      };
-      st.renderEcs();
-    },
-    onParam(st, key) { if (key === 'mono') { if (st.fuente && /q_m|I_m/.test(st.fuente.src)) st.fuente = null; st.renderEcs(); } },
-    step(st, dt) { st.fase = (st.fase || 0) + dt * TAU * st.p.f; },
-    draw(g, st) {
-      const W = st.V.w, cy = 44, x0 = 8, x1 = W - 10, A = 19, kz = [-0.42, 0.27];
-      const lam = st.ancho ? 56 : 44, k = TAU / lam, fase = st.fase || 0;
-      const hl = st.fuente && st.fuente.campo;
-      D.arrow(g, x0 - 3, cy, x1 + 6, cy, 'rgba(255,255,255,0.4)', 0.35);
-      D.txt(g, 'avanza →', x1 + 1, cy + 4, { s: 2.4, c: COL.dim, a: 'right', min: 9 });
-      // Curvas envolventes
-      const ptsE = [], ptsB = [];
-      for (let x = x0; x <= x1; x += 0.8) {
-        const s = Math.sin(k * (x - x0) - fase);
-        ptsE.push([x, cy - A * s]);
-        ptsB.push([x + kz[0] * A * s, cy + kz[1] * A * s]);
-      }
-      D.poly(g, ptsB, hl === 'B' ? COL.B : 'rgba(96,165,250,0.75)', hl === 'B' ? 0.8 : 0.5);
-      D.poly(g, ptsE, hl === 'E' ? COL.E : 'rgba(251,146,60,0.8)', hl === 'E' ? 0.8 : 0.5);
-      for (let x = x0; x <= x1; x += 4.6) {
-        const s = Math.sin(k * (x - x0) - fase);
-        D.arrow(g, x, cy, x + kz[0] * A * s, cy + kz[1] * A * s, hl === 'B' ? COL.B : 'rgba(96,165,250,0.7)', hl === 'B' ? 0.45 : 0.32, 1.2);
-        D.arrow(g, x, cy, x, cy - A * s, hl === 'E' ? COL.E : 'rgba(251,146,60,0.75)', hl === 'E' ? 0.45 : 0.32, 1.2);
-      }
-      D.tex(g, '$\\vec E$ (vertical)', x0 + 2, 10, { s: 2.8, c: COL.E, a: 'left' });
-      D.tex(g, '$\\vec B$ (hacia ti, perpendicular a $\\vec E$)', x0 + 2, 15, { s: 2.8, c: COL.B, a: 'left' });
-      // Ciclo: E cambia → crea B → B cambia → crea E
-      const pasos = ['$\\vec E$ cambia', '→ crea $\\vec B$', '$\\vec B$ cambia', '→ crea $\\vec E$'];
-      const act = Math.floor((st.fase || 0) / (Math.PI / 2)) % 4;
-      const ancho = (W - 16) / 4;
-      pasos.forEach((p, i) => D.tex(g, p, 8 + ancho * (i + 0.5), 83, { s: 2.9, c: i === act ? COL.oro : COL.dim, w: i === act ? 700 : 500, min: 9.5 }));
-    },
-  };
-
   // ===================== 4. Transformador AC vs DC =====================
   const W4 = TAU * 0.6;
   function est4(st) {
@@ -600,62 +516,7 @@
     },
   };
 
-  // ===================== 7. La primaria responde a la carga =====================
-  function est7(st) {
-    const n = st.p.n, Is = 0.5 * n, Ip = 0.02 + Is / 2, P = 110 * Is;
-    return { n, Is, Ip, P };
-  }
-  S['primaria-carga'] = {
-    controls: [{ type: 'slider', key: 'n', label: 'Carga (ampolletas encendidas)', min: 0, max: 4, step: 1, value: 0, fmt: (v) => String(v) }],
-    init(st) { st.fase = 0; },
-    step(st, dt) { st.fase += dt * 9; },
-    draw(g, st) {
-      const W = st.V.w, e = est7(st), cy = 44, cx = st.ancho ? W * 0.4 : W * 0.38;
-      const dir = Math.sin(st.t * TAU * 0.35) >= 0 ? 1 : -1;
-      g.fillStyle = '#5b6168'; g.beginPath(); g.rect(cx - 24, cy - 22, 48, 44); g.rect(cx - 13, cy - 11, 26, 22); g.fill('evenodd');
-      const capa = (d, color, w, s) => {
-        if (w <= 0) return;
-        g.setLineDash([2, 1.6]); g.lineDashOffset = -st.fase * s;
-        g.strokeStyle = color; g.lineWidth = w; g.strokeRect(cx - 18.5 - d, cy - 16.5 - d, 37 + 2 * d, 33 + 2 * d);
-        g.setLineDash([]); g.lineDashOffset = 0;
-      };
-      const mp = (0.04 + e.Is) / 2.04, ms = e.Is / 2.04;
-      capa(3.3, 'rgba(96,165,250,0.95)', 0.3 + 1.3 * mp, dir);
-      if (e.Is > 0) capa(0, 'rgba(74,222,128,0.95)', 0.3 + 1.3 * ms, -dir);
-      capa(-3.3, 'rgba(255,255,255,0.9)', 0.55, dir);
-      // Primaria y red
-      bobina(g, cx - 18.5, cy, 8, 30, COL.I, 0.5 + mp * 0.8);
-      const xr = cx - 36;
-      D.line(g, cx - 25, cy - 15, xr, cy - 15, COL.alambre, 0.4); D.line(g, xr, cy - 15, xr, cy - 5, COL.alambre, 0.4);
-      D.line(g, cx - 25, cy + 15, xr, cy + 15, COL.alambre, 0.4); D.line(g, xr, cy + 15, xr, cy + 5, COL.alambre, 0.4);
-      D.circ(g, xr, cy, 5, 'rgba(0,0,0,0.3)', COL.alambre, 0.4);
-      D.txt(g, 'Red', xr, cy, { s: 2.6, min: 9 });
-      D.puntos(g, [[xr, cy - 5], [xr, cy - 15], [cx - 25, cy - 15]], st.fase * e.Ip * 2 * dir, 3.5, '#fde68a', 0.45);
-      // Secundaria y ampolletas
-      bobina(g, cx + 18.5, cy, 4, 30, COL.ind, 0.5 + ms * 1.2);
-      const pos = st.ancho ? [0, 1, 2, 3].map((i) => [cx + 40 + i * 13, cy]) : [[cx + 38, cy - 9], [cx + 52, cy - 9], [cx + 38, cy + 11], [cx + 52, cy + 11]];
-      const xb = cx + 30;
-      D.line(g, cx + 25, cy - 15, xb, cy - 15, COL.alambre, 0.4); D.line(g, cx + 25, cy + 15, xb, cy + 15, COL.alambre, 0.4);
-      D.line(g, xb, cy - 15, xb, cy + 15, COL.alambre, 0.4);
-      pos.forEach(([x, y], i) => {
-        D.line(g, xb, y - 4, x, y - 4, 'rgba(203,213,225,0.5)', 0.3);
-        D.bulb(g, x, y, 3, i < e.n ? 0.9 : 0);
-      });
-      D.puntos(g, [[cx + 25, cy - 15], [xb, cy - 15]], st.fase * e.Is * dir, 3.5, '#fde68a', 0.45);
-      // Leyenda
-      const ly = 79;
-      D.txt(g, '— primaria', 4, ly, { s: 2.6, c: COL.B, a: 'left', min: 9 });
-      D.txt(g, '— secundaria (opuesto)', 4 + (st.ancho ? 30 : 0), st.ancho ? ly : ly + 4.5, { s: 2.6, c: COL.ind, a: 'left', min: 9 });
-      D.txt(g, '— flujo neto (constante)', st.ancho ? 88 : 4, st.ancho ? ly : ly + 9, { s: 2.6, c: '#fff', a: 'left', min: 9 });
-      D.txt(g, 'Red: ' + fmtSI(e.P, 'W', 0).replace('0 W', '≈ 0 W'), cx, 5, { s: 3, c: COL.oro, fondo: 'rgba(0,0,0,0.35)', w: 700 });
-    },
-    readouts(st) {
-      const e = est7(st);
-      return [['$I_p$', fmt(e.Ip, 2) + ' A', COL.I], ['$I_s$', fmt(e.Is, 2) + ' A', COL.ind], ['Potencia de la red', e.n ? fmt(e.P, 0) + ' W' : '≈ 0 W', COL.oro]];
-    },
-  };
-
-  // ===================== 8. Tres escenarios =====================
+  // ===================== 7. Tres escenarios =====================
   function est8(st) {
     const W = st.V.w, s = 20, esc = st.p.esc;
     if (esc === 'a') { const x = W / 2 - s / 2; return { x, phi: st.p.B * 1, s }; }
@@ -742,7 +603,7 @@
     sample(st) { return { phi: est8(st).phi, eps: st.eps }; },
   };
 
-  // ===================== 9. Universo con signo + vs signo − =====================
+  // ===================== 8. Universo con signo + vs signo − =====================
   const g9 = 9.8, L9 = 0.5;
   S['signo-faraday'] = {
     controls: [

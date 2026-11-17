@@ -1,11 +1,11 @@
-// Animaciones de las preguntas 10 a 18 (Faraday–Lenz e inductancia).
+// Animaciones de las preguntas 9 a 16 (Faraday–Lenz e inductancia).
 // Convención: x a la derecha, y hacia abajo (lienzo), z sale de la pantalla (⊙).
 (function () {
   'use strict';
   const { COL, D, TAU, clamp, lerp, fmt, fmtSI, wrapIdea } = window.Motor;
   const S = window.SIMS;
 
-  // ===================== 10. Imán y aro =====================
+  // ===================== 9. Imán y aro =====================
   // Flujo del imán por el aro según la distancia d (dipolo sobre el eje, normalizado)
   const f10 = (d) => 1 / Math.pow(1 + (d / 14) ** 2, 1.5);
   const df10 = (d) => -3 * d / 196 * Math.pow(1 + (d / 14) ** 2, -2.5);
@@ -109,7 +109,7 @@
     },
   };
 
-  // ===================== 11. Separación de cargas =====================
+  // ===================== 10. Separación de cargas =====================
   function aleatorio(semilla) {
     let x = semilla;
     return () => { x = (x * 16807) % 2147483647; return (x - 1) / 2147483646; };
@@ -175,107 +175,7 @@
     idea(st) { return st.p.rieles ? 'Con circuito: la $\\Delta V$ actúa como pila y circula $I=vBL/R$ (y aparece una fuerza que frena).' : 'Sin circuito: solo $\\Delta V$, sin corriente sostenida.'; },
   };
 
-  // ===================== 12. El campo que da vueltas =====================
-  const R12 = 14;
-  function est12(st) {
-    const m = st.p.modo, T = 5;
-    if (m === 'sube') { const f = (st.t % T) / T; return { B: 0.15 + 0.85 * f, dB: 0.85 / T, esc: 0.85 / T }; }
-    if (m === 'baja') { const f = (st.t % T) / T; return { B: 1 - 0.85 * f, dB: -0.85 / T, esc: 0.85 / T }; }
-    const w = TAU * 0.2;
-    return { B: Math.sin(w * st.t), dB: w * Math.cos(w * st.t), esc: w };
-  }
-  const E12 = (r, dB) => (r < R12 ? r / 2 : R12 * R12 / (2 * r)) * dB;
-  S['campo-inducido'] = {
-    controls: [
-      { type: 'toggle', key: 'modo', label: '$B(t)$', value: 'sube', options: [['sube', 'Creciente'], ['baja', 'Decreciente'], ['oscila', 'Oscilante']] },
-      { type: 'slider', key: 'r', label: 'Radio del anillo de prueba $r$', min: 3, max: 44, step: 0.5, value: 24, fmt: (v) => fmt(v / R12, 2) + ' R₀' },
-      { type: 'check', key: 'comp', label: 'Comparar con carga puntual', value: false },
-      { type: 'button', label: 'Borrar partículas', onClick(st) { st.parts = []; } },
-    ],
-    init(st) { st.rot = {}; st.parts = []; [[8, 0], [-10, 4], [22, -6], [0, 30]].forEach(([dx, dy]) => st.parts.push({ r: Math.hypot(dx, dy), a: Math.atan2(dy, dx), v: 0 })); },
-    layout(st) {
-      const W = st.V.w;
-      st.cy = 46;
-      st.cx = st.ancho ? (st.p.comp ? W * 0.36 : W * 0.44) : (st.p.comp ? W * 0.42 : W * 0.5);
-    },
-    onParam(st, key) { if (key === 'comp') this.layout(st); },
-    step(st, dt) {
-      const e = est12(st), k = 1.4 / e.esc;
-      [5, 10, R12, 20, 27, 35, 44].forEach((r) => { st.rot[r] = (st.rot[r] || 0) + dt * k * E12(r, e.dB) / r; });
-      st.parts.forEach((p) => { p.a += dt * k * E12(p.r, e.dB) / p.r; p.v += dt; });
-      st.parts = st.parts.filter((p) => p.v < 16);
-    },
-    draw(g, st) {
-      const W = st.V.w, { cx, cy } = st, e = est12(st), k = R12 / 2 * e.esc;
-      // Región con B
-      D.circ(g, cx, cy, R12, `rgba(96,165,250,${0.08 + 0.3 * Math.abs(e.B)})`, 'rgba(96,165,250,0.7)', 0.4);
-      for (let x = -R12 + 3; x < R12; x += 5.5) for (let y = -R12 + 3; y < R12; y += 5.5) {
-        if (Math.hypot(x, y) > R12 - 2) continue;
-        const r = 0.4 + 0.9 * Math.abs(e.B);
-        (e.B >= 0 ? D.sale : D.entra)(g, cx + x, cy + y, r, 'rgba(191,219,254,0.85)', 0.22);
-      }
-      // Círculos de E (sentido horario si B ⊙ aumenta)
-      [5, 10, R12, 20, 27, 35, 44].forEach((r) => {
-        if (cy - r < -2 && cx - r < -2) return;
-        const Er = E12(r, e.dB), mag = Math.abs(Er) / k;
-        D.circ(g, cx, cy, r, null, `rgba(251,146,60,${0.12 + 0.35 * mag})`, 0.3);
-        const n = clamp(Math.round(TAU * r / 10), 3, 12);
-        if (mag > 0.02) for (let i = 0; i < n; i++) {
-          const a = (st.rot[r] || 0) + i * TAU / n, sg = Math.sign(Er);
-          D.head(g, cx + r * Math.cos(a), cy + r * Math.sin(a), a + sg * Math.PI / 2, COL.E, 1 + 1.6 * clamp(mag, 0, 1.2));
-        }
-      });
-      // Partículas de prueba (también giran fuera del disco, donde B = 0)
-      st.parts.forEach((p) => D.circ(g, cx + p.r * Math.cos(p.a), cy + p.r * Math.sin(p.a), 0.9, `rgba(253,230,138,${1 - p.v / 16})`, '#000', 0.12));
-      // Anillo de prueba
-      const rt = st.p.r;
-      D.circ(g, cx, cy, rt, null, COL.gamma, 0.5);
-      D.circ(g, cx + rt * Math.cos(-0.7), cy + rt * Math.sin(-0.7), 1.4, COL.gamma);
-      D.tex(g, '$r$', cx + (rt + 3) * Math.cos(-0.7), cy + (rt + 3) * Math.sin(-0.7), { s: 2.8, c: COL.gamma });
-      if (st.p.comp) {
-        const qx = st.ancho ? W * 0.84 : W - 13, qy = st.ancho ? cy : 14, L = st.ancho ? 15 : 9;
-        D.circ(g, qx, qy, L + 4, 'rgba(0,0,0,0.3)');
-        for (let i = 0; i < 12; i++) { const a = i * TAU / 12; D.arrow(g, qx + 2 * Math.cos(a), qy + 2 * Math.sin(a), qx + L * Math.cos(a), qy + L * Math.sin(a), COL.E, 0.35, 1.2); }
-        D.circ(g, qx, qy, 1.8, COL.I); D.txt(g, '+', qx, qy, { s: 2.4, min: 8 });
-        D.tex(g, 'Carga: $\\vec E$ radial', qx, qy + L + 6, { s: 2.4, c: COL.dim, min: 9 });
-        D.tex(g, '$\\oint \\vec E\\cdot d\\vec l = 0$', qx, qy + L + 10, { s: 2.4, c: COL.dim, min: 9 });
-      }
-      const sentido = Math.abs(e.dB) < 0.02 ? '$B$ no cambia por un instante → $E=0$' : (e.B >= 0) === (e.dB > 0) ? '$|B|$ aumenta → $\\vec E$ gira en sentido ' + (e.dB > 0 ? 'horario' : 'antihorario') : '$|B|$ disminuye → $\\vec E$ gira en sentido ' + (e.dB > 0 ? 'horario' : 'antihorario');
-      D.tex(g, sentido, W / 2, 5, { s: 2.8, fondo: 'rgba(0,0,0,0.4)', c: COL.E });
-      D.txt(g, 'Toca para soltar una carga de prueba', W / 2, 87, { s: 2.4, c: COL.dim, min: 9 });
-    },
-    pointer: {
-      hit(st, x, y) { return Math.abs(Math.hypot(x - st.cx, y - st.cy) - st.p.r) < 3; },
-      move(st, x, y) { st.p.r = clamp(Math.hypot(x - st.cx, y - st.cy), 3, 44); },
-      tap(st, x, y) {
-        const r = Math.hypot(x - st.cx, y - st.cy);
-        if (r < 1.5) return;
-        st.parts.push({ r, a: Math.atan2(y - st.cy, x - st.cx), v: 0 });
-        if (st.parts.length > 25) st.parts.shift();
-      },
-    },
-    readouts(st) {
-      const e = est12(st), r = st.p.r, ae = Math.PI * Math.min(r, R12) ** 2;
-      return [['$B$', fmt(e.B, 2), COL.B], ['$dB/dt$', fmt(e.dB, 2), COL.B], ['$\\phi$ encerrado', fmt(e.B * ae / (Math.PI * R12 * R12), 2) + ' $\\phi_0$'], ['$\\oint \\vec E\\cdot d\\vec l$', fmt(-e.dB * ae / (Math.PI * R12 * R12), 2) + ' (u.a.)', COL.E], [r > R12 ? '$r > R_0$: $\\phi$ ya no crece' : '$r < R_0$', '$E =$ ' + fmt(Math.abs(E12(r, 1)), 2) + ' $\\cdot|dB/dt|$']];
-    },
-    plot: { custom: true, legend: [['$|E|(r)$', COL.E], ['anillo de prueba', COL.gamma]] },
-    drawPlot(g, w, h, st) {
-      g.fillStyle = 'rgba(0,0,0,0.18)'; g.fillRect(0, 0, w, h);
-      const rmax = 46, X = (r) => 8 + (w - 16) * r / rmax, Y = (v) => h - 14 - (h - 26) * v;
-      g.strokeStyle = 'rgba(255,255,255,0.2)'; g.lineWidth = 1; g.beginPath(); g.moveTo(8, Y(0)); g.lineTo(w - 8, Y(0)); g.stroke();
-      g.setLineDash([4, 4]); g.beginPath(); g.moveTo(X(R12), 6); g.lineTo(X(R12), h - 12); g.stroke(); g.setLineDash([]);
-      g.strokeStyle = COL.E; g.lineWidth = 2; g.beginPath();
-      for (let i = 0; i <= 200; i++) { const r = i / 200 * rmax, v = Math.abs(E12(r, 1)) / (R12 / 2); i ? g.lineTo(X(r), Y(v)) : g.moveTo(X(r), Y(v)); }
-      g.stroke();
-      const r = st.p.r;
-      g.fillStyle = COL.gamma; g.beginPath(); g.arc(X(r), Y(Math.abs(E12(r, 1)) / (R12 / 2)), 4, 0, TAU); g.fill();
-      const pt = (t, x, y, a) => D.tex(g, t, x, y, { s: 12, a, c: 'rgba(255,255,255,0.7)', w: 500 });
-      pt('$R_0$', X(R12), h - 7); pt('$r$ →', w - 6, h - 7, 'right');
-      pt('crece $\\propto r$', X(2), 11, 'left'); pt('cae $\\propto 1/r$', X(R12 + 4), 11, 'left');
-    },
-  };
-
-  // ===================== 13. Generador =====================
+  // ===================== 11. Generador =====================
   S['generador'] = {
     controls: [
       { type: 'slider', key: 'w', label: 'Rapidez angular $\\omega$', min: 0.5, max: 4, step: 0.1, value: 1.6, fmt: (v) => fmt(v, 1) + ' rad/s' },
@@ -347,7 +247,7 @@
   };
   wrapIdea('generador');
 
-  // ===================== 14. Cocina de inducción =====================
+  // ===================== 12. Cocina de inducción =====================
   S['cocina-induccion'] = {
     controls: [
       { type: 'toggle', key: 'mat', label: 'Material de la olla', value: 'acero', options: [['acero', 'Acero'], ['greda', 'Greda']] },
@@ -431,7 +331,7 @@
   };
   wrapIdea('cocina-induccion');
 
-  // ===================== 15. La inercia de la corriente =====================
+  // ===================== 13. La inercia de la corriente =====================
   function perfil15(t) {
     t %= 6;
     if (t < 1.5) return t / 1.5;
@@ -493,7 +393,7 @@
     sample(st) { return { I: st.I, e: -st.p.L * st.dI }; },
   };
 
-  // ===================== 16. Solenoide configurable =====================
+  // ===================== 14. Solenoide configurable =====================
   const MU0 = 4 * Math.PI * 1e-7;
   function fis16(p, N) {
     N = N || p.N;
@@ -554,7 +454,7 @@
     },
   };
 
-  // ===================== 17. Interruptor y secundaria =====================
+  // ===================== 15. Interruptor y secundaria =====================
   S['interruptor'] = {
     controls: [
       { type: 'button', label: 'Cerrar el interruptor', labelFn: (st) => (st.cerrado ? 'Abrir el interruptor' : 'Cerrar el interruptor'), onClick(st) { st.p.auto = false; st.cerrado = !st.cerrado; } },
@@ -632,7 +532,7 @@
     sample(st) { return { I: st.I1, e: st.eps }; },
   };
 
-  // ===================== 18. Dos caminos, mismo M =====================
+  // ===================== 16. Dos caminos, mismo M =====================
   // Campo Bz (sale = +) en el plano, de un tramo recto con corriente de p1 a p2 (coordenadas matemáticas, y hacia arriba)
   function bzTramo(p1, p2, q) {
     const dx = p2[0] - p1[0], dy = p2[1] - p1[1], L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;

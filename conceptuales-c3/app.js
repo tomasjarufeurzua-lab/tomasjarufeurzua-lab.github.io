@@ -6,7 +6,7 @@
   const TOTAL = P.length;
   const FIN_A = P.filter((q) => q.parte === 'A').length;
   const app = document.getElementById('app');
-  const CLAVE = 'conceptuales-c3-fis121';
+  const CLAVE = 'conceptuales-c3-fis121-v2';
 
   // ---- progreso ----
   let prog = { vistas: [], marcadas: [], ultima: 0 };
@@ -92,7 +92,7 @@
     const temas = [];
     P.forEach((q) => { const k = q.parte + '|' + q.tema; if (!temas.includes(k)) temas.push(k); });
     const indice = h('details', { class: 'indice' },
-      h('summary', null, 'Índice de las 24 preguntas'),
+      h('summary', null, 'Índice de las ' + TOTAL + ' preguntas'),
       ['A', 'B'].map((parte) => h('div', { class: 'indice-parte' },
         h('h3', null, parte === 'A' ? 'Parte A · Las más probables' : 'Parte B · Podrían salir'),
         temas.filter((t) => t.startsWith(parte)).map((t) => h('div', { class: 'indice-tema' },
@@ -156,8 +156,9 @@
       h('div', { class: 'resp-inner' },
         h('h3', { class: 'resp-tit' }, 'Respuesta'),
         cuerpo,
-        h('h3', { class: 'anim-tit' }, 'Animación · ' + q.animTitulo),
-        simHost));
+        q.animacion ? h('h3', { class: 'anim-tit' }, 'Animación · ' + q.animTitulo) : null,
+        q.notaAnim ? h('p', { class: 'nota-anim', html: '<strong>Ojo:</strong> ' + enLinea(q.notaAnim) }) : null,
+        q.animacion ? simHost : null));
     const btnVer = h('button', { class: 'btn principal ver', type: 'button', 'aria-expanded': 'false', 'aria-controls': 'respuesta' }, 'Ver respuesta');
     let abierta = false;
     function alternar(forzar) {
@@ -168,10 +169,10 @@
       btnVer.setAttribute('aria-expanded', String(abierta));
       if (abierta) {
         if (!vista(id)) { prog.vistas.push(id); guardar(); }
-        if (!sim) {
+        if (!sim && q.animacion) {
           const def = window.SIMS[q.animacion];
           if (def) sim = window.Motor.crear(simHost, def, { titulo: q.animTitulo, idea: q.ideaClave });
-        } else sim.activar(true);
+        } else if (sim) sim.activar(true);
         actualizarBarra();
       } else if (sim) sim.activar(false);
     }
@@ -216,7 +217,7 @@
       h('nav', { class: 'q-nav', 'aria-label': 'Navegación entre preguntas' }, ant, h('a', { class: 'q-inicio', href: '#' }, 'Índice'), sig));
     app.append(vista_);
     formulas(enun);
-    formulas(cuerpo);
+    formulas(resp);
     document.title = 'P' + id + ' · ' + q.titulo.replace(/\$/g, '') + ' · Conceptuales C3';
     teclas = (e) => {
       const t = e.target;
@@ -234,7 +235,7 @@
     app.append(h('section', { class: 'portada intermedia' },
       h('p', { class: 'grande' }, '🎉'),
       h('h1', null, '¡Terminaste las más probables!'),
-      h('p', { class: 'sub', html: 'Las siguientes son de <strong>Ley de Ampère</strong>. No creemos que salgan en la sección conceptual, pero podrían. ¿Seguimos?' }),
+      h('p', { class: 'sub', html: 'Las siguientes son de <strong>Ley de Ampère</strong>. No creo que salgan en la sección conceptual, pero podrían. ¿Seguimos?' }),
       h('div', { class: 'acciones' },
         h('a', { class: 'btn principal', href: pq(FIN_A + 1) }, 'Seguir con la Parte B'),
         h('a', { class: 'btn', href: '#' }, 'Volver al inicio'))));

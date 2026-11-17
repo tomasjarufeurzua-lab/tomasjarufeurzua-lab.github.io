@@ -1,4 +1,4 @@
-// Animaciones de las preguntas 19 a 24 (ley de Ampère).
+// Animaciones de las preguntas 17 a 20 (ley de Ampère).
 // Corrientes rectas perpendiculares a la pantalla: I > 0 sale (⊙), I < 0 entra (⊗).
 // En coordenadas del lienzo (y hacia abajo), el campo de una corriente que sale en el punto
 // (dx, dy) relativo al alambre es B = I/(2π r²)·(dy, −dx): da vueltas en sentido antihorario.
@@ -32,135 +32,7 @@
       D.arrow(g, x - bx / m * L / 2, y - by / m * L / 2, x + bx / m * L / 2, y + by / m * L / 2, `rgba(96,165,250,${alfa})`, 0.25, 1);
     }
   }
-  // Punto dentro de un polígono
-  function dentro(poly, x, y) {
-    let c = false;
-    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-      const [xi, yi] = poly[i], [xj, yj] = poly[j];
-      if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c;
-    }
-    return c;
-  }
-  // Rectángulo redondeado recorrido en sentido antihorario (en la pantalla), desde el medio del lado derecho
-  function rectRedondeado(cx, cy, hw, hh, r, n) {
-    const tramos = [];
-    const L = (x1, y1, x2, y2) => tramos.push({ l: Math.hypot(x2 - x1, y2 - y1), f: (t) => [lerp(x1, x2, t), lerp(y1, y2, t)] });
-    const A = (ox, oy, a0, a1) => tramos.push({ l: r * Math.abs(a1 - a0), f: (t) => { const a = lerp(a0, a1, t); return [ox + r * Math.cos(a), oy + r * Math.sin(a)]; } });
-    L(cx + hw, cy, cx + hw, cy - hh + r);
-    A(cx + hw - r, cy - hh + r, 0, -Math.PI / 2);
-    L(cx + hw - r, cy - hh, cx - hw + r, cy - hh);
-    A(cx - hw + r, cy - hh + r, -Math.PI / 2, -Math.PI);
-    L(cx - hw, cy - hh + r, cx - hw, cy + hh - r);
-    A(cx - hw + r, cy + hh - r, -Math.PI, -Math.PI * 1.5);
-    L(cx - hw + r, cy + hh, cx + hw - r, cy + hh);
-    A(cx + hw - r, cy + hh - r, Math.PI / 2, 0);
-    L(cx + hw, cy + hh - r, cx + hw, cy);
-    const total = tramos.reduce((a, b) => a + b.l, 0), pts = [];
-    for (let i = 0; i < n; i++) {
-      let s = i / n * total, k = 0;
-      while (k < tramos.length - 1 && s > tramos[k].l) { s -= tramos[k].l; k++; }
-      pts.push(tramos[k].f(Math.min(1, s / tramos[k].l)));
-    }
-    return pts;
-  }
-
-  // ===================== 19. Recorriendo Γ =====================
-  S['circulacion'] = {
-    controls: [
-      { type: 'slider', key: 'I1', label: '$I_1$ (+ sale, − entra)', min: -3, max: 3, step: 0.1, value: 2, fmt: (v) => fmt(v, 1) + ' A' },
-      { type: 'slider', key: 'I2', label: '$I_2$ (+ sale, − entra)', min: -3, max: 3, step: 0.1, value: -1, fmt: (v) => fmt(v, 1) + ' A' },
-      { type: 'slider', key: 'I3', label: '$I_3$ (+ sale, − entra)', min: -3, max: 3, step: 0.1, value: 1.5, fmt: (v) => fmt(v, 1) + ' A' },
-      { type: 'check', key: 'on1', label: 'Encender $I_1$', value: true },
-      { type: 'check', key: 'on2', label: 'Encender $I_2$', value: true },
-      { type: 'check', key: 'on3', label: 'Encender $I_3$', value: true },
-    ],
-    init(st) { st.u = 0; st.pos = null; st.cache = null; },
-    layout(st) {
-      const W = st.V.w;
-      st.G = { cx: st.ancho ? W * 0.42 : W * 0.44, cy: 44, hw: st.ancho ? 28 : 24, hh: 25 };
-      const { cx, cy, hw } = st.G;
-      st.pos = [{ x: cx - 11, y: cy - 9 }, { x: cx + 9, y: cy + 10 }, { x: cx + hw + 14, y: cy + 3 }];
-      st.path = rectRedondeado(cx, cy, hw, st.G.hh, 9, 480);
-      st.cache = null;
-    },
-    onParam(st) { st.cache = null; },
-    alambres(st) { return [0, 1, 2].filter((i) => st.p['on' + (i + 1)]).map((i) => ({ x: st.pos[i].x, y: st.pos[i].y, I: st.p['I' + (i + 1)], i })); },
-    calc(st) {
-      if (st.cache) return st.cache;
-      const al = this.alambres(st), P = st.path, n = P.length, acum = [0];
-      for (let i = 0; i < n; i++) {
-        const a = P[i], b = P[(i + 1) % n], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
-        const [bx, by] = campo(al, mx, my);
-        acum.push(acum[i] + bx * (b[0] - a[0]) + by * (b[1] - a[1]));
-      }
-      const enc = al.filter((w) => dentro(P, w.x, w.y));
-      st.cache = { acum, enc, total: enc.reduce((s, w) => s + w.I, 0) };
-      return st.cache;
-    },
-    step(st, dt) { st.u += dt / 6.5; if (st.u > 1.2) st.u = 0; },
-    draw(g, st) {
-      const W = st.V.w, al = this.alambres(st), c = this.calc(st), P = st.path, n = P.length;
-      flechasCampo(g, al, W, 8, 0.012);
-      D.poly(g, P, COL.gamma, 0.7, true);
-      D.tex(g, '$\\Gamma$', st.G.cx - st.G.hw + 3, st.G.cy - st.G.hh + 4, { s: 3.2, c: COL.gamma });
-      // Tramo recorrido
-      const u = Math.min(1, st.u), k = Math.floor(u * n);
-      D.poly(g, P.slice(0, k + 1), COL.oro, 1.1);
-      const [px, py] = P[k % n], [qx, qy] = P[(k + 1) % n];
-      const tl = Math.hypot(qx - px, qy - py) || 1;
-      D.arrow(g, px, py, px + (qx - px) / tl * 6, py + (qy - py) / tl * 6, '#fff', 0.45);
-      const [bx, by] = campo(al, px, py), bm = Math.hypot(bx, by);
-      if (bm > 1e-6) { const L = clamp(Math.sqrt(bm / 0.012) * 4, 2, 10); D.arrow(g, px, py, px + bx / bm * L, py + by / bm * L, COL.B, 0.55); }
-      D.circ(g, px, py, 1.1, COL.oro);
-      // Corrientes
-      [0, 1, 2].forEach((i) => {
-        const w = { x: st.pos[i].x, y: st.pos[i].y, I: st.p['I' + (i + 1)] }, on = st.p['on' + (i + 1)];
-        simbolo(g, w, 2.4, !on);
-        D.tex(g, '$I_' + (i + 1) + '$', w.x + 4.5, w.y - 3, { s: 2.8, c: on ? COL.I : COL.dim });
-      });
-      const pP = [st.G.cx + st.G.hw, st.G.cy];
-      D.circ(g, pP[0], pP[1], 0.9, '#fff'); D.tex(g, '$P$', pP[0] + 3, pP[1] + 2.5, { s: 2.6 });
-      // Barra con la suma acumulada
-      const val = c.acum[k], escala = Math.max(1, Math.abs(c.total), ...c.acum.map(Math.abs)) * 1.1;
-      if (st.ancho) {
-        const bx0 = W - 12, y0 = 45, hb = 34;
-        D.rr(g, bx0 - 2.5, y0 - hb, 5, 2 * hb, 1.5); g.fillStyle = 'rgba(0,0,0,0.35)'; g.fill();
-        g.fillStyle = val >= 0 ? COL.oro : COL.B; const hv = val / escala * hb;
-        g.fillRect(bx0 - 2, y0 - Math.max(0, hv), 4, Math.abs(hv));
-        D.line(g, bx0 - 4, y0, bx0 + 4, y0, '#fff', 0.3);
-        D.tex(g, '$\\int \\vec B\\cdot d\\vec l$', bx0, y0 - hb - 3, { s: 2.4, c: COL.dim, min: 9 });
-      } else {
-        const y0 = 85, x0 = W / 2, wb = W / 2 - 8;
-        D.rr(g, x0 - wb, y0 - 2, 2 * wb, 4, 1.5); g.fillStyle = 'rgba(0,0,0,0.35)'; g.fill();
-        g.fillStyle = val >= 0 ? COL.oro : COL.B; const wv = val / escala * wb;
-        g.fillRect(x0 + Math.min(0, wv), y0 - 1.6, Math.abs(wv), 3.2);
-        D.line(g, x0, y0 - 3, x0, y0 + 3, '#fff', 0.3);
-      }
-      const enc = c.enc.map((w) => (w.I >= 0 ? '+' : '-') + fmt(Math.abs(w.I), 1).replace(',', '{,}')).join(' ');
-      const num = (v, d) => fmt(v, d).replace(',', '{,}').replace('−', '-');
-      const txt = st.u >= 1 ? '$\\oint \\vec B\\cdot d\\vec l = \\mu_0(' + (enc || '0') + ') = ' + num(c.total, 1) + '\\,\\mu_0$ ✓' : '$\\int \\vec B\\cdot d\\vec l = ' + num(val, 2) + '\\,\\mu_0$';
-      D.tex(g, txt, st.ancho ? W * 0.42 : W / 2, st.ancho ? 85 : 78, { s: 3, c: st.u >= 1 ? COL.ok : COL.oro, fondo: 'rgba(0,0,0,0.45)', w: 700 });
-    },
-    pointer: {
-      hit(st, x, y) { return st.pos.some((p) => Math.hypot(x - p.x, y - p.y) < 4); },
-      down(st, x, y) { let best = 0, bd = Infinity; st.pos.forEach((p, i) => { const d = Math.hypot(x - p.x, y - p.y); if (d < bd) { bd = d; best = i; } }); st.arr = best; },
-      move(st, x, y) { st.pos[st.arr].x = clamp(x, 3, st.V.w - 3); st.pos[st.arr].y = clamp(y, 3, 87); st.cache = null; },
-    },
-    readouts(st) {
-      const c = this.calc(st);
-      const dentroI = c.enc.map((w) => w.i);
-      const fuera = this.alambres(st).filter((w) => !dentroI.includes(w.i)).map((w) => '$I_' + (w.i + 1) + '$').join(', ');
-      return [['$\\oint \\vec B\\cdot d\\vec l$ (vuelta completa)', fmt(c.total, 1) + ' $\\mu_0$', COL.ok], ['Encerradas', c.enc.map((w) => '$I_' + (w.i + 1) + '$').join(', ') || 'ninguna'], ['Afuera (aportan 0)', fuera || 'ninguna']];
-    },
-    idea(st) {
-      const al = this.alambres(st);
-      if (al.length === 1 && al[0].i === 2 && !this.calc(st).enc.length) return 'Con solo $I_3$: la barra sube y baja durante el recorrido, pero termina en 0.';
-      return null;
-    },
-  };
-  wrapIdea('circulacion');
-
-  // ===================== 20. Mapa de campo de dos alambres =====================
+  // ===================== 17. Mapa de campo de dos alambres =====================
   const CASOS = [[], [['L', 'B']], [['B', 'R']], [['L', 'R']], [['T', 'R']], [['L', 'T'], ['B', 'R']], [['T', 'B']], [['L', 'T']], [['L', 'T']], [['T', 'B']], [['T', 'R'], ['L', 'B']], [['T', 'R']], [['L', 'R']], [['B', 'R']], [['L', 'B']], []];
   function contornos(F, nx, ny, dx, dy, niveles) {
     const segs = [];
@@ -290,7 +162,7 @@
   };
   wrapIdea('dos-alambres');
 
-  // ===================== 21. ¿Se puede despejar B? =====================
+  // ===================== 18. ¿Se puede despejar B? =====================
   function config21(st) {
     const W = st.V.w, cx = W * (st.ancho ? 0.4 : 0.5), cy = 44, cfg = st.p.cfg, al = [];
     let lazo;
@@ -454,7 +326,7 @@
   };
   wrapIdea('sirve-ampere');
 
-  // ===================== 22. Construyendo el solenoide =====================
+  // ===================== 19. Construyendo el solenoide =====================
   S['construye-solenoide'] = {
     controls: [
       { type: 'slider', key: 'N', label: 'Número de vueltas (largo)', min: 1, max: 30, step: 1, value: 1, fmt: (v) => String(v) },
@@ -528,95 +400,7 @@
     },
   };
 
-  // ===================== 23. ¿Dónde está la corriente? =====================
-  const J23 = { uni: (u) => 1, crece: (u) => u, decrece: (u) => 1 - u, sup: (u) => (u > 0.93 ? 1 : 0) };
-  const F23 = { uni: (u) => u * u, crece: (u) => u * u * u, decrece: (u) => 3 * u * u - 2 * u * u * u, sup: (u) => (u < 1 ? 0 : 1) };
-  const C23 = { uni: '#e5e7eb', crece: COL.I, decrece: COL.E, sup: COL.B };
-  const N23 = { uni: 'Uniforme', crece: 'Creciente', decrece: 'Decreciente', sup: 'Solo superficie' };
-  const frac23 = (m, u) => (u >= 1 ? 1 : F23[m](u));
-  const B23 = (m, u) => (u <= 0 ? 0 : frac23(m, u) / u);
-  S['densidad'] = {
-    controls: [
-      { type: 'toggle', key: 'J', label: '$J(r)$', value: 'crece', wide: true, options: [['uni', 'Uniforme'], ['crece', 'Creciente (∝ r)'], ['decrece', 'Decreciente (∝ 1 − r/R)'], ['sup', 'Solo superficie']] },
-      { type: 'check', key: 'auto', label: 'Mover el círculo solo', value: true },
-      { type: 'slider', key: 'r', label: 'Radio del círculo amperiano', min: 0.02, max: 2, step: 0.01, value: 0.75, fmt: (v) => fmt(v, 2) + ' R', show: (p) => !p.auto },
-      { type: 'check', key: 'comp', label: 'Comparar las cuatro distribuciones', value: false },
-    ],
-    init(st) { st.ph = 0; st.puntos = {}; },
-    onParam(st, key) { if (key === 'r') st.p.auto = false; },
-    puntosDe(st, m) {
-      if (st.puntos[m]) return st.puntos[m];
-      let x = 12345;
-      const rnd = () => { x = (x * 16807) % 2147483647; return (x - 1) / 2147483646; };
-      const P = [];
-      let guard = 0;
-      while (P.length < 70 && guard++ < 20000) {
-        const u = m === 'sup' ? 0.94 + 0.05 * rnd() : Math.sqrt(rnd()), a = rnd() * TAU;
-        if (m === 'sup' || rnd() < J23[m](u)) P.push([u * Math.cos(a), u * Math.sin(a)]);
-      }
-      return (st.puntos[m] = P);
-    },
-    step(st, dt) { if (st.p.auto) { st.ph += dt; st.p.r = 1.01 - 0.98 * Math.cos(st.ph * 0.55); } },
-    draw(g, st) {
-      const W = st.V.w, m = st.p.J, cx = st.ancho ? W * 0.32 : W * 0.5, cy = 44, R = st.ancho ? 22 : 19;
-      for (let i = 24; i >= 1; i--) {
-        const u = i / 24;
-        D.circ(g, cx, cy, R * u, `rgba(248,113,113,${0.08 + 0.45 * J23[m](u - 0.02)})`);
-      }
-      D.circ(g, cx, cy, R, null, 'rgba(255,255,255,0.5)', 0.4);
-      this.puntosDe(st, m).forEach(([x, y]) => D.sale(g, cx + x * R, cy + y * R, 0.7, '#fee2e2', 0.2));
-      const r = st.p.r * R;
-      D.circ(g, cx, cy, r, 'rgba(134,239,172,0.1)', COL.gamma, 0.6);
-      const ang = -0.6;
-      D.circ(g, cx + r * Math.cos(ang), cy + r * Math.sin(ang), 1.2, COL.gamma);
-      const f = frac23(m, st.p.r), b = B23(m, st.p.r);
-      if (st.ancho) {
-        const x0 = W * 0.62, x1 = W - 6;
-        D.txt(g, 'Corriente encerrada', x0, 22, { s: 2.6, a: 'left', c: COL.dim, min: 9 });
-        g.fillStyle = 'rgba(255,255,255,0.1)'; g.fillRect(x0, 25, x1 - x0, 4); g.fillStyle = COL.I; g.fillRect(x0, 25, (x1 - x0) * f, 4);
-        D.txt(g, Math.round(f * 100) + ' %', x1, 32.5, { s: 2.8, a: 'right' });
-        D.tex(g, '$B$ en el círculo', x0, 42, { s: 2.6, a: 'left', c: COL.dim, min: 9 });
-        g.fillStyle = 'rgba(255,255,255,0.1)'; g.fillRect(x0, 45, x1 - x0, 4); g.fillStyle = COL.B; g.fillRect(x0, 45, (x1 - x0) * Math.min(1, b / 1.15), 4);
-        D.tex(g, fmt(b, 2) + ' $B(R)$', x1, 52.5, { s: 2.8, a: 'right' });
-        D.tex(g, st.p.r > 1 ? 'Afuera: $B = \\mu_0 I/(2\\pi r)$' : 'Adentro: $B = \\mu_0 I_{enl}(r)/(2\\pi r)$', (x0 + x1) / 2, 64, { s: 2.6, c: COL.oro, min: 9 });
-      } else {
-        D.tex(g, '$I_{enl}$ = ' + Math.round(f * 100) + ' %  ·  $B$ = ' + fmt(b, 2) + ' $B(R)$', W / 2, 84, { s: 2.8, fondo: 'rgba(0,0,0,0.45)' });
-      }
-      D.txt(g, N23[m], cx, 6, { s: 2.8, c: C23[m], fondo: 'rgba(0,0,0,0.4)' });
-      if (!st.p.auto) D.txt(g, 'Arrastra el círculo', cx, cy + R + 8, { s: 2.4, c: COL.dim, min: 9 });
-    },
-    pointer: {
-      hit(st, x, y) { const W = st.V.w, cx = st.ancho ? W * 0.32 : W * 0.5, R = st.ancho ? 22 : 19; return Math.abs(Math.hypot(x - cx, y - 44) - st.p.r * R) < 3.5; },
-      down(st) { st.p.auto = false; },
-      move(st, x, y) { const W = st.V.w, cx = st.ancho ? W * 0.32 : W * 0.5, R = st.ancho ? 22 : 19; st.p.r = clamp(Math.hypot(x - cx, y - 44) / R, 0.02, 2); },
-    },
-    readouts(st) { const m = st.p.J, f = frac23(m, st.p.r); return [['$r$', fmt(st.p.r, 2) + ' $R$'], ['$I_{enl}(r)$', Math.round(f * 100) + ' % del total', COL.I], ['$B(r)$', fmt(B23(m, st.p.r), 2) + ' $\\cdot B(R)$', COL.B]]; },
-    plot: { custom: true, legend: [['$B(r)$', COL.B], ['máximo', COL.oro]] },
-    drawPlot(g, w, h, st) {
-      g.fillStyle = 'rgba(0,0,0,0.18)'; g.fillRect(0, 0, w, h);
-      const X = (u) => 8 + (w - 16) * u / 2, Y = (v) => h - 12 - (h - 22) * v / 1.2;
-      g.strokeStyle = 'rgba(255,255,255,0.2)'; g.lineWidth = 1; g.beginPath(); g.moveTo(8, Y(0)); g.lineTo(w - 8, Y(0)); g.stroke();
-      g.setLineDash([3, 4]); g.beginPath(); g.moveTo(X(1), 4); g.lineTo(X(1), h - 10); g.stroke(); g.setLineDash([]);
-      const modos = st.p.comp ? ['uni', 'crece', 'decrece', 'sup'] : [st.p.J];
-      modos.forEach((m) => {
-        const sel = m === st.p.J;
-        g.strokeStyle = st.p.comp ? C23[m] : COL.B; g.lineWidth = sel ? 2.4 : 1.4; g.globalAlpha = sel ? 1 : 0.75; g.beginPath();
-        for (let i = 0; i <= 200; i++) { const u = i / 100, v = B23(m, u); i ? g.lineTo(X(u), Y(v)) : g.moveTo(X(u), Y(v)); }
-        g.stroke(); g.globalAlpha = 1;
-      });
-      const m = st.p.J;
-      let um = 0, bm = 0;
-      for (let i = 1; i <= 200; i++) { const u = i / 100, v = B23(m, u); if (v > bm + 1e-9) { bm = v; um = u; } }
-      g.fillStyle = COL.oro; g.beginPath(); g.arc(X(um), Y(bm), 4, 0, TAU); g.fill();
-      const pt = (t, x, y, a) => D.tex(g, t, x, y, { s: 12, a, c: 'rgba(255,255,255,0.75)', w: 500 });
-      pt('máx en $r$ = ' + fmt(um, 2) + ' $R$', clamp(X(um), 60, w - 60), Math.max(10, Y(bm) - 12));
-      pt('$R$', X(1), h - 6);
-      g.fillStyle = '#fff'; g.beginPath(); g.arc(X(st.p.r), Y(B23(m, st.p.r)), 3.5, 0, TAU); g.fill();
-      if (st.p.comp) pt('afuera: la misma curva $1/r$', w - 8, 11, 'right');
-    },
-  };
-
-  // ===================== 24. Loops en el toroide =====================
+  // ===================== 20. Loops en el toroide =====================
   S['toroide'] = {
     controls: [
       { type: 'slider', key: 'N', label: 'Número de vueltas $N$', min: 8, max: 48, step: 2, value: 24, fmt: (v) => String(v) },
