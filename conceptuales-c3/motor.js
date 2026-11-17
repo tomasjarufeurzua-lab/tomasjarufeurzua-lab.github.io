@@ -146,6 +146,12 @@
       D.circ(g, x, y, r, vidrio, 'rgba(255,255,255,0.5)', 0.3);
       g.fillStyle = '#9ca3af'; g.fillRect(x - r * 0.55, y + r * 0.85, r * 1.1, r * 0.75);
     },
+    // Rótulo con fórmulas: texto normal y LaTeX entre $...$. Se dibuja con KaTeX en una capa
+    // HTML sobre el lienzo (el lienzo no sabe dibujar LaTeX). Mismas opciones que D.txt.
+    tex(g, src, x, y, o = {}) {
+      if (D._capa) D._capa.poner(src, x, y, o, D._escTex);
+      else D.txt(g, src.replace(/\$/g, ''), x, y, o);
+    },
     // Resorte/resistencia en zigzag entre dos puntos
     resistor(g, x1, y1, x2, y2, c, w = 0.45, n = 6) {
       const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, amp = 1.6;
@@ -192,6 +198,41 @@
     } else el.textContent = s;
   }
 
+  // Texto con $...$ convertido a HTML (KaTeX para las fórmulas)
+  const escHTML = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  function mixto(src) {
+    return src.split(/(\$[^$]+\$)/).map((t) => {
+      if (t.length > 1 && t[0] === '$' && t[t.length - 1] === '$') {
+        const m = t.slice(1, -1);
+        if (window.katex) { try { return window.katex.renderToString(m, { throwOnError: false }); } catch (e) { /* abajo */ } }
+        return escHTML(m);
+      }
+      return escHTML(t);
+    }).join('');
+  }
+  // Capa de rótulos sobre un lienzo: reutiliza los elementos y solo vuelve a pasar por KaTeX si cambió el texto
+  function crearCapa(cont) {
+    const items = [];
+    let n = 0;
+    return {
+      inicio() { n = 0; },
+      poner(src, x, y, o, esc) {
+        let e = items[n];
+        if (!e) { e = el('span', 'sim-tex'); cont.appendChild(e); items.push(e); }
+        n++;
+        if (e._src !== src) { e._src = src; e.innerHTML = mixto(src); }
+        const px = clamp((o.s || 3.2) * esc, o.min || 10.5, o.max || 19);
+        const ax = o.a === 'left' ? '0%' : o.a === 'right' ? '-100%' : '-50%';
+        const est = `font-size:${px.toFixed(1)}px;color:${o.c || COL.txt};font-weight:${o.w || 600};` +
+          `background:${o.fondo || 'transparent'};padding:${o.fondo ? '1px 6px' : '0'};` +
+          `transform:translate(${(x * esc).toFixed(1)}px,${(y * esc).toFixed(1)}px) translate(${ax},-50%)`;
+        if (e._est !== est) { e._est = est; e.style.cssText = est; }
+        if (e.hidden) e.hidden = false;
+      },
+      fin() { for (let i = n; i < items.length; i++) if (!items[i].hidden) items[i].hidden = true; },
+    };
+  }
+
   function el(tag, cls, txt) {
     const e = document.createElement(tag);
     if (cls) e.className = cls;
@@ -210,6 +251,9 @@
     cv.setAttribute('role', 'img');
     cv.setAttribute('aria-label', 'Animación: ' + (opciones.titulo || ''));
     stage.appendChild(cv);
+    const capaEl = el('div', 'sim-capa');
+    stage.appendChild(capaEl);
+    const capa = crearCapa(capaEl);
     const botones = el('div', 'sim-botones');
     const bPlay = el('button', 'sim-btn');
     bPlay.type = 'button';
@@ -229,9 +273,12 @@
       const leg = el('div', 'sim-leg');
       const pc = el('canvas');
       pc.setAttribute('aria-hidden', 'true');
-      pw.append(leg, pc);
+      const pcaja = el('div', 'sim-plot-caja');
+      const pcapa = el('div', 'sim-capa');
+      pcaja.append(pc, pcapa);
+      pw.append(leg, pcaja);
       root.appendChild(pw);
-      plot = { wrap: pw, cv: pc, g: pc.getContext('2d'), buf: [], w: 0, h: 0, esc: [] };
+      plot = { wrap: pw, cv: pc, g: pc.getContext('2d'), buf: [], w: 0, h: 0, esc: [], capa: crearCapa(pcapa) };
       const items = def.plot.series ? def.plot.series.map((s) => [s.label, s.color, s.dash]) : (def.plot.legend || []);
       items.forEach(([t, c, dash]) => {
         const it = el('span', 'sim-leg-item');
@@ -314,11 +361,13 @@
       // botón
       const b = el('button', 'sim-btn2');
       b.type = 'button';
-      texto(b, c.label);
+      const bt = el('span');
+      texto(bt, c.label);
+      b.appendChild(bt);
       b.addEventListener('click', () => { c.onClick(st, api); refrescar(); invalidar(); });
       box.appendChild(b);
       let ultimo = c.label;
-      return { c, box, upd() { if (c.labelFn) { const s = c.labelFn(st); if (s !== ultimo) { ultimo = s; texto(b, s); } } } };
+      return { c, box, upd() { if (c.labelFn) { const s = c.labelFn(st); if (s !== ultimo) { ultimo = s; texto(bt, s); } } } };
     }
     (def.controls || []).forEach((c) => {
       const o = crearControl(c);
@@ -352,6 +401,9 @@
       dpr = Math.min(2.5, window.devicePixelRatio || 1);
       cv.style.width = w + 'px';
       cv.style.height = h + 'px';
+      capaEl.style.width = w + 'px';
+      capaEl.style.height = h + 'px';
+      capaEl.style.left = (cw - w) / 2 + 'px';
       cv.width = Math.round(w * dpr);
       cv.height = Math.round(h * dpr);
       W = w; H = h; esc = w / V.w;
@@ -391,7 +443,12 @@
       const pg = plot.g, w = plot.w, h = plot.h;
       pg.setTransform(dpr, 0, 0, dpr, 0, 0);
       pg.clearRect(0, 0, w, h);
-      if (def.plot.custom) { def.drawPlot(pg, w, h, st); return; }
+      if (def.plot.custom) {
+        D._capa = plot.capa; D._escTex = 1; plot.capa.inicio();
+        def.drawPlot(pg, w, h, st);
+        plot.capa.fin(); D._capa = null;
+        return;
+      }
       ejes(pg, w, h);
       const span = def.plot.span || 6, t1 = Math.max(st.t, span), t0 = t1 - span;
       const series = def.plot.series;
@@ -436,7 +493,9 @@
       g.setTransform(dpr * esc, 0, 0, dpr * esc, 0, 0);
       g.lineCap = 'round';
       g.lineJoin = 'round';
+      D._capa = capa; D._escTex = esc; capa.inicio();
       def.draw(g, st);
+      capa.fin(); D._capa = null;
       dibujarGrafico();
       if (def.readouts) {
         const r = def.readouts(st);
@@ -449,8 +508,8 @@
           }
           r.forEach(([k, v, c], i) => {
             const s = reads.children[i];
-            if (s.firstChild.textContent !== k) s.firstChild.textContent = k;
-            s.lastChild.textContent = v;
+            if (s.firstChild._src !== k) { s.firstChild._src = k; s.firstChild.innerHTML = mixto(k); }
+            if (s.lastChild._src !== v) { s.lastChild._src = v; s.lastChild.innerHTML = mixto(v); }
             s.lastChild.style.color = c || '';
           });
         }

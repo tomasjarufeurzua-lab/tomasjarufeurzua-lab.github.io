@@ -65,7 +65,7 @@
       D.puntos(g, [[3, cy], [gx - 6, cy]], st.fase, 5, COL.I, 0.62);
       D.puntos(g, [[gx + 6, cy], [W - 3, cy]], st.fase, 5, COL.I, 0.62);
       D.arrow(g, 8, cy - 4, 16, cy - 4, COL.I, 0.45);
-      D.txt(g, 'I', 12, cy - 7.5, { s: 3, c: COL.I });
+      D.tex(g, '$I$', 12, cy - 7.5, { s: 3, c: COL.I });
       // Anillos de B alrededor del cable y entre las placas (misma intensidad: I_d = I)
       const inten = I / 2;
       anilloB(g, gam * 0.45, cy, 7, inten, st.ang);
@@ -84,19 +84,19 @@
       }
       const Lq = clamp(qn, 0, 1) * 9.8;
       if (Lq > 0.7) [cy - 11, cy - 5.5, cy + 5.5, cy + 11].forEach((y) => D.arrow(g, gx - 4.9, y, gx - 4.9 + Lq, y, COL.E, 0.45, 1.6));
-      D.txt(g, 'E', gx, cy - 21, { s: 3, c: COL.E });
+      D.tex(g, '$\\vec E$', gx, cy - 21, { s: 3, c: COL.E });
       // Borde Γ
       D.ellipse(g, gam, cy, 2.8, 8, null, COL.gamma, 0.7);
-      D.txt(g, 'Γ', gam, cy - 11.5, { s: 3.2, c: COL.gamma });
+      D.tex(g, '$\\Gamma$', gam, cy - 11.5, { s: 3.2, c: COL.gamma });
       // Rótulos
-      const etiqueta = abomb ? 'La atraviesa I_d = ε₀ dφ_E/dt' : 'La atraviesa I (corriente de conducción)';
-      D.txt(g, (abomb ? 'Superficie abombada: ' : 'Superficie plana: ') + etiqueta, W / 2, 6, { s: 2.8, fondo: 'rgba(0,0,0,0.35)', c: abomb ? COL.E : COL.txt });
-      const res = contra ? '∮B·dl = 0  ✗ ¡Contradicción!' : '∮B·dl = μ₀I  ✓';
-      D.txt(g, res, W / 2, 83, { s: 4, c: contra ? COL.mal : COL.ok, fondo: 'rgba(0,0,0,0.4)', w: 700 });
+      const etiqueta = abomb ? 'La atraviesa $I_d=\\varepsilon_0\\,d\\phi_E/dt$' : 'La atraviesa $I$ (corriente de conducción)';
+      D.tex(g, (abomb ? 'Superficie abombada: ' : 'Superficie plana: ') + etiqueta, W / 2, 6, { s: 2.8, fondo: 'rgba(0,0,0,0.35)', c: abomb ? COL.E : COL.txt });
+      const res = contra ? '$\\oint \\vec B\\cdot d\\vec l = 0$  ✗ ¡Contradicción!' : '$\\oint \\vec B\\cdot d\\vec l = \\mu_0 I$  ✓';
+      D.tex(g, res, W / 2, 83, { s: 4, c: contra ? COL.mal : COL.ok, fondo: 'rgba(0,0,0,0.4)', w: 700 });
     },
     readouts(st) {
       const { I, q } = est1(st);
-      return [['I (cable)', fmt(I, 2) + ' A', COL.I], ['I_d (entre placas)', fmt(I, 2) + ' A', COL.E], ['Carga q', fmt(q, 2) + ' C']];
+      return [['$I$ (cable)', fmt(I, 2) + ' A', COL.I], ['$I_d$ (entre placas)', fmt(I, 2) + ' A', COL.E], ['Carga $q$', fmt(q, 2) + ' C']];
     },
     plot: { series: [{ key: 'I', label: '$I(t)$ en el cable', color: COL.I, max: 2.1 }, { key: 'Id', label: '$I_d(t)$ entre las placas', color: COL.E, dash: true, max: 2.1 }], span: 8 },
     sample(st) { const { I } = est1(st); return { I, Id: I }; },
@@ -254,7 +254,7 @@
       const neto = sal - ent;
       const txt = 'Entran: ' + ent + ' · Salen: ' + sal + ' · Flujo neto: ' + (neto === 0 ? '0' : neto + ' ≠ 0');
       D.txt(g, txt, W / 2, 5.5, { s: 3, fondo: 'rgba(0,0,0,0.4)', c: neto === 0 ? COL.txt : COL.mal });
-      if (st.p.mono && neto !== 0) D.txt(g, '∮B·dA = μ₀ q_m', W / 2, 84, { s: 3.6, c: COL.mal, fondo: 'rgba(0,0,0,0.45)', w: 700 });
+      if (st.p.mono && neto !== 0) D.tex(g, '$\\oint \\vec B\\cdot d\\vec A = \\mu_0 q_m$', W / 2, 84, { s: 3.6, c: COL.mal, fondo: 'rgba(0,0,0,0.45)', w: 700 });
       else D.txt(g, 'Arrastra la superficie', st.sx, Math.min(88, st.sy + R + 3.5), { s: 2.5, c: COL.dim, min: 9.5 });
     },
     pointer: {
@@ -350,13 +350,13 @@
         D.arrow(g, x, cy, x + kz[0] * A * s, cy + kz[1] * A * s, hl === 'B' ? COL.B : 'rgba(96,165,250,0.7)', hl === 'B' ? 0.45 : 0.32, 1.2);
         D.arrow(g, x, cy, x, cy - A * s, hl === 'E' ? COL.E : 'rgba(251,146,60,0.75)', hl === 'E' ? 0.45 : 0.32, 1.2);
       }
-      D.txt(g, 'E (vertical)', x0 + 2, 10, { s: 2.8, c: COL.E, a: 'left' });
-      D.txt(g, 'B (hacia ti, perpendicular a E)', x0 + 2, 15, { s: 2.8, c: COL.B, a: 'left' });
+      D.tex(g, '$\\vec E$ (vertical)', x0 + 2, 10, { s: 2.8, c: COL.E, a: 'left' });
+      D.tex(g, '$\\vec B$ (hacia ti, perpendicular a $\\vec E$)', x0 + 2, 15, { s: 2.8, c: COL.B, a: 'left' });
       // Ciclo: E cambia → crea B → B cambia → crea E
-      const pasos = ['E cambia', '→ crea B', 'B cambia', '→ crea E'];
+      const pasos = ['$\\vec E$ cambia', '→ crea $\\vec B$', '$\\vec B$ cambia', '→ crea $\\vec E$'];
       const act = Math.floor((st.fase || 0) / (Math.PI / 2)) % 4;
       const ancho = (W - 16) / 4;
-      pasos.forEach((p, i) => D.txt(g, p, 8 + ancho * (i + 0.5), 83, { s: 2.9, c: i === act ? COL.oro : COL.dim, w: i === act ? 700 : 500, min: 9.5 }));
+      pasos.forEach((p, i) => D.tex(g, p, 8 + ancho * (i + 0.5), 83, { s: 2.9, c: i === act ? COL.oro : COL.dim, w: i === act ? 700 : 500, min: 9.5 }));
     },
   };
 
@@ -453,12 +453,12 @@
         D.txt(g, 'temperatura', x, y + 13, { s: 2.3, c: COL.dim, min: 9 });
       }
       const msg = st.p.fuente === 'ac' ? 'El flujo cambia todo el tiempo → la ampolleta brilla'
-        : (e.d === undefined || e.d < 0.9) ? 'Al conectar: un pulso de fem' : 'Flujo constante → V_s = 0, ampolleta apagada';
-      D.txt(g, msg, cx, 6, { s: 2.9, fondo: 'rgba(0,0,0,0.35)' });
+        : (e.d === undefined || e.d < 0.9) ? 'Al conectar: un pulso de fem' : 'Flujo constante → $V_s=0$, ampolleta apagada';
+      D.tex(g, msg, cx, 6, { s: 2.9, fondo: 'rgba(0,0,0,0.35)' });
     },
     readouts(st) {
       const e = est4(st);
-      return [['V_p', fmt(e.Vp, 2), COL.I], ['φ', fmt(e.phi, 2), COL.B], ['V_s', fmt(e.Vs, 2), COL.ind], ['Acoplamiento', Math.round(e.k * 100) + ' %']];
+      return [['$V_p$', fmt(e.Vp, 2), COL.I], ['$\\phi$', fmt(e.phi, 2), COL.B], ['$V_s$', fmt(e.Vs, 2), COL.ind], ['Acoplamiento', Math.round(e.k * 100) + ' %']];
     },
     idea(st) {
       const e = est4(st);
@@ -502,9 +502,9 @@
       const caja = (x0, x1, tit, V, I, col) => {
         D.rr(g, x0, 4, x1 - x0, 26, 2); g.fillStyle = 'rgba(0,0,0,0.28)'; g.fill();
         D.txt(g, tit, (x0 + x1) / 2, 8, { s: 2.8, c: col });
-        D.txt(g, 'V = ' + fmtSI(V, 'V', 1), x0 + 2, 14, { s: 2.8, a: 'left' });
-        D.txt(g, 'I = ' + fmtSI(I, 'A', 1), x0 + 2, 19.5, { s: 2.8, a: 'left' });
-        D.txt(g, 'P = ' + fmtSI(V * I, 'W', 1), x0 + 2, 25, { s: 2.8, a: 'left', c: COL.oro });
+        D.tex(g, '$V$ = ' + fmtSI(V, 'V', 1), x0 + 2, 14, { s: 2.8, a: 'left' });
+        D.tex(g, '$I$ = ' + fmtSI(I, 'A', 1), x0 + 2, 19.5, { s: 2.8, a: 'left' });
+        D.tex(g, '$P$ = ' + fmtSI(V * I, 'W', 1), x0 + 2, 25, { s: 2.8, a: 'left', c: COL.oro });
       };
       caja(3, cx - 11, 'Primaria', e.Vp, e.Ip, COL.I);
       caja(cx + 11, W - 3, 'Secundaria', e.Vs, e.Is, COL.ind);
@@ -512,8 +512,8 @@
       const by = 36;
       g.fillStyle = COL.dim; g.beginPath(); g.moveTo(cx, by); g.lineTo(cx - 2, by + 4); g.lineTo(cx + 2, by + 4); g.closePath(); g.fill();
       D.line(g, cx - 18, by, cx + 18, by, COL.oro, 0.5);
-      [-18, 18].forEach((d) => { g.fillStyle = 'rgba(233,213,143,0.5)'; g.fillRect(cx + d - 4, by - 3.5, 8, 3.5); D.txt(g, 'P', cx + d, by - 1.8, { s: 2.2, c: '#222', min: 8 }); });
-      D.txt(g, 'P entra = P sale', cx, by + 6.5, { s: 2.6, c: COL.oro });
+      [-18, 18].forEach((d) => { g.fillStyle = 'rgba(233,213,143,0.5)'; g.fillRect(cx + d - 4, by - 3.5, 8, 3.5); D.tex(g, '$P$', cx + d, by - 1.8, { s: 2.2, c: '#222', min: 8 }); });
+      D.tex(g, '$P$ entra = $P$ sale', cx, by + 6.5, { s: 2.6, c: COL.oro });
       // --- Abajo: central → línea → ciudad ---
       const yl = 62, x0 = 20, x1 = W - 24;
       g.fillStyle = '#6b7280'; g.fillRect(4, yl - 2, 14, 12); g.fillRect(12, yl - 9, 3, 8);
@@ -541,7 +541,7 @@
     },
     readouts(st) {
       const e = est5(st);
-      return [['Corriente en la línea', fmtSI(e.I, 'A', 0)], ['P entregada', fmtSI(e.P, 'W', 0)], ['P perdida = I²R', fmtSI(e.perd, 'W', 1), e.frac < 0.7 ? COL.mal : null], ['Llega a la ciudad', Math.round(e.frac * 100) + ' %']];
+      return [['Corriente en la línea', fmtSI(e.I, 'A', 0)], ['$P$ entregada', fmtSI(e.P, 'W', 0)], ['$P$ perdida $=I^2R$', fmtSI(e.perd, 'W', 1), e.frac < 0.7 ? COL.mal : null], ['Llega a la ciudad', Math.round(e.frac * 100) + ' %']];
     },
   };
 
@@ -572,8 +572,8 @@
       for (let i = 0; i < np; i++) { const y = cy - 15 + (i + 0.5) * 30 / np; D.line(g, cx - 23.5, y - 0.8, cx - 11.5, y + 0.8, COL.I, tp); }
       for (let i = 0; i < ns; i++) { const y = cy - 15 + (i + 0.5) * 30 / ns; D.line(g, cx + 11.5, y - 0.8, cx + 23.5, y + 0.8, COL.ind, ts); }
       D.line(g, 7, 15, cx - 17.5, 15, COL.alambre, 0.4); D.line(g, cx - 17.5, 15, cx - 17.5, cy - 15, COL.alambre, 0.4);
-      D.txt(g, 'N_p = ' + e.Np, cx - 17.5, cy + 22, { s: 2.8, c: COL.I });
-      D.txt(g, 'N_s = ' + e.Ns, cx + 17.5, cy + 22, { s: 2.8, c: COL.ind });
+      D.tex(g, '$N_p$ = ' + e.Np, cx - 17.5, cy + 22, { s: 2.8, c: COL.I });
+      D.tex(g, '$N_s$ = ' + e.Ns, cx + 17.5, cy + 22, { s: 2.8, c: COL.ind });
       // Casa
       const hx = W - 16, hy = 62;
       const xsal = cx + 17.5;
@@ -596,7 +596,7 @@
     },
     readouts(st) {
       const e = est6(st);
-      return [['V_s', fmtSI(e.Vs, 'V', 1), e.ok ? COL.ok : null], ['N_s/N_p', fmt(e.Ns / e.Np, 4)], ['I_s/I_p = N_p/N_s', fmt(e.Np / e.Ns, 1)]];
+      return [['$V_s$', fmtSI(e.Vs, 'V', 1), e.ok ? COL.ok : null], ['$N_s/N_p$', fmt(e.Ns / e.Np, 4)], ['$I_s/I_p = N_p/N_s$', fmt(e.Np / e.Ns, 1)]];
     },
   };
 
@@ -651,7 +651,7 @@
     },
     readouts(st) {
       const e = est7(st);
-      return [['I_p', fmt(e.Ip, 2) + ' A', COL.I], ['I_s', fmt(e.Is, 2) + ' A', COL.ind], ['Potencia de la red', e.n ? fmt(e.P, 0) + ' W' : '≈ 0 W', COL.oro]];
+      return [['$I_p$', fmt(e.Ip, 2) + ' A', COL.I], ['$I_s$', fmt(e.Is, 2) + ' A', COL.ind], ['Potencia de la red', e.n ? fmt(e.P, 0) + ' W' : '≈ 0 W', COL.oro]];
     },
   };
 
@@ -696,7 +696,7 @@
         const wx = st.wx;
         D.line(g, wx, 2, wx, 88, COL.alambre, 0.9);
         D.arrow(g, wx + 2.5, 30, wx + 2.5, 18, COL.I, 0.5);
-        D.txt(g, 'I', wx + 5, 22, { s: 3, c: COL.I });
+        D.tex(g, '$I$', wx + 5, 22, { s: 3, c: COL.I });
         for (let x = wx + 6; x < W - 2; x += 8) for (let y = 8; y < 80; y += 8) D.entra(g, x, y, clamp(14 / (x - wx), 0.4, 2.2), 'rgba(96,165,250,0.6)', 0.25);
         for (let y = 8; y < 80; y += 8) D.sale(g, wx - 6, y, clamp(14 / 6, 0.4, 2.2), 'rgba(96,165,250,0.4)', 0.25);
       } else {
@@ -710,8 +710,8 @@
       if (esc === 'b' && st.p.lados) {
         D.arrow(g, x - 1.8, y + s * 0.75, x - 1.8, y + s * 0.25, COL.ind, 0.5);
         D.arrow(g, x + s + 1.8, y + s * 0.75, x + s + 1.8, y + s * 0.25, COL.ind, 0.5);
-        D.txt(g, 'vBL', x - 4.8, cy, { s: 2.4, c: COL.ind, min: 9 });
-        D.txt(g, 'vBL', x + s + 4.8, cy, { s: 2.4, c: COL.ind, min: 9 });
+        D.tex(g, '$vBL$', x - 4.8, cy, { s: 2.4, c: COL.ind, min: 9 });
+        D.tex(g, '$vBL$', x + s + 4.8, cy, { s: 2.4, c: COL.ind, min: 9 });
         D.txt(g, 'iguales y opuestas en la espira → se cancelan', W / 2, 84, { s: 2.6, c: COL.ind, fondo: 'rgba(0,0,0,0.35)' });
       }
       if (esc !== 'a') D.arrow(g, x + s / 2 - 4, y - 3, x + s / 2 + 4, y - 3, COL.txt, 0.4);
@@ -727,11 +727,11 @@
       g.beginPath(); g.arc(gx, gy, 8, Math.PI, TAU); g.fillStyle = 'rgba(0,0,0,0.4)'; g.fill(); g.strokeStyle = COL.dim; g.lineWidth = 0.3; g.stroke();
       const ang = -Math.PI / 2 + clamp(ie / 3, -1, 1) * 1.1;
       D.line(g, gx, gy, gx + Math.cos(ang) * 7, gy + Math.sin(ang) * 7, Math.abs(ie) > 0.02 ? COL.ind : COL.txt, 0.45);
-      D.txt(g, 'ε', gx, gy - 10.5, { s: 2.6, c: COL.dim, min: 9 });
+      D.tex(g, '$\\varepsilon$', gx, gy - 10.5, { s: 2.6, c: COL.dim, min: 9 });
     },
     readouts(st) {
       const e = est8(st);
-      return [['φ', fmt(e.phi, 2) + ' (u.a.)', COL.E], ['ε', fmt(st.eps, 2) + ' (u.a.)', COL.ind]];
+      return [['$\\phi$', fmt(e.phi, 2) + ' (u.a.)', COL.E], ['$\\varepsilon$', fmt(st.eps, 2) + ' (u.a.)', COL.ind]];
     },
     idea(st) {
       if (st.p.esc === 'a') return Math.abs(st.eps) > 0.02 ? '¡Mientras $B$ cambia sí hay fem! Quieto, el flujo es constante → $\\varepsilon=0$.' : 'Flujo constante → $\\varepsilon=0$, aunque $B$ sea enorme.';
@@ -777,46 +777,46 @@
       const pot = k * st.v * st.v, brillo = clamp(pot / (st.p.m * g9 * this.vT(st) * 1.2), 0, 1);
       D.glow(g, cx, 10, 9, 'rgba(255,120,40,A)', brillo);
       D.resistor(g, cx - hw, 10, cx + hw, 10, `rgb(255,${Math.round(lerp(200, 90, brillo))},${Math.round(lerp(200, 40, brillo))})`, 0.5, 8);
-      D.txt(g, 'R', cx, 5, { s: 2.8 });
+      D.tex(g, '$R$', cx, 5, { s: 2.8 });
       // Barra
       g.fillStyle = '#cfd6dd'; g.fillRect(cx - hw - 1, by - 1.1, 2 * hw + 2, 2.2);
       const I = st.p.B * L9 * st.v / st.p.R;
       if (I > 0.01) {
         const sg = s < 0 ? 1 : -1;
         D.arrow(g, cx - sg * 6, by + 3.3, cx + sg * 6, by + 3.3, COL.ind, 0.5);
-        D.txt(g, 'I', cx, by + 6.5, { s: 2.6, c: COL.ind });
+        D.tex(g, '$I$', cx, by + 6.5, { s: 2.6, c: COL.ind });
       }
       // Fuerzas
       const fg = st.p.m * g9, fm = k * st.v, esc = 10 / fg;
       D.arrow(g, cx + hw + 4, by, cx + hw + 4, by + 10, COL.dim, 0.5);
-      D.txt(g, 'mg', cx + hw + 7.5, by + 6, { s: 2.6, c: COL.dim, min: 9 });
+      D.tex(g, '$mg$', cx + hw + 7.5, by + 6, { s: 2.6, c: COL.dim, min: 9 });
       if (fm > 0.001) {
         const L = clamp(fm * esc, 0.8, 22);
         D.arrow(g, cx - hw - 4, by, cx - hw - 4, by + (s < 0 ? -L : L), COL.F, 0.6);
-        D.txt(g, 'F_B', cx - hw - 8, by + (s < 0 ? -4 : 4), { s: 2.6, c: COL.F, min: 9 });
+        D.tex(g, '$\\vec F_B$', cx - hw - 8, by + (s < 0 ? -4 : 4), { s: 2.6, c: COL.F, min: 9 });
       }
       // Energías
       const x0 = st.ancho ? W * 0.58 : W * 0.6, x1 = W - 4, bw = x1 - x0;
       const U = st.p.m * g9 * st.h, Kc = 0.5 * st.p.m * st.v * st.v, Q = st.Q;
       const m = Math.max(U, Kc + Q, 1e-6) * 1.05;
       D.txt(g, 'Energías', x0 + bw / 2, 16, { s: 2.9, c: COL.txt });
-      D.txt(g, 'Potencial que se pierde (mgh)', x0, 23, { s: 2.4, a: 'left', c: COL.dim, min: 9 });
+      D.tex(g, 'Potencial que se pierde ($mgh$)', x0, 23, { s: 2.4, a: 'left', c: COL.dim, min: 9 });
       g.fillStyle = 'rgba(255,255,255,0.08)'; g.fillRect(x0, 26, bw, 4); g.fillStyle = COL.B; g.fillRect(x0, 26, bw * U / m, 4);
       D.txt(g, 'Cinética + calor', x0, 35, { s: 2.4, a: 'left', c: COL.dim, min: 9 });
       g.fillStyle = 'rgba(255,255,255,0.08)'; g.fillRect(x0, 38, bw, 4);
       g.fillStyle = '#e5e7eb'; g.fillRect(x0, 38, bw * Kc / m, 4);
       g.fillStyle = COL.E; g.fillRect(x0 + bw * Kc / m, 38, bw * Q / m, 4);
       D.txt(g, 'cinética', x0, 46, { s: 2.2, a: 'left', c: '#e5e7eb', min: 8.5 });
-      D.txt(g, 'calor I²R', x0 + bw, 46, { s: 2.2, a: 'right', c: COL.E, min: 8.5 });
+      D.tex(g, 'calor $I^2R$', x0 + bw, 46, { s: 2.2, a: 'right', c: COL.E, min: 8.5 });
       if (s > 0 && st.t > 0.8) {
         D.txt(g, '¡Energía de la nada!', x0 + bw / 2, 58, { s: 3.4, c: COL.mal, w: 700 });
         D.txt(g, 'Imposible.', x0 + bw / 2, 63.5, { s: 3.4, c: COL.mal, w: 700 });
-      } else if (s < 0) D.txt(g, 'Cuadra: mgh = cinética + calor', x0 + bw / 2, 58, { s: 2.5, c: COL.ok, min: 9 });
-      D.txt(g, 'v_T = mgR/(B²L²) = ' + fmt(this.vT(st), 2) + ' m/s', x0 + bw / 2, 75, { s: 2.6, c: COL.oro, min: 9 });
+      } else if (s < 0) D.tex(g, 'Cuadra: $mgh$ = cinética + calor', x0 + bw / 2, 58, { s: 2.5, c: COL.ok, min: 9 });
+      D.tex(g, '$v_T = mgR/(B^2L^2)$ = ' + fmt(this.vT(st), 2) + ' m/s', x0 + bw / 2, 75, { s: 2.6, c: COL.oro, min: 9 });
     },
     readouts(st) {
       const k = st.p.B * st.p.B * L9 * L9 / st.p.R;
-      return [['v', st.v > 999 ? '→ ∞' : fmt(st.v, 2) + ' m/s'], ['v_T', fmt(this.vT(st), 2) + ' m/s', COL.oro], ['Calor I²R', fmtSI(k * st.v * st.v, 'W', 2), COL.E], ['mg·v', fmtSI(st.p.m * g9 * st.v, 'W', 2)]];
+      return [['$v$', st.v > 999 ? '→ ∞' : fmt(st.v, 2) + ' m/s'], ['$v_T$', fmt(this.vT(st), 2) + ' m/s', COL.oro], ['Calor $I^2R$', fmtSI(k * st.v * st.v, 'W', 2), COL.E], ['$mg\\,v$', fmtSI(st.p.m * g9 * st.v, 'W', 2)]];
     },
     idea(st) { return st.p.signo === 'mas' ? 'Con signo $+$ la fuerza empuja a favor: la barra se acelera sola y la energía no cuadra.' : null; },
     plot: { series: [{ key: 'v', label: '$v(t)$', color: COL.txt }, { key: 'vT', label: '$v_T$', color: COL.oro, dash: true }], span: 6, shared: true },

@@ -11,7 +11,7 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="Preguntas conceptuales · Electromagnetismo (Certamen 3)">
   <meta property="og:description" content="24 preguntas con respuesta y animación interactiva: Ampère, Faraday–Lenz, inductancia, transformador y Maxwell.">
-  <meta property="og:image" content="https://tomasjarufe.site/img/preview.png?v=3">
+  <meta property="og:image" content="https://tomasjarufe.site/img/preview.png?v=7">
   <meta property="og:locale" content="es_CL">
   <script data-goatcounter="https://tomasjarufe.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -181,6 +181,12 @@
       color: var(--heading); font: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer;
     }
     .sim-btn:hover, .sim-btn:focus-visible { border-color: var(--accent); color: var(--accent); }
+    .sim-capa { position: absolute; top: 0; left: 0; pointer-events: none; overflow: hidden; }
+    .sim-tex { position: absolute; top: 0; left: 0; white-space: nowrap; line-height: 1.25; border-radius: 5px; font-family: Inter, system-ui, sans-serif; }
+    .sim-tex .katex { font-size: 1.08em; }
+    .sim-plot-caja { position: relative; }
+    .sim-plot-caja .sim-capa { width: 100%; height: 100%; }
+    .sim-reads .katex { font-size: 1em; }
     .sim-reads { display: flex; flex-wrap: wrap; gap: 6px 8px; }
     .sim-read { display: inline-flex; gap: 6px; align-items: baseline; padding: 4px 10px; border-radius: 8px; background: var(--card); border: 1px solid var(--borde); font-size: 0.82rem; }
     .sim-read-k { color: var(--dim); }
@@ -262,11 +268,11 @@
   </div>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
-  <script defer src="datos.js?v=3"></script>
-  <script defer src="motor.js?v=3"></script>
-  <script defer src="anim-a.js?v=3"></script>
-  <script defer src="anim-b.js?v=3"></script>
-  <script defer src="anim-c.js?v=3"></script>
-  <script defer src="app.js?v=3"></script>
+  <script defer src="datos.js?v=7"></script>
+  <script defer src="motor.js?v=7"></script>
+  <script defer src="anim-a.js?v=7"></script>
+  <script defer src="anim-b.js?v=7"></script>
+  <script defer src="anim-c.js?v=7"></script>
+  <script defer src="app.js?v=7"></script>
 </body>
 </html>

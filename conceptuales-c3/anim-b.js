@@ -66,7 +66,7 @@
       if (activo) {
         const Lb = 4 + 11 * Math.abs(indN);
         g.setLineDash([1, 0.8]); D.arrow(g, rx, cy, rx + Math.sign(indN) * Lb, cy, COL.B, 0.55); g.setLineDash([]);
-        D.txt(g, 'B_ind', rx + Math.sign(indN) * (Lb + 4.5), cy + 3.5, { s: 2.5, c: COL.B, min: 9, fondo: 'rgba(0,0,0,0.45)' });
+        D.tex(g, '$\\vec B_{ind}$', rx + Math.sign(indN) * (Lb + 4.5), cy + 3.5, { s: 2.5, c: COL.B, min: 9, fondo: 'rgba(0,0,0,0.45)' });
       }
       // Mitad de adelante del aro y corriente inducida
       g.beginPath();
@@ -101,7 +101,7 @@
       move(st, x) { st.p.d = clamp(st.rx - (x - st.agarre), 4, st.dmax); if (!st.playing) st.dist = st.p.d; },
     },
     readouts(st) {
-      return [['φ', fmt(st.phi, 2) + ' (u.a.)', COL.B], ['dφ/dt', fmt(st.dphi, 2), COL.E], ['I inducida', fmt(Math.abs(st.ind), 2) + ' (u.a.)', COL.ind]];
+      return [['$\\phi$', fmt(st.phi, 2) + ' (u.a.)', COL.B], ['$d\\phi/dt$', fmt(st.dphi, 2), COL.E], ['$I$ inducida', fmt(Math.abs(st.ind), 2) + ' (u.a.)', COL.ind]];
     },
     idea(st) {
       if (Math.abs(st.ind) < 0.05) return Math.abs(st.dd) < 0.5 ? 'Si el imán no se mueve, el flujo no cambia: no hay corriente.' : 'Lejos del aro el flujo casi no cambia: casi no hay corriente.';
@@ -140,7 +140,7 @@
       if (st.p.rieles) {
         D.line(g, 8, top, W - 3, top, COL.alambre, 0.5); D.line(g, 8, bot, W - 3, bot, COL.alambre, 0.5);
         D.resistor(g, 8, top, 8, bot, COL.alambre, 0.5);
-        D.txt(g, 'R', 4, cy, { s: 2.8 });
+        D.tex(g, '$R$', 4, cy, { s: 2.8 });
         D.puntos(g, [[x, top], [x, bot], [8, bot], [8, top], [x, top]], st.fase, 4, COL.ind, 0.6);
         D.arrow(g, x, top - 3, x - 9, top - 3, COL.F, 0.6);
         D.txt(g, 'frena', x - 4.5, top - 6.5, { s: 2.5, c: COL.F, min: 9 });
@@ -158,19 +158,19 @@
       // Fuerzas sobre una carga positiva
       const yf = cy + Lv * 0.15;
       D.arrow(g, x + 8, yf, x + 8, yf + 7, COL.F, 0.5);
-      D.txt(g, 'F_B = qv×B', x + 10, yf + 5, { s: 2.4, c: COL.F, a: 'left', min: 9 });
+      D.tex(g, '$\\vec F_B = q\\vec v\\times\\vec B$', x + 10, yf + 5, { s: 2.4, c: COL.F, a: 'left', min: 9 });
       if (st.sig > 0.05) {
         D.arrow(g, x + 8, yf, x + 8, yf - 7 * st.sig, COL.E, 0.5);
-        D.txt(g, 'F_E = qE', x + 10, yf - 4, { s: 2.4, c: COL.E, a: 'left', min: 9 });
+        D.tex(g, '$\\vec F_E = q\\vec E$', x + 10, yf - 4, { s: 2.4, c: COL.E, a: 'left', min: 9 });
       }
       D.arrow(g, x - 3, top - (st.p.rieles ? 10 : 3), x + 5, top - (st.p.rieles ? 10 : 3), COL.txt, 0.4);
-      D.txt(g, 'v', x + 7, top - (st.p.rieles ? 10 : 3), { s: 2.6 });
+      D.tex(g, '$\\vec v$', x + 7, top - (st.p.rieles ? 10 : 3), { s: 2.6 });
       const dV = st.p.v * st.p.B * st.p.L * st.sig;
-      D.txt(g, 'ΔV = ' + fmt(dV, 2) + ' V (abajo a mayor potencial)', W / 2, 85, { s: 2.8, c: COL.oro, fondo: 'rgba(0,0,0,0.4)' });
+      D.tex(g, '$\\Delta V$ = ' + fmt(dV, 2) + ' V (abajo a mayor potencial)', W / 2, 85, { s: 2.8, c: COL.oro, fondo: 'rgba(0,0,0,0.4)' });
     },
     readouts(st) {
       const e = st.p.v * st.p.B * st.p.L;
-      return [['ΔV = vBL', fmt(e * st.sig, 2) + ' V', COL.oro], ['Corriente', st.p.rieles ? fmt(e / 2, 2) + ' A (R = 2 Ω)' : '0 (circuito abierto)', COL.ind], ['Equilibrio F_E = F_B', Math.round(st.sig * 100) + ' %']];
+      return [['$\\Delta V = vBL$', fmt(e * st.sig, 2) + ' V', COL.oro], ['Corriente', st.p.rieles ? fmt(e / 2, 2) + ' A ($R=2\\,\\Omega$)' : '0 (circuito abierto)', COL.ind], ['Equilibrio $F_E = F_B$', Math.round(st.sig * 100) + ' %']];
     },
     idea(st) { return st.p.rieles ? 'Con circuito: la $\\Delta V$ actúa como pila y circula $I=vBL/R$ (y aparece una fuerza que frena).' : 'Sin circuito: solo $\\Delta V$, sin corriente sostenida.'; },
   };
@@ -231,17 +231,17 @@
       const rt = st.p.r;
       D.circ(g, cx, cy, rt, null, COL.gamma, 0.5);
       D.circ(g, cx + rt * Math.cos(-0.7), cy + rt * Math.sin(-0.7), 1.4, COL.gamma);
-      D.txt(g, 'r', cx + (rt + 3) * Math.cos(-0.7), cy + (rt + 3) * Math.sin(-0.7), { s: 2.8, c: COL.gamma });
+      D.tex(g, '$r$', cx + (rt + 3) * Math.cos(-0.7), cy + (rt + 3) * Math.sin(-0.7), { s: 2.8, c: COL.gamma });
       if (st.p.comp) {
         const qx = st.ancho ? W * 0.84 : W - 13, qy = st.ancho ? cy : 14, L = st.ancho ? 15 : 9;
         D.circ(g, qx, qy, L + 4, 'rgba(0,0,0,0.3)');
         for (let i = 0; i < 12; i++) { const a = i * TAU / 12; D.arrow(g, qx + 2 * Math.cos(a), qy + 2 * Math.sin(a), qx + L * Math.cos(a), qy + L * Math.sin(a), COL.E, 0.35, 1.2); }
         D.circ(g, qx, qy, 1.8, COL.I); D.txt(g, '+', qx, qy, { s: 2.4, min: 8 });
-        D.txt(g, 'Carga: E radial', qx, qy + L + 6, { s: 2.4, c: COL.dim, min: 9 });
-        D.txt(g, '∮E·dl = 0', qx, qy + L + 10, { s: 2.4, c: COL.dim, min: 9 });
+        D.tex(g, 'Carga: $\\vec E$ radial', qx, qy + L + 6, { s: 2.4, c: COL.dim, min: 9 });
+        D.tex(g, '$\\oint \\vec E\\cdot d\\vec l = 0$', qx, qy + L + 10, { s: 2.4, c: COL.dim, min: 9 });
       }
-      const sentido = Math.abs(e.dB) < 0.02 ? 'B no cambia por un instante → E = 0' : (e.B >= 0) === (e.dB > 0) ? '|B| aumenta → E gira en sentido ' + (e.dB > 0 ? 'horario' : 'antihorario') : '|B| disminuye → E gira en sentido ' + (e.dB > 0 ? 'horario' : 'antihorario');
-      D.txt(g, sentido, W / 2, 5, { s: 2.8, fondo: 'rgba(0,0,0,0.4)', c: COL.E });
+      const sentido = Math.abs(e.dB) < 0.02 ? '$B$ no cambia por un instante → $E=0$' : (e.B >= 0) === (e.dB > 0) ? '$|B|$ aumenta → $\\vec E$ gira en sentido ' + (e.dB > 0 ? 'horario' : 'antihorario') : '$|B|$ disminuye → $\\vec E$ gira en sentido ' + (e.dB > 0 ? 'horario' : 'antihorario');
+      D.tex(g, sentido, W / 2, 5, { s: 2.8, fondo: 'rgba(0,0,0,0.4)', c: COL.E });
       D.txt(g, 'Toca para soltar una carga de prueba', W / 2, 87, { s: 2.4, c: COL.dim, min: 9 });
     },
     pointer: {
@@ -256,7 +256,7 @@
     },
     readouts(st) {
       const e = est12(st), r = st.p.r, ae = Math.PI * Math.min(r, R12) ** 2;
-      return [['B', fmt(e.B, 2), COL.B], ['dB/dt', fmt(e.dB, 2), COL.B], ['φ encerrado', fmt(e.B * ae / (Math.PI * R12 * R12), 2) + ' φ₀'], ['∮E·dl', fmt(-e.dB * ae / (Math.PI * R12 * R12), 2) + ' (u.a.)', COL.E], [r > R12 ? 'r > R₀: φ ya no crece' : 'r < R₀', fmt(Math.abs(E12(r, 1)), 2) + '·|dB/dt|']];
+      return [['$B$', fmt(e.B, 2), COL.B], ['$dB/dt$', fmt(e.dB, 2), COL.B], ['$\\phi$ encerrado', fmt(e.B * ae / (Math.PI * R12 * R12), 2) + ' $\\phi_0$'], ['$\\oint \\vec E\\cdot d\\vec l$', fmt(-e.dB * ae / (Math.PI * R12 * R12), 2) + ' (u.a.)', COL.E], [r > R12 ? '$r > R_0$: $\\phi$ ya no crece' : '$r < R_0$', '$E =$ ' + fmt(Math.abs(E12(r, 1)), 2) + ' $\\cdot|dB/dt|$']];
     },
     plot: { custom: true, legend: [['$|E|(r)$', COL.E], ['anillo de prueba', COL.gamma]] },
     drawPlot(g, w, h, st) {
@@ -269,9 +269,9 @@
       g.stroke();
       const r = st.p.r;
       g.fillStyle = COL.gamma; g.beginPath(); g.arc(X(r), Y(Math.abs(E12(r, 1)) / (R12 / 2)), 4, 0, TAU); g.fill();
-      g.fillStyle = 'rgba(255,255,255,0.6)'; g.font = '11px Inter, system-ui, sans-serif'; g.textAlign = 'center';
-      g.fillText('R₀', X(R12), h - 2); g.textAlign = 'right'; g.fillText('r →', w - 6, h - 2);
-      g.textAlign = 'left'; g.fillText('crece ∝ r', X(2), 14); g.fillText('cae ∝ 1/r', X(R12 + 4), 14);
+      const pt = (t, x, y, a) => D.tex(g, t, x, y, { s: 12, a, c: 'rgba(255,255,255,0.7)', w: 500 });
+      pt('$R_0$', X(R12), h - 7); pt('$r$ →', w - 6, h - 7, 'right');
+      pt('crece $\\propto r$', X(2), 11, 'left'); pt('cae $\\propto 1/r$', X(R12 + 4), 11, 'left');
     },
   };
 
@@ -281,8 +281,8 @@
       { type: 'slider', key: 'w', label: 'Rapidez angular $\\omega$', min: 0.5, max: 4, step: 0.1, value: 1.6, fmt: (v) => fmt(v, 1) + ' rad/s' },
       { type: 'slider', key: 'B', label: 'Campo $B$', min: 0.2, max: 1, step: 0.05, value: 0.7, fmt: (v) => fmt(v, 2) + ' T' },
       { type: 'slider', key: 'A', label: 'Área de la espira', min: 0.5, max: 1.5, step: 0.05, value: 1, fmt: (v) => fmt(v, 2) + ' m²' },
-      { type: 'button', label: 'Pausar en ε máx', onClick(st, api) { st.th = Math.floor(st.th / Math.PI) * Math.PI + Math.PI / 2; api.pausar(); } },
-      { type: 'button', label: 'Pausar en ε = 0', onClick(st, api) { st.th = Math.ceil(st.th / Math.PI) * Math.PI; api.pausar(); } },
+      { type: 'button', label: 'Pausar en $\\varepsilon$ máx', onClick(st, api) { st.th = Math.floor(st.th / Math.PI) * Math.PI + Math.PI / 2; api.pausar(); } },
+      { type: 'button', label: 'Pausar en $\\varepsilon = 0$', onClick(st, api) { st.th = Math.ceil(st.th / Math.PI) * Math.PI; api.pausar(); } },
     ],
     init(st) { st.th = 0.3; st.fase = 0; },
     step(st, dt) { st.th += st.p.w * dt; st.fase += dt * 8; },
@@ -294,7 +294,7 @@
       g.setLineDash([2.4, 2]); g.lineDashOffset = -st.fase;
       for (let y = 10; y < 84; y += 9) { g.beginPath(); g.moveTo(3, y); g.lineTo(W - 3, y); g.strokeStyle = `rgba(96,165,250,${0.25 + 0.4 * st.p.B})`; g.lineWidth = 0.35; g.stroke(); }
       g.setLineDash([]); g.lineDashOffset = 0;
-      D.arrow(g, W - 12, 6, W - 4, 6, COL.B, 0.5); D.txt(g, 'B', W - 14, 6, { s: 3, c: COL.B });
+      D.arrow(g, W - 12, 6, W - 4, 6, COL.B, 0.5); D.tex(g, '$\\vec B$', W - 15, 6, { s: 3, c: COL.B });
       const P = (x, y, z) => [cx + x - 0.38 * z, cy - y + 0.22 * z];
       const u = [-Math.sin(th), Math.cos(th)];
       const esq = [[1, 1], [-1, 1], [-1, -1], [1, -1]].map(([i, j]) => P(i * a * u[0], j * b, i * a * u[1]));
@@ -305,21 +305,21 @@
       g.strokeStyle = `rgba(${Math.round(lerp(203, 74, brillo))},${Math.round(lerp(213, 222, brillo))},${Math.round(lerp(225, 128, brillo))},1)`; g.lineWidth = 1; g.stroke();
       const [nx, ny] = P(19 * Math.cos(th), 0, 19 * Math.sin(th));
       D.arrow(g, cx, cy, nx, ny, COL.oro, 0.55);
-      D.txt(g, 'n̂', nx + (nx > cx ? 2.5 : -2.5), ny - 2, { s: 3, c: COL.oro });
+      D.tex(g, '$\\hat n$', nx + (nx > cx ? 2.5 : -2.5), ny - 2, { s: 3, c: COL.oro });
       // Ampolleta conectada
       const bx = st.ancho ? W * 0.83 : W - 10, by = 74;
       D.line(g, cx, cy + b + 9, cx, by + 6, COL.alambre, 0.35); D.line(g, cx, by + 6, bx, by + 6, COL.alambre, 0.35); D.line(g, bx, by + 6, bx, by + 3, COL.alambre, 0.35);
       D.bulb(g, bx, by, 3.2, brillo);
       const sn = Math.abs(Math.sin(th)), cs = Math.abs(Math.cos(th));
       let lbl = '';
-      if (sn > 0.97) lbl = 'Plano ∥ B: φ = 0 pero cambia lo más rápido → ε máxima';
-      else if (cs > 0.97) lbl = 'Normal ∥ B: φ máximo pero no cambia → ε = 0';
-      if (lbl) D.txt(g, lbl, W / 2, 86, { s: 2.8, c: sn > 0.97 ? COL.ind : COL.E, fondo: 'rgba(0,0,0,0.45)' });
+      if (sn > 0.97) lbl = 'Plano $\\parallel \\vec B$: $\\phi=0$ pero cambia lo más rápido → $\\varepsilon$ máxima';
+      else if (cs > 0.97) lbl = 'Normal $\\parallel \\vec B$: $\\phi$ máximo pero no cambia → $\\varepsilon=0$';
+      if (lbl) D.tex(g, lbl, W / 2, 86, { s: 2.8, c: sn > 0.97 ? COL.ind : COL.E, fondo: 'rgba(0,0,0,0.45)' });
     },
     readouts(st) {
       const BA = st.p.B * st.p.A, th = st.th;
       const deg = ((th * 180 / Math.PI) % 360 + 360) % 360;
-      return [['φ = BA cos ωt', fmt(BA * Math.cos(th), 2) + ' Wb', COL.E], ['ε = BAω sin ωt', fmt(BA * st.p.w * Math.sin(th), 2) + ' V', COL.ind], ['ángulo n̂–B', Math.round(deg) + '°']];
+      return [['$\\phi = BA\\cos\\omega t$', fmt(BA * Math.cos(th), 2) + ' Wb', COL.E], ['$\\varepsilon = BA\\omega\\sin\\omega t$', fmt(BA * st.p.w * Math.sin(th), 2) + ' V', COL.ind], ['ángulo $\\hat n$–$\\vec B$', Math.round(deg) + '°']];
     },
     idea(st) {
       const sn = Math.abs(Math.sin(st.th));
@@ -340,9 +340,9 @@
       });
       const t = ((st.th % TAU) + TAU) % TAU;
       g.strokeStyle = 'rgba(255,255,255,0.75)'; g.beginPath(); g.moveTo(X(t), 4); g.lineTo(X(t), h - 4); g.stroke();
-      g.fillStyle = 'rgba(255,255,255,0.65)'; g.font = '11px Inter, system-ui, sans-serif'; g.textAlign = 'left';
-      g.fillText('φ máx → ε = 0', X(0) + 3, 12);
-      g.fillText('φ = 0 → ε máx', X(Math.PI / 2) + 3, h - 4);
+      const pt = (t, x, y) => D.tex(g, t, x, y, { s: 12, a: 'left', c: 'rgba(255,255,255,0.75)', w: 500 });
+      pt('$\\phi$ máx → $\\varepsilon=0$', X(0) + 4, 11);
+      pt('$\\phi=0$ → $\\varepsilon$ máx', X(Math.PI / 2) + 4, h - 10);
     },
   };
   wrapIdea('generador');
@@ -463,20 +463,20 @@
         if (st.I > 0.02) D.head(g, cx + R * Math.cos(a), cy + R * Math.sin(a), a - Math.PI / 2, COL.I, 1.2 + 1.4 * st.I);
       }
       if (st.I > 0.02) D.sale(g, cx, cy, 1 + 4 * st.I, COL.B, 0.4 + 0.3 * st.I);
-      D.txt(g, 'B', cx + 6.5, cy - 3, { s: 2.8, c: COL.B });
+      D.tex(g, '$\\vec B$', cx + 6.5, cy - 3, { s: 2.8, c: COL.B });
       // fem autoinducida: en contra de I si I sube, a favor si I baja
       if (Math.abs(eps) > 0.03) {
         const rr = R + 5.5, span = clamp(Math.abs(eps) / 1.4, 0.12, 1) * Math.PI * 1.1, s = Math.sign(eps);
         const a0 = -Math.PI / 2 + s * span / 2, a1 = -Math.PI / 2 - s * span / 2;
         g.beginPath(); g.arc(cx, cy, rr, Math.min(a0, a1), Math.max(a0, a1)); g.strokeStyle = COL.ind; g.lineWidth = 0.8; g.stroke();
         D.head(g, cx + rr * Math.cos(a1), cy + rr * Math.sin(a1), a1 - s * Math.PI / 2, COL.ind, 2.4);
-        D.txt(g, 'ε_L', cx, cy - rr - 4, { s: 3, c: COL.ind, w: 700 });
+        D.tex(g, '$\\varepsilon_L$', cx, cy - rr - 4, { s: 3, c: COL.ind, w: 700 });
       }
       let estado;
-      if (st.dI > 0.03) estado = ['I aumenta → ε_L en contra de I', COL.ind];
-      else if (st.dI < -0.03) estado = ['I disminuye → ε_L a favor de I', COL.ind];
-      else estado = ['I constante → ε_L = 0 (aunque haya campo)', COL.dim];
-      D.txt(g, estado[0], W / 2, 6, { s: 3, c: estado[1], fondo: 'rgba(0,0,0,0.4)' });
+      if (st.dI > 0.03) estado = ['$I$ aumenta → $\\varepsilon_L$ en contra de $I$', COL.ind];
+      else if (st.dI < -0.03) estado = ['$I$ disminuye → $\\varepsilon_L$ a favor de $I$', COL.ind];
+      else estado = ['$I$ constante → $\\varepsilon_L=0$ (aunque haya campo)', COL.dim];
+      D.tex(g, estado[0], W / 2, 6, { s: 3, c: estado[1], fondo: 'rgba(0,0,0,0.4)' });
       if (st.ancho) {
         // Analogía: la masa de un carro
         const x0 = W * 0.66, x1 = W - 6, yc = 58, px = lerp(x0 + 6, x1 - 8, st.I);
@@ -484,11 +484,11 @@
         const m = 5 + st.p.L * 3;
         D.rr(g, px - m / 2, yc - m * 0.5, m, m * 0.7, 1); g.fillStyle = '#6b7280'; g.fill();
         D.circ(g, px - m / 3, yc + 2.8, 1.3, '#cbd5e1'); D.circ(g, px + m / 3, yc + 2.8, 1.3, '#cbd5e1');
-        D.txt(g, 'más L = más masa', (x0 + x1) / 2, yc - 10, { s: 2.5, c: COL.dim, min: 9 });
+        D.tex(g, 'más $L$ = más masa', (x0 + x1) / 2, yc - 10, { s: 2.5, c: COL.dim, min: 9 });
         D.txt(g, 'analogía', (x0 + x1) / 2, yc - 14.5, { s: 2.3, c: COL.dim, min: 8.5 });
       }
     },
-    readouts(st) { return [['I', fmt(st.I, 2) + ' A', COL.I], ['dI/dt', fmt(st.dI, 2) + ' A/s'], ['ε_L = −L dI/dt', fmt(-st.p.L * st.dI, 2) + ' V', COL.ind]]; },
+    readouts(st) { return [['$I$', fmt(st.I, 2) + ' A', COL.I], ['$dI/dt$', fmt(st.dI, 2) + ' A/s'], ['$\\varepsilon_L = -L\\,dI/dt$', fmt(-st.p.L * st.dI, 2) + ' V', COL.ind]]; },
     plot: { series: [{ key: 'I', label: '$I(t)$', color: COL.I, max: 1.1 }, { key: 'e', label: '$\\varepsilon_L(t)=-L\\,dI/dt$', color: COL.ind }], span: 7 },
     sample(st) { return { I: st.I, e: -st.p.L * st.dI }; },
   };
@@ -530,7 +530,7 @@
       }
       g.setLineDash([]); g.lineDashOffset = 0;
       D.arrow(g, x0 + lv + 5, cy - rv - 3, x0 + lv + 12, cy - rv - 3, COL.B, 0.5);
-      D.txt(g, 'B', x0 + lv + 14, cy - rv - 3, { s: 2.8, c: COL.B, a: 'left' });
+      D.tex(g, '$\\vec B$', x0 + lv + 14, cy - rv - 3, { s: 2.8, c: COL.B, a: 'left' });
       // Mitad de adelante (la corriente baja por el frente → B hacia la derecha)
       const resaltar = st.seq && st.seq.t > 2.3 && st.seq.t < 4.6;
       for (let i = 0; i < N; i++) {
@@ -541,16 +541,16 @@
       if (st.seq) {
         const t = st.seq.t;
         let msg;
-        if (t < 2.3) msg = '① El campo (y el flujo por vuelta) se duplica: × 2';
-        else if (t < 4.6) msg = '② Cada línea atraviesa el doble de vueltas: × 2';
-        else msg = 'Resultado: L × 4 (' + fmtSI(st.seq.L0, 'H', 2) + ' → ' + fmtSI(f.L, 'H', 2) + ')';
-        D.txt(g, msg, W / 2, 80, { s: 3, c: COL.oro, fondo: 'rgba(0,0,0,0.5)', w: 700 });
+        if (t < 2.3) msg = '① El campo (y el flujo por vuelta) se duplica: $\\times 2$';
+        else if (t < 4.6) msg = '② Cada línea atraviesa el doble de vueltas: $\\times 2$';
+        else msg = 'Resultado: $L\\times 4$ (' + fmtSI(st.seq.L0, 'H', 2) + ' → ' + fmtSI(f.L, 'H', 2) + ')';
+        D.tex(g, msg, W / 2, 80, { s: 3, c: COL.oro, fondo: 'rgba(0,0,0,0.5)', w: 700 });
       }
-      D.txt(g, 'L = ' + fmtSI(f.L, 'H', 2) + '  🔒 no depende de I', W / 2, 6, { s: 3, c: COL.txt, fondo: 'rgba(0,0,0,0.4)' });
+      D.tex(g, '$L$ = ' + fmtSI(f.L, 'H', 2) + '  🔒 no depende de $I$', W / 2, 6, { s: 3, c: COL.txt, fondo: 'rgba(0,0,0,0.4)' });
     },
     readouts(st) {
       const f = fis16(st.p);
-      return [['B = μ₀NI/ℓ', fmtSI(f.B, 'T', 2), COL.B], ['φ por vuelta', fmtSI(f.phi1, 'Wb', 2), COL.E], ['N·φ', fmtSI(f.Nphi, 'Wb', 2)], ['L = Nφ/I', fmtSI(f.L, 'H', 2), COL.oro]];
+      return [['$B=\\mu_0 NI/\\ell$', fmtSI(f.B, 'T', 2), COL.B], ['$\\phi$ por vuelta', fmtSI(f.phi1, 'Wb', 2), COL.E], ['$N\\phi$', fmtSI(f.Nphi, 'Wb', 2)], ['$L=N\\phi/I$', fmtSI(f.L, 'H', 2), COL.oro]];
     },
   };
 
@@ -614,11 +614,11 @@
       D.line(g, gx, gy, gx + 7 * Math.cos(na), gy + 7 * Math.sin(na), Math.abs(st.eps) > 0.03 ? COL.ind : COL.txt, 0.5);
       D.txt(g, '0', gx, gy - 9.8, { s: 2.2, c: COL.dim, min: 8 });
       let msg;
-      if (st.cerrado && st.dI > 0.05) msg = 'Al cerrar: I₁ sube → pulso en sentido contrario';
-      else if (st.cerrado) msg = 'Campo grande pero constante → ε₂ = 0';
-      else if (st.dI < -0.05) msg = 'Al abrir: I₁ cae → pulso en el mismo sentido';
+      if (st.cerrado && st.dI > 0.05) msg = 'Al cerrar: $I_1$ sube → pulso en sentido contrario';
+      else if (st.cerrado) msg = 'Campo grande pero constante → $\\varepsilon_2=0$';
+      else if (st.dI < -0.05) msg = 'Al abrir: $I_1$ cae → pulso en el mismo sentido';
       else msg = 'Interruptor abierto: no hay corriente ni flujo';
-      D.txt(g, msg, W / 2, 5, { s: 2.8, fondo: 'rgba(0,0,0,0.4)' });
+      D.tex(g, msg, W / 2, 5, { s: 2.8, fondo: 'rgba(0,0,0,0.4)' });
     },
     pointer: {
       hit() { return false; },
@@ -627,7 +627,7 @@
         if (Math.abs(x - sx) < 9 && Math.abs(y - sy) < 8) { st.p.auto = false; st.cerrado = !st.cerrado; }
       },
     },
-    readouts(st) { return [['I₁', fmt(st.I1, 2) + ' A', COL.I], ['ε₂ = −M dI₁/dt', fmt(st.eps, 2) + ' V', COL.ind], ['M (relativa)', fmt(this.M(st), 2)]]; },
+    readouts(st) { return [['$I_1$', fmt(st.I1, 2) + ' A', COL.I], ['$\\varepsilon_2 = -M\\,dI_1/dt$', fmt(st.eps, 2) + ' V', COL.ind], ['$M$ (relativa)', fmt(this.M(st), 2)]]; },
     plot: { series: [{ key: 'I', label: '$I_1(t)$', color: COL.I, max: 1.1 }, { key: 'e', label: '$\\varepsilon_2(t)$', color: COL.ind }], span: 7 },
     sample(st) { return { I: st.I1, e: st.eps }; },
   };
@@ -659,7 +659,7 @@
       const alambre = st.p.quien === 'alambre';
       // Alambre
       D.line(g, wx, 2, wx, 88, alambre ? COL.alambre : 'rgba(203,213,225,0.45)', 0.9);
-      if (alambre) { D.arrow(g, wx - 3, 26, wx - 3, 14, COL.I, 0.55); D.txt(g, 'I', wx - 6, 20, { s: 3, c: COL.I }); }
+      if (alambre) { D.arrow(g, wx - 3, 26, wx - 3, 14, COL.I, 0.55); D.tex(g, '$I$', wx - 6, 20, { s: 3, c: COL.I }); }
       if (alambre) {
         // Campo del alambre ∝ 1/x: ⊗ a la derecha (corriente hacia arriba)
         for (let x = wx + 4; x < W - 2; x += 7) for (let y = 6; y < 88; y += 7) D.entra(g, x, y, clamp(9 / (x - wx), 0.35, 2), 'rgba(96,165,250,0.45)', 0.2);
@@ -672,7 +672,7 @@
         }
         const xa = (st.p.a + f * st.p.c);
         st.parcial = 2e-7 * (st.p.h / 100) * Math.log(xa / st.p.a);
-        D.txt(g, 'φ₂₁ = ∫ μ₀I h /(2πx) dx', W / 2 + 8, 84, { s: 2.8, c: COL.E, fondo: 'rgba(0,0,0,0.45)' });
+        D.tex(g, '$\\phi_{21} = \\int \\frac{\\mu_0 I h}{2\\pi x}\\,dx$', W / 2 + 8, 84, { s: 2.8, c: COL.E, fondo: 'rgba(0,0,0,0.45)' });
       } else {
         // Campo de la espira (en su plano): Bz por superposición de sus 4 tramos
         const P = [[x0, cy + hh], [x0 + w, cy + hh], [x0 + w, cy - hh], [x0, cy - hh]].map(([x, y]) => [x, -y]);
@@ -693,14 +693,14 @@
       g.strokeStyle = alambre ? '#cbd5e1' : COL.I; g.lineWidth = 0.8; g.strokeRect(x0, cy - hh, w, 2 * hh);
       if (!alambre) D.puntos(g, [[x0, cy - hh], [x0, cy + hh], [x0 + w, cy + hh], [x0 + w, cy - hh], [x0, cy - hh]], st.fase, 5, COL.I, 0.6);
       // Cotas
-      D.line(g, wx, cy + hh + 4, x0, cy + hh + 4, COL.dim, 0.3); D.txt(g, 'a', (wx + x0) / 2, cy + hh + 6.5, { s: 2.6, c: COL.dim });
-      D.line(g, x0, cy - hh - 3, x0 + w, cy - hh - 3, COL.dim, 0.3); D.txt(g, 'c', x0 + w / 2, cy - hh - 5.5, { s: 2.6, c: COL.dim });
-      D.txt(g, 'h', x0 + w + 3, cy, { s: 2.6, c: COL.dim });
+      D.line(g, wx, cy + hh + 4, x0, cy + hh + 4, COL.dim, 0.3); D.tex(g, '$a$', (wx + x0) / 2, cy + hh + 6.5, { s: 2.6, c: COL.dim });
+      D.line(g, x0, cy - hh - 3, x0 + w, cy - hh - 3, COL.dim, 0.3); D.tex(g, '$c$', x0 + w / 2, cy - hh - 5.5, { s: 2.6, c: COL.dim });
+      D.tex(g, '$h$', x0 + w + 3, cy, { s: 2.6, c: COL.dim });
     },
     readouts(st) {
       const M = this.M(st.p);
-      const r = [['M = μ₀h/(2π) ln((a+c)/a)', fmtSI(M, 'H', 2), COL.oro]];
-      if (st.p.quien === 'alambre') r.push(['φ₂₁/I (barrido)', fmtSI(st.parcial || 0, 'H', 2), COL.E]);
+      const r = [['$M = \\frac{\\mu_0 h}{2\\pi}\\ln\\frac{a+c}{a}$', fmtSI(M, 'H', 2), COL.oro]];
+      if (st.p.quien === 'alambre') r.push(['$\\phi_{21}/I$ (barrido)', fmtSI(st.parcial || 0, 'H', 2), COL.E]);
       else r.push(['Calculado desde la espira', fmtSI(M, 'H', 2) + ' (igual)', COL.I]);
       return r;
     },

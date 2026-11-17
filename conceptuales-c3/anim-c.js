@@ -102,7 +102,7 @@
       const W = st.V.w, al = this.alambres(st), c = this.calc(st), P = st.path, n = P.length;
       flechasCampo(g, al, W, 8, 0.012);
       D.poly(g, P, COL.gamma, 0.7, true);
-      D.txt(g, 'Γ', st.G.cx - st.G.hw + 3, st.G.cy - st.G.hh + 4, { s: 3.2, c: COL.gamma });
+      D.tex(g, '$\\Gamma$', st.G.cx - st.G.hw + 3, st.G.cy - st.G.hh + 4, { s: 3.2, c: COL.gamma });
       // Tramo recorrido
       const u = Math.min(1, st.u), k = Math.floor(u * n);
       D.poly(g, P.slice(0, k + 1), COL.oro, 1.1);
@@ -116,10 +116,10 @@
       [0, 1, 2].forEach((i) => {
         const w = { x: st.pos[i].x, y: st.pos[i].y, I: st.p['I' + (i + 1)] }, on = st.p['on' + (i + 1)];
         simbolo(g, w, 2.4, !on);
-        D.txt(g, 'I' + '₁₂₃'[i], w.x + 4.5, w.y - 3, { s: 2.8, c: on ? COL.I : COL.dim });
+        D.tex(g, '$I_' + (i + 1) + '$', w.x + 4.5, w.y - 3, { s: 2.8, c: on ? COL.I : COL.dim });
       });
       const pP = [st.G.cx + st.G.hw, st.G.cy];
-      D.circ(g, pP[0], pP[1], 0.9, '#fff'); D.txt(g, 'P', pP[0] + 3, pP[1] + 2.5, { s: 2.6 });
+      D.circ(g, pP[0], pP[1], 0.9, '#fff'); D.tex(g, '$P$', pP[0] + 3, pP[1] + 2.5, { s: 2.6 });
       // Barra con la suma acumulada
       const val = c.acum[k], escala = Math.max(1, Math.abs(c.total), ...c.acum.map(Math.abs)) * 1.1;
       if (st.ancho) {
@@ -128,7 +128,7 @@
         g.fillStyle = val >= 0 ? COL.oro : COL.B; const hv = val / escala * hb;
         g.fillRect(bx0 - 2, y0 - Math.max(0, hv), 4, Math.abs(hv));
         D.line(g, bx0 - 4, y0, bx0 + 4, y0, '#fff', 0.3);
-        D.txt(g, '∫B·dl', bx0, y0 - hb - 3, { s: 2.4, c: COL.dim, min: 9 });
+        D.tex(g, '$\\int \\vec B\\cdot d\\vec l$', bx0, y0 - hb - 3, { s: 2.4, c: COL.dim, min: 9 });
       } else {
         const y0 = 85, x0 = W / 2, wb = W / 2 - 8;
         D.rr(g, x0 - wb, y0 - 2, 2 * wb, 4, 1.5); g.fillStyle = 'rgba(0,0,0,0.35)'; g.fill();
@@ -136,9 +136,10 @@
         g.fillRect(x0 + Math.min(0, wv), y0 - 1.6, Math.abs(wv), 3.2);
         D.line(g, x0, y0 - 3, x0, y0 + 3, '#fff', 0.3);
       }
-      const enc = c.enc.map((w) => (w.I >= 0 ? '+' : '−') + fmt(Math.abs(w.I), 1)).join(' ');
-      const txt = st.u >= 1 ? '∮B·dl = μ₀(' + (enc || '0') + ') = ' + fmt(c.total, 1) + ' μ₀ ✓' : '∫B·dl = ' + fmt(val, 2) + ' μ₀';
-      D.txt(g, txt, st.ancho ? W * 0.42 : W / 2, st.ancho ? 85 : 78, { s: 3, c: st.u >= 1 ? COL.ok : COL.oro, fondo: 'rgba(0,0,0,0.45)', w: 700 });
+      const enc = c.enc.map((w) => (w.I >= 0 ? '+' : '-') + fmt(Math.abs(w.I), 1).replace(',', '{,}')).join(' ');
+      const num = (v, d) => fmt(v, d).replace(',', '{,}').replace('−', '-');
+      const txt = st.u >= 1 ? '$\\oint \\vec B\\cdot d\\vec l = \\mu_0(' + (enc || '0') + ') = ' + num(c.total, 1) + '\\,\\mu_0$ ✓' : '$\\int \\vec B\\cdot d\\vec l = ' + num(val, 2) + '\\,\\mu_0$';
+      D.tex(g, txt, st.ancho ? W * 0.42 : W / 2, st.ancho ? 85 : 78, { s: 3, c: st.u >= 1 ? COL.ok : COL.oro, fondo: 'rgba(0,0,0,0.45)', w: 700 });
     },
     pointer: {
       hit(st, x, y) { return st.pos.some((p) => Math.hypot(x - p.x, y - p.y) < 4); },
@@ -147,8 +148,9 @@
     },
     readouts(st) {
       const c = this.calc(st);
-      const fuera = this.alambres(st).filter((w) => !c.enc.includes(w)).map((w) => 'I' + '₁₂₃'[w.i]).join(', ');
-      return [['∮B·dl (vuelta completa)', fmt(c.total, 1) + ' μ₀', COL.ok], ['Encerradas', c.enc.map((w) => 'I' + '₁₂₃'[w.i]).join(', ') || 'ninguna'], ['Afuera (aportan 0)', fuera || 'ninguna']];
+      const dentroI = c.enc.map((w) => w.i);
+      const fuera = this.alambres(st).filter((w) => !dentroI.includes(w.i)).map((w) => '$I_' + (w.i + 1) + '$').join(', ');
+      return [['$\\oint \\vec B\\cdot d\\vec l$ (vuelta completa)', fmt(c.total, 1) + ' $\\mu_0$', COL.ok], ['Encerradas', c.enc.map((w) => '$I_' + (w.i + 1) + '$').join(', ') || 'ninguna'], ['Afuera (aportan 0)', fuera || 'ninguna']];
     },
     idea(st) {
       const al = this.alambres(st);
@@ -239,7 +241,7 @@
       c.segs.forEach(([a, b]) => { g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); });
       g.stroke();
       D.line(g, 0, cy, W, cy, 'rgba(255,255,255,0.15)', 0.25, [1, 1]);
-      al.forEach((w, i) => { simbolo(g, w, 2.6); D.txt(g, i ? 'I₂' : 'I₁', w.x, w.y - 5.5, { s: 2.8, c: COL.I }); });
+      al.forEach((w, i) => { simbolo(g, w, 2.6); D.tex(g, i ? '$I_2$' : '$I_1$', w.x, w.y - 5.5, { s: 2.8, c: COL.I }); });
       // Sonda
       const [sx, sy] = this.sonda(st);
       const b1 = campo([al[0]], sx, sy), b2 = campo([al[1]], sx, sy), bt = [b1[0] + b2[0], b1[1] + b2[1]];
@@ -249,8 +251,8 @@
       const fl = (b, col, w) => { const L = Math.hypot(b[0], b[1]) * k, f = L > 20 ? 20 / L : 1; D.arrow(g, sx, sy, sx + b[0] * k * f, sy + b[1] * k * f, col, w); };
       fl(b1, 'rgba(147,197,253,0.8)', 0.35); fl(b2, 'rgba(196,181,253,0.8)', 0.35); fl(bt, '#fff', 0.6);
       D.circ(g, sx, sy, 1.3, cero ? COL.ok : COL.oro, '#000', 0.2);
-      if (cero) D.txt(g, '¡B = 0!', sx, sy - 6, { s: 3, c: COL.ok, w: 700 });
-      D.txt(g, 'B₁', 4, 6, { s: 2.6, c: '#93c5fd', a: 'left' }); D.txt(g, 'B₂', 12, 6, { s: 2.6, c: '#c4b5fd', a: 'left' }); D.txt(g, 'B total', 20, 6, { s: 2.6, a: 'left' });
+      if (cero) D.tex(g, '¡$B = 0$!', sx, sy - 6, { s: 3, c: COL.ok, w: 700 });
+      D.tex(g, '$\\vec B_1$', 4, 6, { s: 2.6, c: '#93c5fd', a: 'left' }); D.tex(g, '$\\vec B_2$', 12, 6, { s: 2.6, c: '#c4b5fd', a: 'left' }); D.tex(g, '$\\vec B$ total', 20, 6, { s: 2.6, a: 'left' });
       D.txt(g, 'Arrastra la sonda', W / 2, 87, { s: 2.4, c: COL.dim, min: 9 });
     },
     pointer: {
@@ -261,7 +263,7 @@
     readouts(st) {
       const { al } = this.geo(st), [sx, sy] = this.sonda(st);
       const b = campo(al, sx, sy), ref = st.p.I1 / (TAU * this.geo(st).dv / 2);
-      return [['|B| en la sonda', fmt(Math.hypot(b[0], b[1]) / ref, 2) + ' B₀'], ['Entre los alambres', st.p.sentido === 'mismo' ? 'hay un cero' : 'se suman: no hay cero', st.p.sentido === 'mismo' ? COL.ok : COL.E]];
+      return [['$|\\vec B|$ en la sonda', fmt(Math.hypot(b[0], b[1]) / ref, 2) + ' $B_0$'], ['Entre los alambres', st.p.sentido === 'mismo' ? 'hay un cero' : 'se suman: no hay cero', st.p.sentido === 'mismo' ? COL.ok : COL.E]];
     },
     plot: { custom: true, legend: [['$B_y(x)$ sobre la línea que une los alambres', COL.B], ['sonda', COL.oro]] },
     drawPlot(g, w, h, st) {
@@ -380,7 +382,7 @@
         const a = -st.u * TAU, px = xl + 0.3 * r * Math.sin(a), py = c.cy - r * Math.cos(a);
         D.circ(g, px, py, 1, COL.oro);
         D.txt(g, '↔ arrastra el loop', xl, c.cy + r + 4, { s: 2.4, c: COL.dim, min: 9 });
-        D.txt(g, '❌ La simetría no basta: B en el loop no es μ₀I/2πr', W / 2, 6, { s: 2.8, c: COL.mal, fondo: 'rgba(0,0,0,0.45)', w: 700 });
+        D.tex(g, '❌ La simetría no basta: $B$ en el loop no es $\\mu_0 I/2\\pi r$', W / 2, 6, { s: 2.8, c: COL.mal, fondo: 'rgba(0,0,0,0.45)', w: 700 });
         return;
       }
       flechasCampo(g, c.al, W, 7, c.cfg === 'solenoide' || c.cfg === 'toroide' ? 0.05 : 0.008, 0.5);
@@ -392,7 +394,7 @@
       const [bx, by] = campo(c.al, px, py), bm = Math.hypot(bx, by);
       if (bm > 1e-6) { const L = clamp(bm / k.mmax * 9, 1, 9); D.arrow(g, px, py, px + bx / bm * L, py + by / bm * L, COL.B, 0.5); }
       D.circ(g, px, py, 1, COL.oro);
-      D.txt(g, k.ok ? '✅ B sale de la integral: se puede despejar' : '❌ La ley se cumple, pero no puedes despejar B', W / 2, 6, { s: 2.8, c: k.ok ? COL.ok : COL.mal, fondo: 'rgba(0,0,0,0.45)', w: 700 });
+      D.tex(g, k.ok ? '✅ $B$ sale de la integral: se puede despejar' : '❌ La ley se cumple, pero no puedes despejar $B$', W / 2, 6, { s: 2.8, c: k.ok ? COL.ok : COL.mal, fondo: 'rgba(0,0,0,0.45)', w: 700 });
       D.txt(g, 'Arrastra el loop para probar otros', W / 2, 87, { s: 2.4, c: COL.dim, min: 9 });
     },
     pointer: {
@@ -419,10 +421,10 @@
     },
     readouts(st) {
       const k = this.calc(st);
-      if (k.finito) return [['B en el loop', Math.round(this.finitoRatio(st) * 100) + ' % de μ₀I/2πr', COL.mal], ['Constante a lo largo del loop', 'sí, pero no sirve'], ['Hay que usar', 'Biot–Savart']];
+      if (k.finito) return [['$B$ en el loop', Math.round(this.finitoRatio(st) * 100) + ' % de $\\mu_0 I/2\\pi r$', COL.mal], ['Constante a lo largo del loop', 'sí, pero no sirve'], ['Hay que usar', 'Biot–Savart']];
       const media = k.mag.reduce((a, b) => a + b, 0) / k.mag.length;
       const cv = Math.sqrt(k.mag.reduce((a, b) => a + (b - media) ** 2, 0) / k.mag.length) / (media || 1);
-      return [['Variación de |B| en el loop', Math.round(cv * 100) + ' %'], ['Ángulo máx. entre B y dl', Math.round(Math.max(...k.ang)) + '°'], ['¿Se despeja B?', k.ok ? 'sí' : 'no', k.ok ? COL.ok : COL.mal]];
+      return [['Variación de $|\\vec B|$ en el loop', Math.round(cv * 100) + ' %'], ['Ángulo máx. entre $\\vec B$ y $d\\vec l$', Math.round(Math.max(...k.ang)) + '°'], ['¿Se despeja $B$?', k.ok ? 'sí' : 'no', k.ok ? COL.ok : COL.mal]];
     },
     idea(st) {
       if (st.p.cfg === 'finito') return 'Alambre finito: un tramo solo no es un circuito y $B$ depende de dónde pongas el loop. La igualdad no deja despejar $B$: se usa Biot–Savart.';
@@ -438,7 +440,7 @@
         const r = this.finitoRatio(st);
         g.strokeStyle = COL.B; g.lineWidth = 2; g.beginPath(); g.moveTo(X(0), Y(r * 0.8)); g.lineTo(X(1), Y(r * 0.8)); g.stroke();
         g.strokeStyle = COL.oro; g.setLineDash([5, 4]); g.beginPath(); g.moveTo(X(0), Y(0.8)); g.lineTo(X(1), Y(0.8)); g.stroke(); g.setLineDash([]);
-        g.textAlign = 'left'; g.fillText('lo que daría Ampère: μ₀I/2πr', X(0.02), Y(0.8) - 5);
+        D.tex(g, 'lo que daría Ampère: $\\mu_0 I/2\\pi r$', X(0.02), Y(0.8) - 10, { s: 12, a: 'left', c: 'rgba(255,255,255,0.75)', w: 500 });
         return;
       }
       const n = k.mag.length;
@@ -522,7 +524,7 @@
       const enc = al.filter((w) => Math.abs(w.x - rx) < rw / 2 && Math.abs(w.y - ry) < rh / 2);
       const neto = enc.reduce((s, w) => s + w.I, 0);
       const lado1 = ry + rh / 2, dentro1 = Math.abs(lado1 - cy) < a;
-      return [['Corriente encerrada', neto ? Math.abs(neto) + '·I' : '0', COL.I], ['B (lado 1)', neto ? 'μ₀·' + Math.abs(neto) + 'I/ℓ (igual a cualquier altura)' : '0 (no encierra corriente)', COL.B], ['Lado 1', dentro1 ? 'adentro' : 'afuera']];
+      return [['Corriente encerrada', neto ? '$' + Math.abs(neto) + 'I$' : '0', COL.I], ['$B$ (lado 1)', neto ? '$\\mu_0\\cdot ' + Math.abs(neto) + 'I/\\ell$ (igual a cualquier altura)' : '0 (no encierra corriente)', COL.B], ['Lado 1', dentro1 ? 'adentro' : 'afuera']];
     },
   };
 
@@ -573,12 +575,12 @@
         D.txt(g, 'Corriente encerrada', x0, 22, { s: 2.6, a: 'left', c: COL.dim, min: 9 });
         g.fillStyle = 'rgba(255,255,255,0.1)'; g.fillRect(x0, 25, x1 - x0, 4); g.fillStyle = COL.I; g.fillRect(x0, 25, (x1 - x0) * f, 4);
         D.txt(g, Math.round(f * 100) + ' %', x1, 32.5, { s: 2.8, a: 'right' });
-        D.txt(g, 'B en el círculo', x0, 42, { s: 2.6, a: 'left', c: COL.dim, min: 9 });
+        D.tex(g, '$B$ en el círculo', x0, 42, { s: 2.6, a: 'left', c: COL.dim, min: 9 });
         g.fillStyle = 'rgba(255,255,255,0.1)'; g.fillRect(x0, 45, x1 - x0, 4); g.fillStyle = COL.B; g.fillRect(x0, 45, (x1 - x0) * Math.min(1, b / 1.15), 4);
-        D.txt(g, fmt(b, 2) + ' B(R)', x1, 52.5, { s: 2.8, a: 'right' });
-        D.txt(g, st.p.r > 1 ? 'Afuera: B = μ₀I/(2πr)' : 'Adentro: B = μ₀I_enl(r)/(2πr)', (x0 + x1) / 2, 64, { s: 2.6, c: COL.oro, min: 9 });
+        D.tex(g, fmt(b, 2) + ' $B(R)$', x1, 52.5, { s: 2.8, a: 'right' });
+        D.tex(g, st.p.r > 1 ? 'Afuera: $B = \\mu_0 I/(2\\pi r)$' : 'Adentro: $B = \\mu_0 I_{enl}(r)/(2\\pi r)$', (x0 + x1) / 2, 64, { s: 2.6, c: COL.oro, min: 9 });
       } else {
-        D.txt(g, 'I_enl = ' + Math.round(f * 100) + ' %  ·  B = ' + fmt(b, 2) + ' B(R)', W / 2, 84, { s: 2.8, fondo: 'rgba(0,0,0,0.45)' });
+        D.tex(g, '$I_{enl}$ = ' + Math.round(f * 100) + ' %  ·  $B$ = ' + fmt(b, 2) + ' $B(R)$', W / 2, 84, { s: 2.8, fondo: 'rgba(0,0,0,0.45)' });
       }
       D.txt(g, N23[m], cx, 6, { s: 2.8, c: C23[m], fondo: 'rgba(0,0,0,0.4)' });
       if (!st.p.auto) D.txt(g, 'Arrastra el círculo', cx, cy + R + 8, { s: 2.4, c: COL.dim, min: 9 });
@@ -588,7 +590,7 @@
       down(st) { st.p.auto = false; },
       move(st, x, y) { const W = st.V.w, cx = st.ancho ? W * 0.32 : W * 0.5, R = st.ancho ? 22 : 19; st.p.r = clamp(Math.hypot(x - cx, y - 44) / R, 0.02, 2); },
     },
-    readouts(st) { const m = st.p.J, f = frac23(m, st.p.r); return [['r', fmt(st.p.r, 2) + ' R'], ['I_enl(r)', Math.round(f * 100) + ' % del total', COL.I], ['B(r)', fmt(B23(m, st.p.r), 2) + ' · B(R)', COL.B]]; },
+    readouts(st) { const m = st.p.J, f = frac23(m, st.p.r); return [['$r$', fmt(st.p.r, 2) + ' $R$'], ['$I_{enl}(r)$', Math.round(f * 100) + ' % del total', COL.I], ['$B(r)$', fmt(B23(m, st.p.r), 2) + ' $\\cdot B(R)$', COL.B]]; },
     plot: { custom: true, legend: [['$B(r)$', COL.B], ['máximo', COL.oro]] },
     drawPlot(g, w, h, st) {
       g.fillStyle = 'rgba(0,0,0,0.18)'; g.fillRect(0, 0, w, h);
@@ -606,11 +608,11 @@
       let um = 0, bm = 0;
       for (let i = 1; i <= 200; i++) { const u = i / 100, v = B23(m, u); if (v > bm + 1e-9) { bm = v; um = u; } }
       g.fillStyle = COL.oro; g.beginPath(); g.arc(X(um), Y(bm), 4, 0, TAU); g.fill();
-      g.font = '11px Inter, system-ui, sans-serif'; g.textAlign = 'center'; g.fillStyle = 'rgba(255,255,255,0.65)';
-      g.fillText('máx en r = ' + fmt(um, 2) + ' R', clamp(X(um), 50, w - 50), Math.max(12, Y(bm) - 8));
-      g.fillText('R', X(1), h - 1);
+      const pt = (t, x, y, a) => D.tex(g, t, x, y, { s: 12, a, c: 'rgba(255,255,255,0.75)', w: 500 });
+      pt('máx en $r$ = ' + fmt(um, 2) + ' $R$', clamp(X(um), 60, w - 60), Math.max(10, Y(bm) - 12));
+      pt('$R$', X(1), h - 6);
       g.fillStyle = '#fff'; g.beginPath(); g.arc(X(st.p.r), Y(B23(m, st.p.r)), 3.5, 0, TAU); g.fill();
-      if (st.p.comp) { g.textAlign = 'right'; g.fillStyle = 'rgba(255,255,255,0.65)'; g.fillText('afuera: la misma curva 1/r', w - 8, 14); }
+      if (st.p.comp) pt('afuera: la misma curva $1/r$', w - 8, 11, 'right');
     },
   };
 
@@ -653,21 +655,21 @@
       }
       D.circ(g, cx, cy, r, 'rgba(134,239,172,0.08)', COL.gamma, 0.65);
       const nsale = r > a ? N : 0, nentra = r > b ? N : 0;
-      const zona = r < a ? 'En el hueco: 0 cortes → I_enl = 0' : r < b ? 'Dentro del núcleo: ⊙ × ' + N + ' → I_enl = NI' : '⊙ × ' + N + ' y ⊗ × ' + N + ' → I_enl = 0';
-      D.txt(g, zona, st.p.franjas && st.ancho ? cx + 4 : W / 2, 5, { s: 2.8, c: r > a && r < b ? COL.ok : COL.txt, fondo: 'rgba(0,0,0,0.45)' });
+      const zona = r < a ? 'En el hueco: 0 cortes → $I_{enl}=0$' : r < b ? 'Dentro del núcleo: ⊙ × ' + N + ' → $I_{enl}=NI$' : '⊙ × ' + N + ' y ⊗ × ' + N + ' → $I_{enl}=0$';
+      D.tex(g, zona, st.p.franjas && st.ancho ? cx + 4 : W / 2, 5, { s: 2.8, c: r > a && r < b ? COL.ok : COL.txt, fondo: 'rgba(0,0,0,0.45)' });
       st.cortes = [nsale, nentra];
       if (st.p.franjas) {
         const x0 = st.ancho ? W * 0.6 : W * 0.6, x1 = W - 5, y0 = 30, hh = 26;
-        D.txt(g, 'Sección: h × (b − a)', (x0 + x1) / 2, y0 - 4, { s: 2.5, c: COL.dim, min: 9 });
+        D.tex(g, 'Sección: $h\\times(b-a)$', (x0 + x1) / 2, y0 - 4, { s: 2.5, c: COL.dim, min: 9 });
         const n = 14;
         for (let i = 0; i < n; i++) {
           const rr = a + (i + 0.5) * (b - a) / n, al = 0.15 + 0.7 * a / rr;
           g.fillStyle = `rgba(251,146,60,${al})`; g.fillRect(x0 + i * (x1 - x0) / n, y0, (x1 - x0) / n - 0.25, hh);
         }
         g.strokeStyle = 'rgba(255,255,255,0.4)'; g.lineWidth = 0.3; g.strokeRect(x0, y0, x1 - x0, hh);
-        D.txt(g, 'a', x0, y0 + hh + 3, { s: 2.6, c: COL.dim }); D.txt(g, 'b', x1, y0 + hh + 3, { s: 2.6, c: COL.dim });
-        D.txt(g, 'franjas dr: B ∝ 1/r', (x0 + x1) / 2, y0 + hh + 8, { s: 2.4, c: COL.E, min: 9 });
-        D.txt(g, 'φ = μ₀NIh/(2π)·ln(b/a)', (x0 + x1) / 2, y0 + hh + 13, { s: 2.6, c: COL.oro, min: 9 });
+        D.tex(g, '$a$', x0, y0 + hh + 3, { s: 2.6, c: COL.dim }); D.tex(g, '$b$', x1, y0 + hh + 3, { s: 2.6, c: COL.dim });
+        D.tex(g, 'franjas $dr$: $B\\propto 1/r$', (x0 + x1) / 2, y0 + hh + 8, { s: 2.4, c: COL.E, min: 9 });
+        D.tex(g, '$\\phi = \\frac{\\mu_0 NIh}{2\\pi}\\ln\\frac{b}{a}$', (x0 + x1) / 2, y0 + hh + 13, { s: 2.6, c: COL.oro, min: 9 });
       }
     },
     pointer: {
@@ -678,7 +680,7 @@
     readouts(st) {
       const gm = this.geo(st), r = st.p.r * this.rMax(gm), c = st.cortes || [0, 0];
       const B = r > gm.a && r < gm.b ? gm.a / r : 0;
-      return [['⊙ cortadas', String(c[0]), COL.I], ['⊗ cortadas', String(c[1]), COL.I], ['I_enl', (c[0] - c[1]) ? (c[0] - c[1]) + '·I' : '0'], ['B(r)', fmt(B, 2) + ' · B(a)', COL.B]];
+      return [['⊙ cortadas', String(c[0]), COL.I], ['⊗ cortadas', String(c[1]), COL.I], ['$I_{enl}$', (c[0] - c[1]) ? '$' + (c[0] - c[1]) + 'I$' : '0'], ['$B(r)$', fmt(B, 2) + ' $\\cdot B(a)$', COL.B]];
     },
     idea(st) {
       const gm = this.geo(st), r = st.p.r * this.rMax(gm);
@@ -697,8 +699,8 @@
       g.lineTo(X(gm.b), Y(0)); g.lineTo(X(rm), Y(0)); g.stroke();
       const r = st.p.r * rm, v = r > gm.a && r < gm.b ? gm.a / r * 0.95 : 0;
       g.fillStyle = COL.gamma; g.beginPath(); g.arc(X(r), Y(v), 4, 0, TAU); g.fill();
-      g.font = '11px Inter, system-ui, sans-serif'; g.fillStyle = 'rgba(255,255,255,0.6)'; g.textAlign = 'center';
-      g.fillText('a', X(gm.a), h - 1); g.fillText('b', X(gm.b), h - 1); g.fillText('∝ 1/r', X((gm.a + gm.b) / 2), 14);
+      const pt = (t, x, y) => D.tex(g, t, x, y, { s: 12, c: 'rgba(255,255,255,0.75)', w: 500 });
+      pt('$a$', X(gm.a), h - 6); pt('$b$', X(gm.b), h - 6); pt('$\\propto 1/r$', X((gm.a + gm.b) / 2), 11);
     },
   };
   wrapIdea('toroide');
