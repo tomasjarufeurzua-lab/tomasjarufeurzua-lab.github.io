@@ -818,6 +818,18 @@
     }
 
     @media (max-width: 767px) { .wrap { padding-top: 72px; } }
+    /* Celular: la portada entera (nombre, descripción, redes y botones) cabe en la pantalla sin bajar.
+       Los tamaños se ajustan a la altura visible (dvh: sin contar las barras del navegador). */
+    @media (max-width: 1023px) {
+      body:not(.con-seccion) .wrap { padding-top: clamp(60px, 9dvh, 72px); padding-bottom: 16px; }
+      .side h1 { font-size: clamp(1.75rem, 5.4dvh, 2.5rem); }
+      .side h2 { font-size: clamp(1rem, 2.4dvh, 1.15rem); margin-top: clamp(6px, 1.2dvh, 12px); }
+      .side .tagline { font-size: clamp(0.84rem, 2.15dvh, 1rem); line-height: 1.55; margin-top: clamp(8px, 1.6dvh, 16px); }
+      .side .location { margin-top: clamp(4px, 0.9dvh, 8px); }
+      header.side > .social { margin-top: clamp(12px, 2.6dvh, 32px); }
+      .go-fila.go-mobile { gap: clamp(8px, 1.3dvh, 12px); margin: clamp(14px, 2.8dvh, 24px) 0 12px; }
+      .go-fila.go-mobile .go-material { padding: clamp(8px, 1.35dvh, 12px) 20px; font-size: clamp(0.86rem, 2dvh, 0.95rem); }
+    }
 
     @keyframes menu-pulso {
       0% { transform: scale(1); opacity: 1; }
