@@ -9,7 +9,14 @@ CALC['procesos/ejemplo-base'] = {
   f(d) {
     const ue = d.terminadas + d.enProceso * d.avance;
     const unit = d.costo / ue;
-    return { v: { unitario: unit, pt: d.terminadas * unit, penp: d.enProceso * d.avance * unit }, extra: { ue }, suma: [[['pt', 'penp'], d.costo]] };
+    return {
+      v: { unitario: unit, pt: d.terminadas * unit, penp: d.enProceso * d.avance * unit },
+      tr: {
+        unitario: [d.costo / d.iniciadas],        // dividir por las unidades físicas
+        penp: [d.enProceso * unit]                // no aplicar el % de avance
+      },
+      suma: [[['pt', 'penp'], d.costo]]
+    };
   }
 };
 CALC['procesos/lean-harina'] = {
@@ -27,6 +34,11 @@ CALC['procesos/lean-harina'] = {
         p2: d.terminados * (uPrimo + uCif),
         p3: enp * d.avancePrimo,
         p4: uPrimo + uCif
+      },
+      tr: {
+        'ue:enp|2': [enp], 'ue:enp|3': [enp],                 // no aplicar el % de avance
+        p1: [enp * (uPrimo + uCif)],                           // en proceso como si estuviera terminado
+        p3: [enp]                                              // kg físicos en vez de equivalentes
       },
       fijos: { 'ue:tt|1': d.terminados, 'ue:tot|1': d.recibidos, 'ue:costo|2': d.costosPrimos, 'ue:costo|3': d.cif },
       suma: [[['p1', 'p2'], d.costosPrimos + d.cif]]
@@ -50,6 +62,11 @@ CALC['procesos/abon-champu'] = {
         p3: ueMo,
         p4: unit
       },
+      tr: {
+        p1: [enp * unit],                                      // en proceso como si estuviera terminado
+        p3: [ueMpd],                                           // UE de la MPD en vez de las de MOD y MOI
+        p4: [(d.mpd + mo + d.mpi) / d.iniciadas]               // costo total ÷ unidades iniciadas
+      },
       fijos: { 'ue:mpd|1': d.mpd, 'ue:mpi|1': d.mpi, 'ue:tot|1': d.mpd + mo + d.mpi },
       suma: [[['p1', 'p2'], d.mpd + mo + d.mpi]]
     };
@@ -60,7 +77,10 @@ CALC['procesos/mermas-dos-casos'] = {
   f(d) {
     const uNormal = d.costo / d.buenas;                 // la merma normal no se cuenta
     const uAnormal = d.costo / (d.buenas + d.malas);    // la merma anormal sí se cuenta
-    return { v: { normal: uNormal, anormal: uAnormal, perdida: d.malas * uAnormal }, extra: { produccion: d.buenas + d.malas } };
+    return {
+      v: { normal: uNormal, anormal: uAnormal, perdida: d.malas * uAnormal },
+      tr: { normal: [uAnormal], anormal: [uNormal], perdida: [d.malas * uNormal] }  // confundir un caso con el otro
+    };
   }
 };
 CALC['procesos/etc-dos-departamentos'] = {
@@ -114,6 +134,19 @@ CALC['procesos/etc-dos-departamentos'] = {
         'd1-unit:mp|1': a.materiales, 'd1-unit:cc|1': a.conversion, 'd1-unit:tot|1': costo1, 'd1-dist:tot|1': costo1,
         'd2-ue:tt|1': b.terminadas, 'd2-ue:enp|1': b.enProceso, 'd2-ue:ma|1': b.mermaAnormal, 'd2-ue:tot|1': a.terminadas,
         'd2-unit:mp|1': b.materiales, 'd2-unit:cc|1': b.conversion, 'd2-dist:tot|1': costo2
+      },
+      tr: {
+        'd1-ue:enp|3': [a.enProceso],                                             // no aplicar el 70 %
+        'd1-ue:mn|2': [a.mermaNormal], 'd1-ue:mn|3': [a.mermaNormal],             // contar la merma normal
+        'd1-ue:tot|2': [ue1mp + a.mermaNormal], 'd1-ue:tot|3': [ue1cc + a.mermaNormal],
+        'd1-unit:mp|2': [a.materiales / a.puestas],                               // dividir por las unidades puestas en proceso
+        'd1-dist:mn|1': [a.mermaNormal * u1],                                     // costear la merma normal
+        'd2-ue:enp|4': [b.enProceso],                                             // no aplicar el 60 %
+        'd2-ue:ma|2': [0], 'd2-ue:ma|3': [0], 'd2-ue:ma|4': [0],                  // no contar la merma anormal
+        'd2-ue:tot|2': [ue2mp1 - b.mermaAnormal], 'd2-ue:tot|3': [ue2mp - b.mermaAnormal], 'd2-ue:tot|4': [ue2cc - b.mermaAnormal],
+        p1: [u1],                                                                 // unitario del depto. 1
+        p3: [pmp + pcc, qmp1 + qmp + qcc],                                        // un solo departamento
+        p4: [a.mermaNormal * u1]                                                  // costear la merma normal
       },
       cl: { p5: 1 }, // la merma anormal va al estado de resultados como pérdida no operacional (opción 1)
       modelo: { 'd1-ue:tt|2': a.terminadas, 'd1-ue:tt|3': a.terminadas },

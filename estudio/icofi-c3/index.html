@@ -228,7 +228,7 @@
     ol.pasos > li:last-child::after { display: none; }
     ol.pasos b.t { display: block; margin-bottom: 2px; }
     .diagrama { margin: 0 0 18px; padding: 14px; border-radius: 12px; border: 1px solid var(--borde); background: rgba(0, 0, 0, 0.22); }
-    .diagrama svg { display: block; width: 100%; height: auto; max-width: 620px; margin: 0 auto; font-family: Inter, system-ui, sans-serif; }
+    .diagrama svg { display: block; width: 100%; height: auto; max-width: 440px; margin: 0 auto; font-family: Inter, system-ui, sans-serif; }
     .diagrama figcaption { margin-top: 8px; color: var(--dim); font-size: 0.84rem; text-align: center; }
 
     /* ---------- Tablas ---------- */
@@ -402,6 +402,50 @@
     .portada ol, .portada ul { padding-left: 22px; margin: 0 0 14px; }
     .portada li { margin: 6px 0; }
 
+    /* ---------- Simulacro ---------- */
+    .sim-barra {
+      position: sticky; top: calc(var(--barra-h) + 6px); z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+      margin: 0 0 20px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--metal-borde); background: var(--panel); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    }
+    .reloj { color: var(--heading); font-size: 1.3rem; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 68px; }
+    .reloj.poco { color: var(--oro); }
+    .sim-cta { flex: 1 1 auto; color: var(--dim); font-size: 0.86rem; }
+    .sim-sec { margin: 0 0 30px; }
+    .sim-sec > h2 { margin: 0 0 12px; font-size: 1.15rem; }
+    .sim-sec > h2 small { display: block; margin-top: 2px; color: var(--dim); font-size: 0.82rem; font-weight: 500; }
+    .sim-sec > h3 { margin: 0 0 10px; font-size: 1.05rem; }
+    ol.sim-vf { list-style: none; margin: 0; padding: 0; counter-reset: af; display: grid; gap: 10px; }
+    ol.sim-vf li { counter-increment: af; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--borde); background: var(--card); }
+    ol.sim-vf li p { margin: 0 0 10px; color: var(--heading); }
+    ol.sim-vf li p::before { content: counter(af) ". "; color: var(--accent); font-weight: 700; }
+    .sim-vfb { display: flex; gap: 8px; }
+    .sim-vfb .chip { min-width: 108px; text-align: center; min-height: 44px; }
+    .grande { font-size: 1.7rem !important; line-height: 1.2; }
+    .rev { margin: 0 0 10px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--borde); background: var(--card); font-size: 0.94rem; }
+    .rev.ok { box-shadow: inset 3px 0 0 var(--ok); }
+    .rev.mal { box-shadow: inset 3px 0 0 var(--mal-borde); }
+    .rev p { margin: 0 0 6px; }
+    .rev > :last-child { margin-bottom: 0; }
+    .rev-t { display: flex; gap: 10px; align-items: baseline; color: var(--heading); }
+    .rev-t > span:nth-child(2) { flex: 1 1 auto; }
+    .rev-m { font-weight: 800; }
+    .rev-m.ok { color: var(--ok); }
+    .rev-m.mal { color: var(--mal); }
+    .rev-p { flex: 0 0 auto; color: var(--dim); font-size: 0.8rem; white-space: nowrap; }
+    .rev-en { margin: 0 0 12px; }
+    .rev-en summary { cursor: pointer; padding: 6px 0; color: var(--accent); font-size: 0.9rem; font-weight: 600; }
+    .rev-en .enunciado { margin: 8px 0 0; }
+    .sim h2 { margin-top: 26px; }
+
+    /* ---------- Hoja de fórmulas ---------- */
+    .hoja { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap: 12px; margin: 0 0 16px; }
+    .hoja-g { padding: 14px 16px; border-radius: 12px; border: 1px solid var(--borde); background: var(--card); break-inside: avoid; }
+    .hoja-g h2 { margin: 0 0 8px; color: var(--accent); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; }
+    .hoja-g ul { list-style: none; margin: 0; padding: 0; }
+    .hoja-g li { margin: 0; padding: 7px 0; border-top: 1px solid var(--borde); color: var(--heading); font-size: 0.95rem; line-height: 1.7; }
+    .hoja-g li:first-child { border-top: 0; padding-top: 0; }
+    .hoja-ley { color: var(--dim); font-size: 0.82rem; line-height: 1.7; }
+
     /* ---------- Repaso ---------- */
     .ses-cab { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; color: var(--dim); font-size: 0.88rem; }
     .ses-cab .prog { flex: 1 1 auto; }
@@ -466,11 +510,21 @@
       .indice, .velo, .prog i, .btn, .campo { transition: none; }
     }
     @media print {
-      .cred, .barra, .indice, .velo, .nav, #tip { display: none !important; }
-      body, html { background: #fff; color: #111; }
+      :root {
+        --bg: #fff; --text: #222; --heading: #000; --dim: #444; --accent: #0f766e; --accent-bg: #eef7f6; --card: #fff; --borde: #bbb;
+        --oro: #7a5c00; --oro-bg: #fbf6e3; --ok: #15803d; --mal: #b91c1c; --campo: #fff; --panel: #fff;
+      }
+      .barra, .indice, .velo, .nav, #tip, .no-imprimir, .sim-barra { display: none !important; }
+      body, html { background: #fff; color: #222; }
       body::before { display: none; }
-      .marco { display: block; }
-      h1, h2, h3, h4, b, strong { color: #000; }
+      .cred { background: none; border: 0; color: #444; }
+      .marco { display: block; max-width: none; }
+      main { padding: 0; }
+      .bloque, .bloque.ancho { max-width: none; }
+      .formula { background: #fff; }
+      .formulas .hoja { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .formulas .hoja-g li { font-size: 0.86rem; padding: 4px 0; }
+      abbr.ab { text-decoration: none; }
     }
   </style>
 </head>

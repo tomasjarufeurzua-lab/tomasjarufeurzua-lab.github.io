@@ -154,6 +154,9 @@
       .replace(/\{\{(.+?)\s*\/\/\s*(.+?)\}\}/g, '<span class="frac"><span>$1</span><span>$2</span></span>')
       .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
   }
+  // Primera letra en minúscula (tras "Casi: ") o en mayúscula (inicio de frase); no toca siglas como "IVA"
+  const minus = (s) => (/^[A-ZÁÉÍÓÚÑ][a-záéíóúñ ]/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
+  const mayus = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   const sinHtml = (s) => String(s).replace(/<[^>]+>/g, '').replace(/\*\*/g, '');
   const corto = (s, n) => { s = sinHtml(s); return s.length > n ? s.slice(0, n - 1).trim() + '…' : s; };
 
@@ -374,7 +377,7 @@
       fb.className = 'fb mal';
     } else {
       const soloSigno = q.signo && res.estado === 'incorrecta' && Math.abs(Math.abs(res.valor) - Math.abs(q.respuesta)) <= M.tolerancia(q);
-      h = '<p class="fb-h"><span class="ic">✗</span><span>' + (res.estado === 'trampa' ? 'Casi: ' + tx(res.trampa.msg) : (soloSigno ? 'Casi: el monto está bien, pero es ' + tx((q.respuesta < 0 ? q.signo.neg : q.signo.pos).toLowerCase()) + '.' : 'Todavía no.')) + '</span></p>' +
+      h = '<p class="fb-h"><span class="ic">✗</span><span>' + (res.estado === 'trampa' ? 'Casi: ' + tx(minus(res.trampa.msg)) : (soloSigno ? 'Casi: el monto está bien, pero es ' + tx((q.respuesta < 0 ? q.signo.neg : q.signo.pos).toLowerCase()) + '.' : 'Todavía no.')) + '</span></p>' +
         '<p>La respuesta correcta es ' + correcta + (q.clasif ? ' · ' + tx(q.clasif.opciones[q.clasif.correcta]) : '') + '.</p>' + hSol(q) +
         (q.clasif && okC === false ? '<p>' + tx(q.clasif.porque) + '</p>' : '') +
         '<p class="animo">' + animo() + ' Puedes corregir tu respuesta y revisar de nuevo.</p>';
@@ -525,7 +528,7 @@
             (res.estado !== 'correcta' ? ' <span class="nota-red">Tu valor difiere solo por redondeo: está bien. Valor principal: ' + valor + '.' + (res.alt && res.alt.nota ? ' ' + tx(res.alt.nota) : '') + '</span>' : '') + '</li>');
         } else {
           out.push('<li class="mal">' + rotCelda(t, f, ci) + ': la respuesta es <b>' + valor + '</b>.' +
-            (res.estado === 'trampa' ? ' ' + tx(res.trampa.msg) : '') + (c.s ? ' → ' + tx(c.s) : '') + '</li>');
+            (res.estado === 'trampa' ? ' ' + tx(mayus(res.trampa.msg)) : '') + (c.s ? ' → ' + tx(c.s) : '') + '</li>');
         }
       });
     });
@@ -911,6 +914,8 @@
     if (b.tipo === 'vf' || b.tipo === 'mc') return hRonda(b);
     if (b.tipo === 'resumen') return hResumen(b);
     if (b.tipo === 'portada') return hPortada(b);
+    if (b.tipo === 'simulacro') return hSimulacro(b);
+    if (b.tipo === 'formulas') return hFormulas(b);
     return '<article class="bloque"><h1 tabindex="-1">' + tx(b.titulo) + '</h1></article>';
   }
 
@@ -1080,6 +1085,272 @@
   }
 
   // =====================================================================
+  // Simulacro final (formato del certamen, con tiempo y sin ayuda) y hoja de fórmulas
+  // =====================================================================
+  let simReloj = 0;
+  const preguntasDe = (b) => itemsDe(b).filter((it) => it.k === 'preg');
+  function areaDe(b, cfg) {
+    if (b.area) return b.area;
+    const a = cfg.areas.find((x) => x.modulos.indexOf(b.mod.id) >= 0);
+    return a ? a.id : null;
+  }
+  function armarSimulacro(cfg) {
+    // V/F: primero los que nunca se han respondido
+    const vfs = [];
+    ITEMS.forEach((it) => { if (it.k === 'vf') vfs.push(it); });
+    const vf = mezclar(vfs.filter((it) => !S.it[it.id])).concat(mezclar(vfs.filter((it) => S.it[it.id]))).slice(0, cfg.vf.n).map((it) => it.id);
+    // Un ejercicio de certamen por área: primero los reservados (simulacro: true) que no se han usado
+    const previos = S.simPrev || [];
+    const ej = [];
+    cfg.areas.forEach((a) => {
+      const banco = [];
+      BLOQUES.forEach((b) => {
+        const n = b.tipo === 'ejercicio' ? preguntasDe(b).length : 0;
+        if (n >= 4 && n <= 5 && b.fuente && b.fuente.k === 'certamen' && areaDe(b, cfg) === a.id) banco.push(b);
+      });
+      const sinUsar = banco.filter((b) => b.simulacro && !preguntasDe(b).some((it) => S.it[it.id]));
+      let pool = sinUsar.length ? sinUsar : banco;
+      const distintos = pool.filter((b) => previos.indexOf(b.key) < 0);
+      if (distintos.length) pool = distintos;
+      if (pool.length) ej.push(mezclar(pool)[0].key);
+    });
+    return { vf: vf, ej: ej, r: {}, acum: 0, t0: Date.now(), pausa: false };
+  }
+  function simItems(sim) {
+    const out = sim.vf.map((id) => ITEMS.get(id));
+    sim.ej.forEach((k) => preguntasDe(BLOQUES.get(k)).forEach((it) => out.push(it)));
+    return out.filter(Boolean);
+  }
+  function simRespondida(sim, it) {
+    const r = sim.r[it.id];
+    if (!r) return false;
+    if (it.k === 'vf') return r.v === 0 || r.v === 1;
+    if (it.ref.tipo === 'opcion') return typeof r.c === 'number';
+    return !!(r.t && r.t.trim());
+  }
+  const simUsado = (sim) => Math.floor(sim.acum + (sim.t0 ? (Date.now() - sim.t0) / 1000 : 0));
+  const mmss = (s) => { s = Math.max(0, s); return Math.floor(s / 60) + ':' + (s % 60 < 10 ? '0' : '') + (s % 60); };
+
+  // Corrige un simulacro. Si "registrar" es true, cada respuesta cuenta como intento (y lo fallado va a repaso).
+  function corregirSimulacro(cfg, sim, conRegistro) {
+    const det = [];
+    let pts = 0;
+    sim.vf.forEach((id) => {
+      const it = ITEMS.get(id);
+      if (!it) return;
+      const resp = simRespondida(sim, it);
+      const ok = resp && ((sim.r[id].v === 1) === it.ref.r);
+      if (resp && conRegistro) registrar(id, ok, { limpio: true });
+      if (ok) pts += cfg.vf.puntos;
+      det.push({ it: it, resp: resp, ok: ok, pts: ok ? cfg.vf.puntos : 0, max: cfg.vf.puntos });
+    });
+    const nPreg = sim.ej.reduce((s, k) => s + preguntasDe(BLOQUES.get(k)).length, 0);
+    const valor = nPreg ? cfg.puntosEjercicios / nPreg : 0;
+    sim.ej.forEach((k) => preguntasDe(BLOQUES.get(k)).forEach((it) => {
+      const q = it.ref;
+      const r = sim.r[it.id] || {};
+      const resp = simRespondida(sim, it);
+      let ok = false, res = null;
+      if (q.tipo === 'opcion') ok = resp && r.c === q.correcta;
+      else if (resp) {
+        res = M.corregir(q, textoConSigno(q, r.t, r));
+        ok = M.esAcierto(res.estado) && (!q.clasif || r.c === q.clasif.correcta);
+      }
+      if (resp && conRegistro) registrar(it.id, ok, { limpio: true });
+      if (ok) pts += valor;
+      det.push({ it: it, resp: resp, ok: ok, res: res, pts: ok ? valor : 0, max: valor });
+    }));
+    const puntaje = M.entero(pts);
+    return { det: det, puntaje: puntaje, nota: M.nota(puntaje), valor: valor };
+  }
+  function entregarSimulacro(b, forzado) {
+    const sim = S.sim;
+    if (!sim) return;
+    const faltan = simItems(sim).filter((it) => !simRespondida(sim, it)).length;
+    if (!forzado && faltan && !window.confirm('Te quedan ' + faltan + ' sin responder. ¿Entregar el simulacro igual?')) return;
+    clearInterval(simReloj);
+    const seg = Math.min(simUsado(sim), b.minutos * 60);
+    const c = corregirSimulacro(b, sim, true);
+    S.simRes = { vf: sim.vf, ej: sim.ej, r: sim.r, seg: seg, fecha: hoy(), puntaje: c.puntaje, nota: c.nota, agotado: !!forzado };
+    S.simPrev = sim.ej;
+    S.sim = null;
+    guardar();
+    pintar();
+    window.scrollTo(0, 0);
+  }
+  function hSimPregunta(it, n, sim) {
+    const q = it.ref;
+    const r = sim.r[it.id] || {};
+    const ad = adornos(q);
+    const chips = (a, ops, sel) => '<div class="chips">' + ops.map((op, i) => '<button type="button" class="chip" data-a="' + a + '" data-v="' + i + '" aria-pressed="' + (sel === i) + '">' + tx(op) + '</button>').join('') + '</div>';
+    let h = '<div class="preg" data-s="' + it.id + '"><label class="preg-t" for="sim-' + it.id + '"><span class="preg-n">' + n + '</span><span>' + tx(q.texto) + '</span></label>';
+    if (q.tipo === 'opcion') h += chips('sim-c', q.opciones, r.c);
+    else {
+      h += '<div class="campo">' + (ad.pre ? '<span class="ad">' + ad.pre + '</span>' : '') +
+        '<input id="sim-' + it.id + '" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Tu respuesta" data-t="' + (q.tipo || 'pesos') + '" value="' + esc(r.t || '') + '">' +
+        (ad.suf ? '<span class="ad">' + esc(ad.suf) + '</span>' : '') + '</div>';
+      if (q.signo) h += '<div class="clasif"><span>¿Qué es?</span>' + chips('sim-s', [q.signo.pos, q.signo.neg], r.s) + '</div>';
+      if (q.clasif) h += '<div class="clasif"><span>' + tx(q.clasif.texto) + '</span>' + chips('sim-c', q.clasif.opciones, r.c) + '</div>';
+    }
+    return h + '</div>';
+  }
+  function hSimEnCurso(b) {
+    const sim = S.sim;
+    const its = simItems(sim);
+    const resp = its.filter((it) => simRespondida(sim, it)).length;
+    const nPreg = sim.ej.reduce((s, k) => s + preguntasDe(BLOQUES.get(k)).length, 0);
+    const valor = nPreg ? b.puntosEjercicios / nPreg : 0;
+    let h = '<article class="bloque ancho sim"><p class="migas">Módulo 7 · Simulacro</p><h1 tabindex="-1">Simulacro final</h1>' +
+      '<div class="sim-barra"><span class="reloj" id="sim-reloj" aria-label="Tiempo restante">' + mmss(b.minutos * 60 - simUsado(sim)) + '</span>' +
+      '<span class="sim-cta" id="sim-cta">' + resp + ' de ' + its.length + ' respondidas</span>' +
+      '<button type="button" class="btn chico" data-a="sim-pausa">' + (sim.pausa ? 'Reanudar' : 'Pausar') + '</button>' +
+      '<button type="button" class="btn chico principal" data-a="sim-entregar">Entregar</button></div>';
+    if (sim.pausa) {
+      return h + '<div class="res-mod"><p><b>Simulacro en pausa.</b> El tiempo está detenido y las preguntas quedan ocultas hasta que reanudes.</p>' +
+        '<p><button type="button" class="btn principal" data-a="sim-pausa">Reanudar</button></p></div></article>';
+    }
+    h += '<section class="sim-sec"><h2>Pregunta 1 · Verdadero o falso <small>' + (b.vf.puntos * sim.vf.length) + ' puntos (' + b.vf.puntos + ' cada una)</small></h2><ol class="sim-vf">';
+    sim.vf.forEach((id) => {
+      const it = ITEMS.get(id);
+      const v = sim.r[id] ? sim.r[id].v : null;
+      h += '<li data-s="' + id + '"><p>' + tx(it.ref.af) + '</p><div class="sim-vfb">' +
+        '<button type="button" class="chip" data-a="sim-v" data-v="1" aria-pressed="' + (v === 1) + '">Verdadero</button>' +
+        '<button type="button" class="chip" data-a="sim-v" data-v="0" aria-pressed="' + (v === 0) + '">Falso</button></div></li>';
+    });
+    h += '</ol></section>';
+    sim.ej.forEach((k, i) => {
+      const e = BLOQUES.get(k);
+      const ps = preguntasDe(e);
+      const area = b.areas.find((a) => a.id === areaDe(e, b));
+      h += '<section class="sim-sec"><h2>Pregunta ' + (i + 2) + ' · ' + tx(area ? area.titulo : e.titulo) + ' <small>' + M.num(valor * ps.length, M.decimales(valor * ps.length, 1)) + ' puntos (' + M.num(valor, M.decimales(valor, 1)) + ' cada respuesta)</small></h2>' +
+        hEnunciado(e) + ps.map((it, j) => hSimPregunta(it, j + 1, sim)).join('') + '</section>';
+    });
+    return h + '<div class="nav"><button type="button" class="btn principal sig" data-a="sim-entregar">Entregar simulacro</button></div></article>';
+  }
+  function hSimRevision(b, sr) {
+    const c = corregirSimulacro(b, sr, false);
+    const porId = {};
+    c.det.forEach((d) => { porId[d.it.id] = d; });
+    const marca = (d) => '<span class="rev-m ' + (d.ok ? 'ok' : 'mal') + '">' + (d.ok ? '✓' : '✗') + '</span>';
+    const pts = (d) => '<span class="rev-p">' + M.num(d.pts, M.decimales(d.pts, 1)) + ' / ' + M.num(d.max, M.decimales(d.max, 1)) + ' pts</span>';
+    let h = '<h2>Revisión pregunta por pregunta</h2><section class="sim-sec"><h3>Pregunta 1 · Verdadero o falso</h3>';
+    sr.vf.forEach((id) => {
+      const d = porId[id];
+      if (!d) return;
+      const x = d.it.ref;
+      const v = sr.r[id] ? sr.r[id].v : null;
+      h += '<div class="rev ' + (d.ok ? 'ok' : 'mal') + '">' + hFuente(x.fuente, true) + '<p class="rev-t">' + marca(d) + '<span>' + tx(x.af) + '</span>' + pts(d) + '</p>' +
+        '<p>Tu respuesta: <b>' + (d.resp ? (v === 1 ? 'Verdadero' : 'Falso') : 'sin responder') + '</b> · Correcta: <b>' + (x.r ? 'Verdadero' : 'Falso') + '</b></p><p class="suave">' + tx(x.porque) + '</p></div>';
+    });
+    h += '</section>';
+    sr.ej.forEach((k, i) => {
+      const e = BLOQUES.get(k);
+      h += '<section class="sim-sec"><h3>Pregunta ' + (i + 2) + ' · ' + tx(e.titulo) + '</h3>' + hFuente(e.fuente) +
+        '<details class="rev-en"><summary>Ver el enunciado</summary>' + hEnunciado(e) + '</details>';
+      preguntasDe(e).forEach((it, j) => {
+        const d = porId[it.id], q = it.ref, r = sr.r[it.id] || {};
+        let tuya = 'sin responder', correcta;
+        if (q.tipo === 'opcion') { if (d.resp) tuya = sinHtml(q.opciones[r.c]); correcta = sinHtml(q.opciones[q.correcta]); }
+        else {
+          if (d.resp) tuya = esc(r.t) + (q.signo && typeof r.s === 'number' ? ' (' + sinHtml(r.s === 1 ? q.signo.neg : q.signo.pos) + ')' : '') + (q.clasif && typeof r.c === 'number' ? ' · ' + sinHtml(q.clasif.opciones[r.c]) : '');
+          correcta = M.formatear(q.respuesta, q) + (q.clasif ? ' · ' + sinHtml(q.clasif.opciones[q.clasif.correcta]) : '');
+        }
+        h += '<div class="rev ' + (d.ok ? 'ok' : 'mal') + '"><p class="rev-t">' + marca(d) + '<span><b>' + (j + 1) + '.</b> ' + tx(q.texto) + '</span>' + pts(d) + '</p>' +
+          '<p>Tu respuesta: <b>' + tuya + '</b> · Correcta: <b>' + correcta + '</b></p>' +
+          (d.ok && d.res && d.res.estado !== 'correcta' ? '<p class="nota-red">Tu resultado difiere solo por redondeo: está bien.' + (d.res.alt && d.res.alt.nota ? ' ' + tx(d.res.alt.nota) : '') + '</p>' : '') +
+          (!d.ok && d.res && d.res.estado === 'trampa' ? '<p><b>Qué pasó:</b> ' + tx(d.res.trampa.msg) + '</p>' : '') +
+          (q.tipo === 'opcion' ? '<p class="suave">' + tx(q.porque) + '</p>' : hSol(q)) + '</div>';
+      });
+      h += '</section>';
+    });
+    return h;
+  }
+  function hSimulacro(b) {
+    if (S.sim) return hSimEnCurso(b);
+    const sr = S.simRes;
+    const nVf = Array.from(ITEMS.values()).filter((it) => it.k === 'vf').length;
+    let h = '<article class="bloque ancho sim"><p class="migas">Módulo 7 · Simulacro</p>';
+    if (sr) {
+      const min = Math.max(1, Math.round(sr.seg / 60));
+      const e = nErrores();
+      h += '<h1 tabindex="-1">Resultado del simulacro</h1>' +
+        '<div class="datos-cert"><div><span class="rot">Puntaje</span><b class="grande">' + sr.puntaje + ' / 100</b></div>' +
+        '<div><span class="rot">Nota</span><b class="grande">' + M.num(sr.nota, 1) + '</b><span class="suave">Escala 1 a 7: 1 + 6 × puntaje ÷ 100</span></div>' +
+        '<div><span class="rot">Tiempo usado</span><b class="grande">' + min + ' min</b><span class="suave">de ' + b.minutos + (sr.agotado ? ' · se acabó el tiempo' : '') + '</span></div></div>' +
+        '<div class="res-mod"><p>' + (sr.puntaje >= 85 ? '<b>Muy bien.</b> Estás al nivel del certamen; repasa solo lo que falló.' : sr.puntaje >= 55 ? '<b>Vas bien encaminado.</b> Lo que falló es justo lo que conviene repasar antes del certamen.' : '<b>Ya sabes dónde poner el esfuerzo.</b> Cada pregunta fallada trae abajo su desarrollo: revísalo y vuelve a intentarlo otro día.') + '</p>' +
+        '<p>' + (e ? 'Lo que fallaste quedó en <a href="#/repaso/errores">Mis errores para repasar</a> (' + e + ' en total).' : 'No tienes errores pendientes.') + '</p></div>' +
+        '<div class="acciones"><button type="button" class="btn principal" data-a="sim-iniciar">Hacer otro simulacro</button>' + (e ? '<a class="btn" href="#/repaso/errores">Repasar mis errores</a>' : '') + '</div>' +
+        hSimRevision(b, sr);
+    } else {
+      h += '<h1 tabindex="-1">Simulacro final</h1>' +
+        '<p>El mismo formato del certamen, con tiempo y sin ayuda. Las preguntas salen mezcladas de todos los módulos, porque en el certamen hay que reconocer de qué tipo es cada problema.</p>' +
+        '<div class="datos-cert"><div><span class="rot">Parte 1</span><b>' + b.vf.n + ' verdadero o falso</b><span class="suave">' + (b.vf.n * b.vf.puntos) + ' puntos, ' + b.vf.puntos + ' cada uno</span></div>' +
+        '<div><span class="rot">Parte 2</span><b>' + b.areas.length + ' ejercicios</b><span class="suave">Presupuestos, costos y CVU · 4–5 preguntas, 20–25 puntos cada uno</span></div>' +
+        '<div><span class="rot">Tiempo</span><b>' + b.minutos + ' minutos</b><span class="suave">Se puede pausar</span></div></div>' +
+        '<ul><li>Durante el simulacro no hay pistas ni corrección: respondes todo y entregas, como en la prueba.</li>' +
+        '<li>Al entregar ves tu puntaje sobre 100, tu nota (1 + 6 × puntaje ÷ 100) y la revisión de cada pregunta con su desarrollo.</li>' +
+        '<li>Ten a mano una calculadora simple y papel.</li></ul>';
+      if (nVf < b.vf.n) h += '<div class="res-mod"><p>Todavía no hay suficientes preguntas cargadas para armar el simulacro.</p></div>';
+      else h += '<div class="acciones"><button type="button" class="btn principal" data-a="sim-iniciar">Empezar simulacro →</button></div>';
+    }
+    return h + '<div id="zona-nav"></div></article>';
+  }
+  function tickSimulacro() {
+    const b = VISTA.bloque;
+    if (!S.sim || !b || b.tipo !== 'simulacro' || S.sim.pausa) return;
+    const queda = b.minutos * 60 - simUsado(S.sim);
+    const el = document.getElementById('sim-reloj');
+    if (el) { el.textContent = mmss(queda); el.classList.toggle('poco', queda <= 300); }
+    if (queda <= 0) entregarSimulacro(b, true);
+  }
+  function simContar() {
+    const el = document.getElementById('sim-cta');
+    if (!el || !S.sim) return;
+    const its = simItems(S.sim);
+    el.textContent = its.filter((it) => simRespondida(S.sim, it)).length + ' de ' + its.length + ' respondidas';
+  }
+  // Clics propios del simulacro. Devuelve true si atendió la acción.
+  function clicSimulacro(a, el) {
+    const b = VISTA.bloque;
+    if (a === 'sim-iniciar') {
+      if (S.simRes && !window.confirm('Se armará un simulacro nuevo y se cerrará la revisión del anterior. ¿Seguir?')) return true;
+      S.simRes = null;
+      S.sim = armarSimulacro(b);
+      guardar(); pintar(); window.scrollTo(0, 0);
+      return true;
+    }
+    if (!S.sim) return a.indexOf('sim-') === 0;
+    if (a === 'sim-pausa') {
+      if (S.sim.pausa) { S.sim.pausa = false; S.sim.t0 = Date.now(); }
+      else { S.sim.acum = simUsado(S.sim); S.sim.t0 = null; S.sim.pausa = true; }
+      guardar(); pintar();
+      return true;
+    }
+    if (a === 'sim-entregar') { entregarSimulacro(b, false); return true; }
+    const caja = el.closest('[data-s]');
+    if (!caja) return false;
+    const r = S.sim.r[caja.dataset.s] || (S.sim.r[caja.dataset.s] = {});
+    const v = Number(el.dataset.v);
+    const campo = a === 'sim-v' ? 'v' : a === 'sim-c' ? 'c' : a === 'sim-s' ? 's' : null;
+    if (!campo) return false;
+    r[campo] = r[campo] === v ? null : v; // tocar de nuevo deja sin responder
+    el.parentElement.querySelectorAll('[data-a="' + a + '"]').forEach((x) => x.setAttribute('aria-pressed', String(Number(x.dataset.v) === r[campo])));
+    guardarLuego(); simContar();
+    return true;
+  }
+
+  function hFormulas(b) {
+    let h = '<article class="bloque ancho formulas"><p class="migas">Módulo 8 · Fórmulas</p><h1 tabindex="-1">' + tx(b.titulo) + '</h1>' +
+      '<p>' + tx(b.bajada) + '</p><div class="acciones no-imprimir"><button type="button" class="btn" data-a="imprimir">Imprimir la hoja</button></div><div class="hoja">';
+    b.grupos.forEach((gr) => {
+      h += '<section class="hoja-g"><h2>' + tx(gr.t) + '</h2><ul>' + gr.items.map((x) => '<li>' + tx(x) + '</li>').join('') + '</ul></section>';
+    });
+    h += '</div><p class="hoja-ley"><b>Abreviaturas:</b> ' + (b.leyenda || []).map((k) => '<span class="sin-ab"><b>' + esc(k) + '</b> ' + esc(AB[k] || '') + '</span>').join(' · ') +
+      ' · <span><b>p</b> precio unitario</span> · <span><b>q</b> unidades</span> · <span><b>t</b> tasa de impuesto</span></p>';
+    return h + '<div id="zona-nav"></div></article>';
+  }
+
+  // =====================================================================
   // Índice lateral y progreso
   // =====================================================================
   const EST_TXT = { n: 'sin ver', visto: 'visto', ok: 'correcto', err: 'con errores', parcial: 'a medias' };
@@ -1111,7 +1382,7 @@
         h += '<ul>';
         mod.bloques.forEach((b) => {
           h += '<li' + (b.rol === 'extra' ? ' class="extra"' : '') + '><a href="' + href(b) + '"' + (b === act ? ' aria-current="page"' : '') + '>' + hEst(b) +
-            '<span>' + tx(b.titulo) + '<small>' + (b.rol === 'extra' ? 'Ejercicio extra' : TIPO_TXT[b.tipo]) + (b.fuente && b.fuente.k === 'certamen' ? ' · C3 ' + b.fuente.sem + 'S-' + b.fuente.anio : '') + '</small></span></a></li>';
+            '<span>' + tx(b.titulo) + '<small>' + (b.tipo === 'simulacro' ? (S.sim ? 'En curso' : (S.simRes ? 'Último: ' + S.simRes.puntaje + ' puntos · nota ' + M.num(S.simRes.nota, 1) : 'Formato del certamen · 70 min')) : b.rol === 'extra' ? 'Ejercicio extra' : TIPO_TXT[b.tipo]) + (b.fuente && b.fuente.k === 'certamen' ? ' · C3 ' + b.fuente.sem + 'S-' + b.fuente.anio : '') + '</small></span></a></li>';
         });
         h += '</ul>';
       }
@@ -1149,6 +1420,7 @@
   function pintar() {
     U = new Map();
     ocultarTip();
+    clearInterval(simReloj);
     const b = VISTA.bloque;
     if (VISTA.esp) app.innerHTML = SES ? hSesion() : (VISTA.esp === 'errores' ? hErrores() : hMixto());
     else {
@@ -1160,6 +1432,7 @@
     abreviar(app);
     restaurar();
     marcarScroll();
+    if (b && b.tipo === 'simulacro' && S.sim && !S.sim.pausa) { simReloj = setInterval(tickSimulacro, 1000); tickSimulacro(); }
     if (b) refrescarBloque();
     pintarIndice();
     pintarProgreso();
@@ -1201,6 +1474,8 @@
     }
     const a = el.dataset.a;
     const u = unidadDe(el);
+    if (a.indexOf('sim-') === 0) { clicSimulacro(a, el); return; }
+    if (a === 'imprimir') { window.print(); return; }
     if (a === 'revisar' && u) revisarPreg(u);
     else if (a === 'pista' && u) verPista(u);
     else if (a === 'sol' && u) verSolucion(u, false);
@@ -1265,6 +1540,12 @@
     const inp = e.target;
     if (!inp.matches || !inp.matches('.campo input')) return;
     autoMiles(inp, e);
+    const enSim = inp.closest('[data-s]');
+    if (enSim && S.sim) {
+      (S.sim.r[enSim.dataset.s] || (S.sim.r[enSim.dataset.s] = {})).t = inp.value;
+      guardarLuego(); simContar();
+      return;
+    }
     const u = unidadDe(inp);
     if (!u) return;
     const campo = inp.closest('.campo');

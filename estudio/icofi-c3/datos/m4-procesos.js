@@ -89,6 +89,7 @@
             preguntas: [
               {
                 id: 'unitario', texto: 'Costo unitario (por unidad equivalente)', tipo: 'pesos', respuesta: 1000,
+                trampas: [{ valor: 900, propia: true, msg: 'dividiste por las 1.000 unidades físicas. Hay que dividir por las 900 UE, porque las que están en proceso consumieron solo una parte.' }],
                 pista: 'Divide el costo total por las UE del paso 1, no por las 1.000 unidades físicas.',
                 sol: { d: 'Costo total del período: $ 900.000. UE del paso 1: 900.', f: 'Costo unitario = costo total ÷ UE', c: '900.000 ÷ 900 = $ 1.000' }
               },
@@ -99,6 +100,7 @@
               },
               {
                 id: 'penp', texto: 'Costo de los productos en proceso (PenP)', tipo: 'pesos', respuesta: 100000,
+                trampas: [{ valor: 200000, propia: true, msg: 'contaste las 200 unidades en proceso como si estuvieran terminadas. Aplica el 50 % de avance: equivalen a 100.' }],
                 pista: 'Las 200 unidades en proceso equivalen a 200 × 50 % unidades terminadas.',
                 sol: { d: 'En proceso: 200 unidades al 50 % = 100 UE. Costo unitario: $ 1.000.', f: 'PenP = unidades en proceso × % de avance × costo unitario', c: '200 × 50 % × 1.000 = $ 100.000' }
               }
@@ -130,7 +132,7 @@
               cols: ['Partida', 'Kilogramos', 'UE costos primos', 'UE CIF'],
               filas: [
                 { id: 'tt', celdas: [{ t: 'Terminados y traspasados' }, { f: 4000, tipo: 'unidades' }, { r: 4000, tipo: 'unidades', s: 'Lo terminado cuenta completo: 4.000' }, { r: 4000, tipo: 'unidades', s: 'Lo terminado cuenta completo: 4.000' }] },
-                { id: 'enp', celdas: [{ t: 'En proceso' }, { r: 6000, tipo: 'unidades', s: '10.000 − 4.000 = 6.000' }, { r: 3000, tipo: 'unidades', s: '6.000 × 50 % = 3.000' }, { r: 1200, tipo: 'unidades', s: '6.000 × 20 % = 1.200' }] },
+                { id: 'enp', celdas: [{ t: 'En proceso' }, { r: 6000, tipo: 'unidades', s: '10.000 − 4.000 = 6.000' }, { r: 3000, tipo: 'unidades', s: '6.000 × 50 % = 3.000', trampas: [{ valor: 6000, propia: true, msg: 'Esos son los kilogramos físicos en proceso: aplica el 50 % de avance.' }] }, { r: 1200, tipo: 'unidades', s: '6.000 × 20 % = 1.200', trampas: [{ valor: 6000, propia: true, msg: 'Esos son los kilogramos físicos en proceso: aplica el 20 % de avance.' }] }] },
                 { id: 'tot', total: true, celdas: [{ t: 'Total' }, { f: 10000, tipo: 'unidades' }, { r: 7000, tipo: 'unidades', s: '4.000 + 3.000 = 7.000' }, { r: 5200, tipo: 'unidades', s: '4.000 + 1.200 = 5.200' }] },
                 { id: 'costo', celdas: [{ t: 'Costo del elemento' }, { t: '' }, { f: 70000000, tipo: 'pesos' }, { f: 20800000, tipo: 'pesos' }] },
                 { id: 'unit', celdas: [{ t: 'Costo por kilogramo' }, { t: '' }, { r: 10000, tipo: 'pesos', s: '70.000.000 ÷ 7.000 = $ 10.000' }, { r: 4000, tipo: 'pesos', s: '20.800.000 ÷ 5.200 = $ 4.000' }] }
@@ -142,6 +144,7 @@
             preguntas: [
               {
                 id: 'p1', texto: '¿Calcular el costo del inventario de productos en proceso?', tipo: 'pesos', respuesta: 34800000,
+                trampas: [{ valor: 84000000, propia: true, msg: 'usaste los 6.000 kg completos. En proceso solo cuenta el % de avance de cada elemento (50 % y 20 %).' }],
                 sol: { d: 'En proceso: 3.000 kg equivalentes en costos primos y 1.200 en CIF. Costos por kg: $ 10.000 y $ 4.000.', f: 'PenP = Σ (UE en proceso del elemento × costo unitario del elemento)', c: '3.000 × 10.000 + 1.200 × 4.000 = 30.000.000 + 4.800.000 = $ 34.800.000' }
               },
               {
@@ -150,6 +153,7 @@
               },
               {
                 id: 'p3', texto: '¿A cuántos kilogramos terminados equivalen los productos en proceso en relación al costo primo?', tipo: 'unidades', unidad: 'kg', respuesta: 3000,
+                trampas: [{ valor: 6000, propia: true, msg: 'esos son los kilogramos físicos en proceso. Piden a cuántos terminados equivalen: aplica el 50 % de avance.' }],
                 sol: { d: 'En proceso: 6.000 kg con 50 % de avance en costos primos.', f: 'UE en proceso = kg en proceso × % de avance', c: '6.000 × 50 % = 3.000 kg' }
               },
               {
@@ -198,6 +202,7 @@
             preguntas: [
               {
                 id: 'p1', texto: 'Costo del inventario de productos en proceso:', tipo: 'pesos', respuesta: 38000000,
+                trampas: [{ valor: 45000000, propia: true, msg: 'costeaste las 2.500 unidades en proceso como si estuvieran terminadas. Cada elemento va con su propio % de avance.' }],
                 sol: { d: 'En proceso: 2.500 unidades con avance 100 % (MPD), 80 % (MOD y MOI) y 60 % (MPI). Costos unitarios: $ 6.000, $ 10.000 y $ 2.000.', f: 'PenP = Σ (unidades en proceso × % de avance × costo unitario del elemento)', c: '2.500 × 6.000 + 2.000 × 10.000 + 1.500 × 2.000 = 15.000.000 + 20.000.000 + 3.000.000 = $ 38.000.000' }
               },
               {
@@ -206,10 +211,12 @@
               },
               {
                 id: 'p3', texto: '¿Cuántas unidades equivalentes totales del área de procesado son utilizadas para determinar el costo del MOI (mano de obra indirecta)?', tipo: 'unidades', unidad: 'unidades', respuesta: 5500,
+                trampas: [{ valor: 6000, propia: true, msg: 'esas son las UE de la MPD (100 % de avance). La MOI tiene 80 %.' }],
                 sol: { d: 'Terminadas: 3.500. En proceso: 2.500 con 80 % de avance en MOD y MOI.', f: 'UE = terminadas + en proceso × % de avance del elemento', c: '3.500 + 2.500 × 80 % = 5.500 unidades' }
               },
               {
                 id: 'p4', texto: '¿Cuál es el costo de producción unitario de departamento?', tipo: 'pesos', respuesta: 18000,
+                trampas: [{ valor: 16833, propia: true, msg: 'dividiste el costo total por las 6.000 unidades iniciadas. Cada elemento se divide por sus propias UE y después se suman los unitarios.' }],
                 sol: { d: 'Unitarios: MPD 36.000.000 ÷ 6.000 = $ 6.000; MOD + MOI 55.000.000 ÷ 5.500 = $ 10.000; MPI 10.000.000 ÷ 5.000 = $ 2.000.', f: 'Costo unitario total = suma de los unitarios de cada elemento', c: '6.000 + 10.000 + 2.000 = $ 18.000' }
               }
             ]
@@ -273,16 +280,19 @@
             preguntas: [
               {
                 id: 'normal', texto: 'Costo unitario si las 200 unidades malas son <b>merma normal</b>', tipo: 'pesos', respuesta: 1000,
+                trampas: [{ valor: 800, propia: true, msg: 'dividiste por las 1.000 unidades: ese es el caso de merma anormal. La merma normal no se cuenta, así que se divide por las 800 buenas.' }],
                 pista: 'La merma normal no se cuenta: el costo se reparte solo entre las unidades buenas.',
                 sol: { d: 'Costo total: $ 800.000. Unidades buenas: 800. La merma normal no se cuenta.', f: 'Costo unitario = costo total ÷ unidades buenas', c: '800.000 ÷ 800 = $ 1.000' }
               },
               {
                 id: 'anormal', texto: 'Costo unitario si las 200 unidades malas son <b>merma anormal</b>', tipo: 'pesos', respuesta: 800,
+                trampas: [{ valor: 1000, propia: true, msg: 'dividiste solo por las 800 buenas: ese es el caso de merma normal. La merma anormal sí se cuenta, así que se divide por las 1.000.' }],
                 pista: 'La merma anormal sí se cuenta: el costo se reparte en todo el nivel de producción.',
                 sol: { d: 'Costo total: $ 800.000. Nivel de producción total: 1.000 unidades (buenas + merma anormal).', f: 'Costo unitario = costo total ÷ nivel de producción total', c: '800.000 ÷ 1.000 = $ 800' }
               },
               {
                 id: 'perdida', texto: 'Pérdida no operacional en el caso de merma anormal', tipo: 'pesos', respuesta: 160000,
+                trampas: [{ valor: 200000, propia: true, msg: 'usaste el costo unitario del caso normal ($ 1.000). La merma anormal se costea al unitario del caso anormal: $ 800.' }],
                 pista: 'Las unidades perdidas se costean al mismo costo unitario del caso anormal.',
                 sol: { d: 'Merma anormal: 200 unidades. Costo unitario del caso anormal: $ 800.', f: 'Pérdida no operacional = unidades de merma anormal × costo unitario', c: '200 × 800 = $ 160.000' }
               }
@@ -330,9 +340,9 @@
               cols: ['Partida', 'Unidades', 'UE MP', 'UE CC'],
               filas: [
                 { id: 'tt', modelo: 'La primera fila (en verde) va hecha como modelo: lo terminado cuenta completo en todos los elementos.', celdas: [{ t: 'Terminadas y transferidas' }, { f: 700, tipo: 'unidades' }, { m: 700, tipo: 'unidades' }, { m: 700, tipo: 'unidades' }] },
-                { id: 'enp', celdas: [{ t: 'En proceso' }, { f: 200, tipo: 'unidades' }, { r: 200, tipo: 'unidades', s: '200 × 100 % = 200' }, { r: 140, tipo: 'unidades', s: '200 × 70 % = 140' }] },
-                { id: 'mn', celdas: [{ t: 'Merma normal' }, { f: 100, tipo: 'unidades' }, { r: 0, guion: true, tipo: 'unidades', s: 'La merma normal no se cuenta en las UE: –' }, { r: 0, guion: true, tipo: 'unidades', s: 'La merma normal no se cuenta en las UE: –' }] },
-                { id: 'tot', total: true, celdas: [{ t: 'Total producción equivalente' }, { f: 1000, tipo: 'unidades' }, { r: 900, tipo: 'unidades', s: '700 + 200 = 900' }, { r: 840, tipo: 'unidades', s: '700 + 140 = 840' }] }
+                { id: 'enp', celdas: [{ t: 'En proceso' }, { f: 200, tipo: 'unidades' }, { r: 200, tipo: 'unidades', s: '200 × 100 % = 200' }, { r: 140, tipo: 'unidades', s: '200 × 70 % = 140', trampas: [{ valor: 200, propia: true, msg: 'El costo de conversión lleva 70 % de avance: 200 × 70 %.' }] }] },
+                { id: 'mn', celdas: [{ t: 'Merma normal' }, { f: 100, tipo: 'unidades' }, { r: 0, guion: true, tipo: 'unidades', s: 'La merma normal no se cuenta en las UE: –', trampas: [{ valor: 100, propia: true, msg: 'La merma normal no se cuenta en las UE: su costo lo absorben las unidades buenas.' }] }, { r: 0, guion: true, tipo: 'unidades', s: 'La merma normal no se cuenta en las UE: –', trampas: [{ valor: 100, propia: true, msg: 'La merma normal no se cuenta en las UE: su costo lo absorben las unidades buenas.' }] }] },
+                { id: 'tot', total: true, celdas: [{ t: 'Total producción equivalente' }, { f: 1000, tipo: 'unidades' }, { r: 900, tipo: 'unidades', s: '700 + 200 = 900', trampas: [{ valor: 1000, propia: true, msg: 'Contaste la merma normal: no entra a las UE, la absorben las unidades buenas.' }] }, { r: 840, tipo: 'unidades', s: '700 + 140 = 840', trampas: [{ valor: 940, propia: true, msg: 'Contaste la merma normal: no entra a las UE, la absorben las unidades buenas.' }] }] }
               ]
             }
           },
@@ -343,7 +353,7 @@
               id: 'd1-unit',
               cols: ['Elemento', 'Costo', 'Costo unitario'],
               filas: [
-                { id: 'mp', celdas: [{ t: 'MP (materiales)' }, { f: 150000, tipo: 'pesos' }, { r: 166.67, tipo: 'unitario', s: '150.000 ÷ 900 = 166,67', tambien: [{ valor: 166.7, nota: NOTA_CLASE }] }] },
+                { id: 'mp', celdas: [{ t: 'MP (materiales)' }, { f: 150000, tipo: 'pesos' }, { r: 166.67, tipo: 'unitario', s: '150.000 ÷ 900 = 166,67', trampas: [{ valor: 150, propia: true, msg: 'Dividiste por las 1.000 unidades puestas en proceso. La merma normal no entra a las UE: son 900.' }], tambien: [{ valor: 166.7, nota: NOTA_CLASE }] }] },
                 { id: 'cc', celdas: [{ t: 'CC (conversión)' }, { f: 94000, tipo: 'pesos' }, { r: 111.9, tipo: 'unitario', s: '94.000 ÷ 840 = 111,90' }] },
                 { id: 'tot', total: true, celdas: [{ t: 'Total' }, { f: 244000, tipo: 'pesos' }, { r: 278.57, tipo: 'unitario', s: '166,67 + 111,90 = 278,57', tambien: [{ valor: 278.6, nota: NOTA_CLASE }] }] }
               ]
@@ -361,7 +371,7 @@
                 { id: 'pmp', celdas: [{ t: 'En proceso · MP' }, { r: 33333, tipo: 'pesos', s: '200 × 166,666… = $ 33.333', tambien: [{ valor: 33340, nota: NOTA_CLASE }] }] },
                 { id: 'pcc', celdas: [{ t: 'En proceso · CC' }, { r: 15667, tipo: 'pesos', s: '140 × 111,904… = $ 15.667', tambien: [{ valor: 15640, nota: 'Es el valor que se anotó en la resolución de clase (con los costos unitarios a un decimal); con él, el departamento cuadra en $ 244.000.' }] }] },
                 { id: 'penp', celdas: [{ t: 'Total en proceso (PenP)' }, { r: 49000, tipo: 'pesos', s: '33.333 + 15.667 = $ 49.000', tambien: [{ valor: 48980, nota: NOTA_CLASE }] }] },
-                { id: 'mn', celdas: [{ t: 'Merma normal' }, { r: 0, guion: true, tipo: 'pesos', s: 'La merma normal no tiene costo propio: $ 0' }] },
+                { id: 'mn', celdas: [{ t: 'Merma normal' }, { r: 0, guion: true, tipo: 'pesos', s: 'La merma normal no tiene costo propio: $ 0', trampas: [{ valor: 27857, propia: true, msg: 'La merma normal no se costea: su costo ya está dentro del unitario de las unidades buenas.' }] }] },
                 { id: 'tot', total: true, celdas: [{ t: 'Total (= 150.000 + 94.000)' }, { f: 244000, tipo: 'pesos' }] }
               ],
               cuadre: { celdas: ['tt', 'penp', 'mn'], col: 1, objetivo: 244000, texto: 'Transferidas + en proceso + merma normal' }
@@ -375,9 +385,9 @@
               cols: ['Partida', 'Unidades', 'UE MP₁', 'UE MP', 'UE CC'],
               filas: [
                 { id: 'tt', celdas: [{ t: 'Terminadas y transferidas' }, { f: 500, tipo: 'unidades' }, { r: 500, tipo: 'unidades', s: 'Terminadas: 500' }, { r: 500, tipo: 'unidades', s: 'Terminadas: 500' }, { r: 500, tipo: 'unidades', s: 'Terminadas: 500' }] },
-                { id: 'enp', celdas: [{ t: 'En proceso' }, { f: 100, tipo: 'unidades' }, { r: 100, tipo: 'unidades', s: 'El costo transferido siempre tiene 100 %: 100' }, { r: 100, tipo: 'unidades', s: '100 × 100 % = 100' }, { r: 60, tipo: 'unidades', s: '100 × 60 % = 60' }] },
-                { id: 'ma', celdas: [{ t: 'Merma anormal' }, { f: 100, tipo: 'unidades' }, { r: 100, tipo: 'unidades', s: 'La merma anormal sí se cuenta; está terminada: 100' }, { r: 100, tipo: 'unidades', s: 'La merma anormal sí se cuenta; está terminada: 100' }, { r: 100, tipo: 'unidades', s: 'La merma anormal sí se cuenta; está terminada: 100' }] },
-                { id: 'tot', total: true, celdas: [{ t: 'Total producción equivalente' }, { f: 700, tipo: 'unidades' }, { r: 700, tipo: 'unidades', s: '500 + 100 + 100 = 700' }, { r: 700, tipo: 'unidades', s: '500 + 100 + 100 = 700' }, { r: 660, tipo: 'unidades', s: '500 + 60 + 100 = 660' }] }
+                { id: 'enp', celdas: [{ t: 'En proceso' }, { f: 100, tipo: 'unidades' }, { r: 100, tipo: 'unidades', s: 'El costo transferido siempre tiene 100 %: 100' }, { r: 100, tipo: 'unidades', s: '100 × 100 % = 100' }, { r: 60, tipo: 'unidades', s: '100 × 60 % = 60', trampas: [{ valor: 100, propia: true, msg: 'El costo de conversión lleva 60 % de avance: 100 × 60 %.' }] }] },
+                { id: 'ma', celdas: [{ t: 'Merma anormal' }, { f: 100, tipo: 'unidades' }, { r: 100, tipo: 'unidades', s: 'La merma anormal sí se cuenta; está terminada: 100', trampas: [{ valor: 0, propia: true, msg: 'La merma anormal sí se cuenta en las UE (a diferencia de la normal). Está terminada: 100.' }] }, { r: 100, tipo: 'unidades', s: 'La merma anormal sí se cuenta; está terminada: 100', trampas: [{ valor: 0, propia: true, msg: 'La merma anormal sí se cuenta en las UE (a diferencia de la normal). Está terminada: 100.' }] }, { r: 100, tipo: 'unidades', s: 'La merma anormal sí se cuenta; está terminada: 100', trampas: [{ valor: 0, propia: true, msg: 'La merma anormal sí se cuenta en las UE (a diferencia de la normal). Está terminada: 100.' }] }] },
+                { id: 'tot', total: true, celdas: [{ t: 'Total producción equivalente' }, { f: 700, tipo: 'unidades' }, { r: 700, tipo: 'unidades', s: '500 + 100 + 100 = 700', trampas: [{ valor: 600, propia: true, msg: 'Te faltó la merma anormal: esa sí se cuenta en las UE.' }] }, { r: 700, tipo: 'unidades', s: '500 + 100 + 100 = 700', trampas: [{ valor: 600, propia: true, msg: 'Te faltó la merma anormal: esa sí se cuenta en las UE.' }] }, { r: 660, tipo: 'unidades', s: '500 + 60 + 100 = 660', trampas: [{ valor: 560, propia: true, msg: 'Te faltó la merma anormal: esa sí se cuenta en las UE.' }] }] }
               ]
             }
           },
@@ -419,6 +429,7 @@
             preguntas: [
               {
                 id: 'p1', texto: 'Costo unitario del producto terminado (existencia)', tipo: 'unitario', respuesta: 508.01,
+                trampas: [{ valor: 278.57, propia: true, msg: 'ese es el costo unitario del depto. 1. El producto terminado sale del depto. 2, que le suma sus materiales y su conversión.' }],
                 tambien: [{ valor: 508.1, nota: NOTA_CLASE }],
                 sol: { d: 'Unitarios del depto. 2: MP₁ 195.000 ÷ 700 = 278,57; MP 80.000 ÷ 700 = 114,29; CC 76.000 ÷ 660 = 115,15.', f: 'Costo unitario del producto terminado = suma de los unitarios del último departamento', c: '278,57 + 114,29 + 115,15 = $ 508,01' }
               },
@@ -428,11 +439,13 @@
               },
               {
                 id: 'p3', texto: 'Costo de las unidades en proceso (ambos departamentos)', tipo: 'pesos', respuesta: 95195,
+                trampas: [{ valor: 49000, propia: true, msg: 'ese es solo el depto. 1. Piden los dos departamentos: súmale los $ 46.195 del depto. 2.' }, { valor: 46195, propia: true, msg: 'ese es solo el depto. 2. Piden los dos departamentos: súmale los $ 49.000 del depto. 1.' }],
                 tambien: [{ valor: 95182, nota: 'Es el valor de la resolución de clase (48.980 + 46.202), con los costos unitarios redondeados a un decimal.' }],
                 sol: { d: 'PenP del depto. 1: 33.333 + 15.667 = $ 49.000. PenP del depto. 2: 27.857 + 11.429 + 6.909 = $ 46.195.', f: 'Se suman los productos en proceso de los dos departamentos', c: '49.000 + 46.195 = $ 95.195' }
               },
               {
                 id: 'p4', texto: 'Costo de las unidades de pérdida normal', tipo: 'pesos', respuesta: 0, guion: true,
+                trampas: [{ valor: 27857, propia: true, msg: 'la merma normal no se costea aparte: su costo lo absorben las unidades buenas. La que sí se costea es la anormal.' }],
                 sol: { d: 'Depto. 1: 100 unidades de merma normal.', f: 'La merma normal no se cuenta en las UE ni tiene costo propio', c: 'Su costo lo absorben las unidades buenas (por eso el material sube de $ 150 a $ 166,67 por unidad): $ 0' }
               },
               {

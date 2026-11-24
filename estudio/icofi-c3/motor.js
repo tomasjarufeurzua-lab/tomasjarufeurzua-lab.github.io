@@ -196,8 +196,9 @@
     var L = leer(texto);
     if (L.vacio) return { estado: 'vacia' };
     if (L.guion) {
-      if (q.guion) return { estado: 'correcta', valor: 0 };
-      return { estado: 'invalida' };
+      // Un guion significa "nada" (0): correcto solo si la respuesta es 0 y la celda admite guion
+      if (q.guion && q.respuesta === 0) return { estado: 'correcta', valor: 0 };
+      L = { ok: true, cands: [0], pct: false };
     }
     if (!L.ok) return { estado: 'invalida' };
     var cs = candidatos(q, L);
