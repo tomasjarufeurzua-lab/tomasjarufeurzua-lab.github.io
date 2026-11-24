@@ -1,0 +1,1236 @@
+// Guía interactiva ICOFI · Certamen 3 — interfaz.
+// Todo el contenido viene de datos/*.js (window.ICOFI_C3) y la corrección de motor.js (window.ICOFI_MOTOR).
+// El progreso se guarda en localStorage; si falla, la página funciona igual sin guardar.
+(function () {
+  'use strict';
+
+  const C = window.ICOFI_C3;
+  const M = window.ICOFI_MOTOR;
+  const DG = window.ICOFI_DIAGRAMAS || {};
+  const app = document.getElementById('app');
+  const indice = document.getElementById('indice');
+  const tip = document.getElementById('tip');
+  const CLAVE = 'icofi-c3-progreso-v1';
+  const RONDA = 5; // máximo de V/F o alternativas por ronda en el flujo
+
+  // =====================================================================
+  // Contenido: módulos, bloques e ítems
+  // =====================================================================
+  const MODS = C.modulos.slice().sort((a, b) => a.n - b.n);
+  const BLOQUES = new Map(); // "modulo/bloque" -> bloque
+  const FLUJO = [];          // bloques del camino recomendado (sin los ejercicios extra)
+  const ITEMS = new Map();   // id de ítem -> { id, k, b, ref, parte }
+
+  function itemsDe(b) {
+    if (b._items) return b._items;
+    const out = [];
+    if (b.tipo === 'leccion' && b.porque) out.push({ id: b.key + '#porque', k: 'pq', b: b, ref: b.porque });
+    if (b.tipo === 'ejercicio') {
+      b.partes.forEach((p) => {
+        if (p.tabla) out.push({ id: b.key + '#' + p.tabla.id, k: 'tabla', b: b, ref: p.tabla, parte: p });
+        (p.preguntas || []).forEach((q) => out.push({ id: b.key + '#' + q.id, k: 'preg', b: b, ref: q, parte: p }));
+      });
+    }
+    if (b.tipo === 'vf') b.items.forEach((x) => out.push({ id: b.key + '#' + x.id, k: 'vf', b: b, ref: x }));
+    if (b.tipo === 'mc') b.items.forEach((x) => out.push({ id: b.key + '#' + x.id, k: 'mc', b: b, ref: x }));
+    b._items = out;
+    return out;
+  }
+
+  MODS.forEach((mod) => {
+    let principal = null;
+    mod.bloques.forEach((b) => {
+      b.mod = mod;
+      b.key = mod.id + '/' + b.id;
+      if (b.rol === 'extra' && principal) {
+        b.de = principal;
+        (principal.extras = principal.extras || []).push(b);
+      } else {
+        b.rol = 'principal';
+        FLUJO.push(b);
+        if (b.tipo === 'ejercicio') principal = b;
+      }
+      BLOQUES.set(b.key, b);
+      itemsDe(b).forEach((it) => ITEMS.set(it.id, it));
+    });
+  });
+
+  // =====================================================================
+  // Progreso (localStorage)
+  // =====================================================================
+  const VACIO = () => ({ v: 1, vistos: {}, hechos: {}, it: {}, err: {}, r: {}, ult: null, dias: [], ses: { dia: '', n: 0 } });
+  let S = VACIO();
+  try {
+    const g = JSON.parse(localStorage.getItem(CLAVE));
+    if (g && g.v === 1) S = Object.assign(VACIO(), g);
+  } catch (e) { /* sin almacenamiento: se sigue sin guardar */ }
+
+  function guardar() {
+    try { localStorage.setItem(CLAVE, JSON.stringify(S)); } catch (e) { /* nada */ }
+  }
+  function hoy() {
+    const d = new Date();
+    const p = (n) => (n < 10 ? '0' : '') + n;
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+  // ¿Es la primera visita de hoy habiendo estado otro día? (para ofrecer el repaso primero)
+  const DIA_ANTERIOR = S.dias.length > 0 && S.dias[S.dias.length - 1] !== hoy();
+  if (S.dias[S.dias.length - 1] !== hoy()) { S.dias.push(hoy()); if (S.dias.length > 60) S.dias.shift(); }
+  if (S.ses.dia !== hoy()) S.ses = { dia: hoy(), n: 0 };
+
+  function estadoItem(id) {
+    const x = S.it[id];
+    if (!x) return 'n';
+    if (x.u === 1) return 'ok';
+    if (x.n > 0) return 'mal';
+    return x.s ? 'sol' : 'n';
+  }
+  // Ítems que cuentan para el avance del bloque (en V/F y alternativas, solo la primera ronda)
+  function itemsFlujo(b) {
+    const its = itemsDe(b);
+    return (b.tipo === 'vf' || b.tipo === 'mc') ? its.slice(0, RONDA) : its;
+  }
+  function hecho(b) {
+    if (b.tipo === 'ejercicio' || b.tipo === 'vf' || b.tipo === 'mc') return itemsFlujo(b).every((it) => estadoItem(it.id) !== 'n');
+    return !!S.vistos[b.key];
+  }
+  // 'n' sin ver/intentar · 'visto' · 'ok' todo correcto · 'err' con errores · 'parcial' a medias
+  function estadoBloque(b) {
+    if (b.tipo !== 'ejercicio' && b.tipo !== 'vf' && b.tipo !== 'mc') return S.vistos[b.key] ? 'visto' : 'n';
+    const es = itemsFlujo(b).map((it) => estadoItem(it.id));
+    if (es.every((e) => e === 'n')) return 'n';
+    if (es.every((e) => e === 'ok')) return 'ok';
+    if (es.some((e) => e === 'mal' || e === 'sol')) return 'err';
+    return 'parcial';
+  }
+  function completo(b) {
+    const e = estadoBloque(b);
+    return e === 'visto' || e === 'ok';
+  }
+  function marcarAvance(b) {
+    if (hecho(b) && !S.hechos[b.key]) { S.hechos[b.key] = 1; S.ses.n++; }
+  }
+
+  // Registra un intento. o.conf: 1 seguro · 2 más o menos · 3 adiviné. o.limpio: respondió sin haber visto la respuesta.
+  function registrar(id, ok, o) {
+    o = o || {};
+    const x = S.it[id] || (S.it[id] = { n: 0, u: null, p: null, s: 0, h: [] });
+    if (x.p === null) x.p = ok && !x.s ? 1 : 0;
+    x.n++;
+    x.u = ok ? 1 : 0;
+    x.h.push([hoy(), ok ? 1 : 0, o.conf || 0]);
+    if (x.h.length > 10) x.h.shift();
+    let salio = false;
+    if (!ok || o.conf === 3) {
+      // Falló, o acertó adivinando: entra (o vuelve a empezar) en la lista de repaso
+      S.err[id] = { desde: S.err[id] ? S.err[id].desde : hoy(), d: [] };
+    } else if (S.err[id] && o.limpio) {
+      const e = S.err[id];
+      if (e.d.indexOf(hoy()) < 0) e.d.push(hoy());
+      if (e.d.length >= 2) { delete S.err[id]; salio = true; } // dos aciertos en días distintos
+    }
+    const it = ITEMS.get(id);
+    if (it) marcarAvance(it.b);
+    guardar();
+    return { salio: salio };
+  }
+  function marcarSolucionVista(id) {
+    const x = S.it[id] || (S.it[id] = { n: 0, u: null, p: null, s: 0, h: [] });
+    x.s = 1;
+    if (x.u !== 1 && !S.err[id]) S.err[id] = { desde: hoy(), d: [] };
+    const it = ITEMS.get(id);
+    if (it) marcarAvance(it.b);
+    guardar();
+  }
+  const nErrores = () => Object.keys(S.err).filter((id) => ITEMS.has(id)).length;
+
+  // =====================================================================
+  // Texto
+  // =====================================================================
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  // **negrita** y {{numerador // denominador}}
+  function tx(s) {
+    return String(s == null ? '' : s)
+      .replace(/\{\{(.+?)\s*\/\/\s*(.+?)\}\}/g, '<span class="frac"><span>$1</span><span>$2</span></span>')
+      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  }
+  const sinHtml = (s) => String(s).replace(/<[^>]+>/g, '').replace(/\*\*/g, '');
+  const corto = (s, n) => { s = sinHtml(s); return s.length > n ? s.slice(0, n - 1).trim() + '…' : s; };
+
+  function fuenteTxt(f) {
+    if (!f) return '';
+    if (f.k === 'certamen') return 'Certamen 3 · ' + (f.sem === 1 ? '1er' : '2º') + ' semestre ' + f.anio + ' · Pregunta ' + f.preg;
+    if (f.k === 'taller') return 'Taller de clases' + (f.ej ? ' · Ejercicio ' + f.ej : '');
+    if (f.k === 'clase') return 'Ejemplo de clase';
+    if (f.k === 'comprension') return 'Pregunta de comprensión';
+    return 'Ejemplo';
+  }
+  function hFuente(f, mini) {
+    if (!f) return '';
+    return '<div class="fuente' + (mini ? ' mini' : '') + '">' + fuenteTxt(f) +
+      (f.tb ? ' <small>· también ' + f.tb + '</small>' : '') + (f.nota ? ' <small>· ' + f.nota + '</small>' : '') + '</div>';
+  }
+  const href = (b) => '#/' + b.mod.id + '/' + b.id;
+  const TIPO_TXT = { leccion: 'Lección', ejercicio: 'Ejercicio', vf: 'Verdadero o falso', mc: 'Selección múltiple', resumen: 'Resumen', portada: 'Inicio', simulacro: 'Simulacro', formulas: 'Fórmulas' };
+
+  // ---- Abreviaturas con tooltip ----
+  const AB = C.abreviaturas || {};
+  const LETRA = 'A-Za-zÁÉÍÓÚáéíóúñÑ0-9₁ᵤ$';
+  const AB_RE = new RegExp('(^|[^' + LETRA + '])(' + Object.keys(AB).sort((a, b) => b.length - a.length)
+    .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')(?![' + LETRA + '])', 'g');
+
+  function abreviar(raiz, omitir) {
+    const w = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT, {
+      acceptNode: (n) => (n.parentElement && n.parentElement.closest('abbr, input, textarea, svg, button, a, .sin-ab, script, style')
+        ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT)
+    });
+    const nodos = [];
+    while (w.nextNode()) nodos.push(w.currentNode);
+    nodos.forEach((n) => {
+      // "$ 36.000.000" y "70 %" no se cortan entre líneas
+      if (/\$ \d|\d %/.test(n.nodeValue)) n.nodeValue = n.nodeValue.replace(/\$ (?=\d)/g, '$\u00a0').replace(/(\d) %/g, '$1\u00a0%');
+      const s = n.nodeValue;
+      AB_RE.lastIndex = 0;
+      if (!AB_RE.test(s)) return;
+      AB_RE.lastIndex = 0;
+      const frag = document.createDocumentFragment();
+      let pos = 0, m;
+      while ((m = AB_RE.exec(s))) {
+        if (omitir && omitir.indexOf(m[2]) >= 0) continue;
+        const ini = m.index + m[1].length;
+        frag.appendChild(document.createTextNode(s.slice(pos, ini)));
+        const a = document.createElement('abbr');
+        a.className = 'ab';
+        a.tabIndex = 0;
+        a.dataset.ab = m[2];
+        a.textContent = m[2];
+        frag.appendChild(a);
+        pos = ini + m[2].length;
+        AB_RE.lastIndex = pos;
+      }
+      if (pos === 0) return;
+      frag.appendChild(document.createTextNode(s.slice(pos)));
+      n.parentNode.replaceChild(frag, n);
+    });
+  }
+
+  function mostrarTip(el) {
+    const k = el.dataset.ab;
+    tip.innerHTML = '<b>' + esc(k) + '</b>: ' + esc(AB[k] || '');
+    tip.hidden = false;
+    const r = el.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    let x = r.left + r.width / 2 - t.width / 2;
+    x = Math.max(8, Math.min(x, window.innerWidth - t.width - 8));
+    let y = r.top - t.height - 8;
+    if (y < 8) y = r.bottom + 8;
+    tip.style.left = x + 'px';
+    tip.style.top = y + 'px';
+  }
+  const ocultarTip = () => { tip.hidden = true; };
+  document.addEventListener('pointerover', (e) => { const a = e.target.closest && e.target.closest('abbr.ab'); if (a) mostrarTip(a); });
+  document.addEventListener('pointerout', (e) => { if (e.target.closest && e.target.closest('abbr.ab')) ocultarTip(); });
+  document.addEventListener('focusin', (e) => { const a = e.target.closest && e.target.closest('abbr.ab'); if (a) mostrarTip(a); });
+  document.addEventListener('focusout', (e) => { if (e.target.closest && e.target.closest('abbr.ab')) ocultarTip(); });
+  window.addEventListener('scroll', ocultarTip, { passive: true });
+
+  // =====================================================================
+  // Unidades interactivas de la vista actual
+  // =====================================================================
+  // uid -> { uid, item, k, modo: 'flujo' | 'repaso', revelado, conf, d (borrador si no se guarda) }
+  let U = new Map();
+  let SES = null; // sesión de repaso en curso
+
+  function unidad(item, o) {
+    const uid = (o.ns || '') + item.id;
+    const u = { uid: uid, item: item, k: item.k, modo: o.modo || 'flujo', revelado: false, conf: 0, d: null, nuevo: true };
+    U.set(uid, u);
+    return u;
+  }
+  // Borrador de la unidad: en el flujo se guarda; en el repaso vive solo en memoria.
+  function borr(u) {
+    if (u.modo === 'flujo') return S.r[u.item.id] || (S.r[u.item.id] = {});
+    return u.d || (u.d = {});
+  }
+  const cajaDe = (u) => app.querySelector('[data-u="' + u.uid + '"]');
+
+  function hConf() {
+    return '<div class="conf" role="group" aria-label="¿Qué tan seguro estás? (opcional)"><span>¿Qué tan seguro? <span class="suave">(opcional)</span></span>' +
+      '<button type="button" class="chip" data-a="conf" data-v="1" aria-pressed="false">Seguro</button>' +
+      '<button type="button" class="chip" data-a="conf" data-v="2" aria-pressed="false">Más o menos</button>' +
+      '<button type="button" class="chip" data-a="conf" data-v="3" aria-pressed="false">Adiviné</button></div>';
+  }
+  const ANIMO = [
+    'Equivocarse intentando es la forma más rápida de aprenderlo.',
+    'Este error es de los más comunes en el certamen; ahora ya lo conoces.',
+    'Mejor que pase aquí y no en el certamen: quedó anotado para repasarlo.'
+  ];
+  let animoI = 0;
+  const animo = () => ANIMO[(animoI++) % ANIMO.length];
+
+  // ---------- Pregunta numérica ----------
+  function adornos(q) {
+    const tipo = q.tipo || 'pesos';
+    return {
+      pre: (tipo === 'pesos' || tipo === 'unitario') ? (q.moneda || '$') : '',
+      suf: tipo === 'unidades' ? (q.unidad || 'u') : tipo === 'porcentaje' ? '%' : (tipo === 'razon' ? '' : (q.unidad || ''))
+    };
+  }
+  function hPreg(item, o) {
+    const q = item.ref;
+    const u = unidad(item, o);
+    const ad = adornos(q);
+    let h = '<div class="preg" data-u="' + u.uid + '">' +
+      '<label class="preg-t" for="in-' + u.uid + '">' + (o.num ? '<span class="preg-n">' + o.num + '</span>' : '') + '<span>' + tx(q.texto) + '</span></label>' +
+      '<div class="campo">' + (ad.pre ? '<span class="ad">' + ad.pre + '</span>' : '') +
+      '<input id="in-' + u.uid + '" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="Tu respuesta" data-t="' + (q.tipo || 'pesos') + '">' +
+      (ad.suf ? '<span class="ad">' + esc(ad.suf) + '</span>' : '') + '<span class="marca" aria-hidden="true"></span></div>';
+    if (q.clasif) {
+      h += '<div class="clasif"><span>' + tx(q.clasif.texto) + '</span><div class="chips">' +
+        q.clasif.opciones.map((op, i) => '<button type="button" class="chip" data-a="clasif" data-v="' + i + '" aria-pressed="false">' + tx(op) + '</button>').join('') + '</div></div>';
+    }
+    h += hConf() +
+      '<div class="preg-a"><button type="button" class="btn principal" data-a="revisar">Revisar</button>' +
+      (q.pista ? '<button type="button" class="btn-l" data-a="pista">Ver pista</button>' : '') +
+      '<button type="button" class="btn-l" data-a="sol">Ver solución</button></div>' +
+      '<div class="fb" role="status" aria-live="polite"></div></div>';
+    return h;
+  }
+  function hSol(q) {
+    const s = q.sol;
+    if (!s) return '';
+    return '<ol class="sol"><li><b>Dato:</b> ' + tx(s.d) + '</li><li><b>Fórmula:</b> ' + tx(s.f) + '</li><li><b>Cálculo:</b> ' + tx(s.c) + '</li><li><b>Resultado:</b> ' + M.formatear(q.respuesta, q) + '</li></ol>';
+  }
+  function notaRedondeo(q, res) {
+    return '<p class="nota-red">Tu resultado difiere solo por redondeo: está bien. Valor principal: <b>' + M.formatear(q.respuesta, q) + '</b>.' +
+      (res.alt && res.alt.nota ? ' ' + tx(res.alt.nota) : ' La diferencia viene de redondear pasos intermedios.') + '</p>';
+  }
+  // Pinta el resultado de una pregunta ya corregida. okC: null si no hay clasificación.
+  function pintarPreg(u, res, okC, selC) {
+    const q = u.item.ref;
+    const caja = cajaDe(u);
+    const campo = caja.querySelector('.campo');
+    const fb = caja.querySelector('.fb');
+    const okNum = M.esAcierto(res.estado);
+    const ok = okNum && okC !== false;
+    campo.classList.toggle('ok', okNum);
+    campo.classList.toggle('mal', !okNum);
+    if (q.clasif) {
+      caja.querySelectorAll('[data-a="clasif"]').forEach((b, i) => {
+        b.classList.toggle('ok', i === q.clasif.correcta && selC === i);
+        b.classList.toggle('mal', selC === i && i !== q.clasif.correcta);
+      });
+    }
+    const correcta = '<b>' + M.formatear(q.respuesta, q) + '</b>';
+    let h;
+    if (ok) {
+      h = '<p class="fb-h"><span class="ic">✓</span><span>Correcto: ' + correcta + (q.clasif ? ' · ' + tx(q.clasif.opciones[q.clasif.correcta]) : '') + '</span></p>';
+      if (res.estado !== 'correcta') h += notaRedondeo(q, res);
+      if (q.sol) h += '<p><b>Por qué:</b> ' + tx(q.sol.c) + '</p>';
+      fb.className = 'fb ok';
+    } else if (okNum) {
+      // El número está bien y falta la clasificación
+      h = '<p class="fb-h"><span class="ic">✗</span><span>El monto está bien (' + correcta + '). Lo que falta corregir es la opción que elegiste.</span></p>' +
+        '<p>' + tx(q.clasif.porque) + '</p>';
+      if (res.estado !== 'correcta') h += notaRedondeo(q, res);
+      fb.className = 'fb mal';
+    } else {
+      h = '<p class="fb-h"><span class="ic">✗</span><span>' + (res.estado === 'trampa' ? 'Casi: ' + tx(res.trampa.msg) : 'Todavía no.') + '</span></p>' +
+        '<p>La respuesta correcta es ' + correcta + (q.clasif ? ' · ' + tx(q.clasif.opciones[q.clasif.correcta]) : '') + '.</p>' + hSol(q) +
+        (q.clasif && okC === false ? '<p>' + tx(q.clasif.porque) + '</p>' : '') +
+        '<p class="animo">' + animo() + ' Puedes corregir tu respuesta y revisar de nuevo.</p>';
+      fb.className = 'fb mal';
+    }
+    fb.innerHTML = h;
+    abreviar(fb);
+    u.revelado = true;
+  }
+  function revisarPreg(u) {
+    const q = u.item.ref;
+    const caja = cajaDe(u);
+    const inp = caja.querySelector('input');
+    const fb = caja.querySelector('.fb');
+    const res = M.corregir(q, inp.value);
+    const d = borr(u);
+    if (res.estado === 'vacia' || res.estado === 'invalida') {
+      fb.className = 'fb aviso';
+      fb.innerHTML = res.estado === 'vacia'
+        ? '<p>Escribe tu respuesta antes de revisar.</p>'
+        : '<p>No pude leer ese número. Ejemplos válidos: <b>36.000.000</b> · <b>36,5</b> · <b>70 %</b>.</p>';
+      inp.focus();
+      return;
+    }
+    let okC = null;
+    if (q.clasif) {
+      if (typeof d.c !== 'number') {
+        fb.className = 'fb aviso';
+        fb.innerHTML = '<p>Te falta elegir una opción en «' + sinHtml(q.clasif.texto) + '».</p>';
+        return;
+      }
+      okC = d.c === q.clasif.correcta;
+    }
+    const ok = M.esAcierto(res.estado) && okC !== false;
+    const limpio = !u.revelado;
+    d.t = inp.value;
+    d.e = 1;
+    const r = registrar(u.item.id, ok, { conf: u.conf, limpio: limpio });
+    pintarPreg(u, res, okC, d.c);
+    despuesDeResponder(u, ok, r, limpio);
+  }
+  function verPista(u) {
+    const fb = cajaDe(u).querySelector('.fb');
+    fb.className = 'fb aviso';
+    fb.innerHTML = '<p><b>Pista:</b> ' + tx(u.item.ref.pista) + '</p>';
+    abreviar(fb);
+  }
+  function verSolucion(u, confirmado) {
+    const caja = cajaDe(u);
+    const fb = caja.querySelector('.fb');
+    const intentado = u.revelado || (S.it[u.item.id] && S.it[u.item.id].n > 0);
+    if (!intentado && !confirmado) {
+      fb.className = 'fb aviso';
+      fb.innerHTML = '<p><b>¿Seguro que quieres verla sin intentar?</b> Equivocarse intentando enseña más que leer la respuesta.</p>' +
+        '<div class="preg-a"><button type="button" class="btn chico" data-a="sol-no">Voy a intentarlo</button><button type="button" class="btn-l" data-a="sol-si">Sí, ver la solución</button></div>';
+      return;
+    }
+    marcarSolucionVista(u.item.id);
+    u.revelado = true;
+    if (u.k === 'tabla') {
+      fb.className = 'fb';
+      fb.innerHTML = '<p><b>Solución de la tabla</b></p><ul class="sol-celdas">' + lineasTabla(u.item.ref, null).join('') + '</ul>';
+    } else {
+      const q = u.item.ref;
+      fb.className = 'fb';
+      fb.innerHTML = '<p><b>Solución:</b> ' + M.formatear(q.respuesta, q) + (q.clasif ? ' · ' + tx(q.clasif.opciones[q.clasif.correcta]) : '') + '</p>' + hSol(q) +
+        (q.tambien && q.tambien.length ? '<p class="suave">También se acepta: ' + q.tambien.map((a) => M.formatear(a.valor, q)).join(' · ') + ' (diferencias de redondeo).</p>' : '');
+    }
+    abreviar(fb);
+    despuesDeResponder(u, false, {}, false, true);
+  }
+
+  // ---------- Tabla editable ----------
+  const celdaQ = (c) => ({ tipo: c.tipo || 'pesos', respuesta: c.r, tambien: c.tambien, trampas: c.trampas, guion: c.guion, unidad: c.unidad });
+  function fijo(v, tipo) {
+    if (tipo === 'pesos' || tipo === 'unitario') return '$ ' + M.soloNumero(v, { tipo: tipo });
+    return M.soloNumero(v, { tipo: tipo || 'unidades' });
+  }
+  function editables(t) {
+    const out = [];
+    t.filas.forEach((f) => f.celdas.forEach((c, ci) => { if (c.r !== undefined) out.push(f.id + '|' + ci); }));
+    return out;
+  }
+  function hTabla(item, o) {
+    const t = item.ref;
+    const u = unidad(item, o);
+    let h = '<div class="tabla-ed" data-u="' + u.uid + '">' +
+      t.filas.filter((f) => f.modelo).map((f) => '<p class="nota-modelo">' + tx(f.modelo) + '</p>').join('') +
+      '<div class="tabla-scroll"><table><thead><tr>' +
+      t.cols.map((c, i) => '<th scope="col"' + (i ? ' class="num"' : '') + '>' + tx(c) + '</th>').join('') + '<th><span class="sr">Revisar</span></th></tr></thead><tbody>';
+    t.filas.forEach((f) => {
+      const tieneR = f.celdas.some((c) => c.r !== undefined);
+      h += '<tr' + (f.total ? ' class="total"' : '') + '>';
+      f.celdas.forEach((c, ci) => {
+        if (c.t !== undefined) h += ci === 0 ? '<th scope="row">' + tx(c.t) + '</th>' : '<td class="num">' + tx(c.t) + '</td>';
+        else if (c.f !== undefined) h += '<td class="num">' + fijo(c.f, c.tipo) + '</td>';
+        else if (c.m !== undefined) h += '<td class="num modelo">' + fijo(c.m, c.tipo) + '</td>';
+        else {
+          const pesos = c.tipo === 'pesos' || c.tipo === 'unitario' || !c.tipo;
+          h += '<td class="c-in' + (pesos ? '' : ' corta') + '"><div class="campo chico">' + (pesos ? '<span class="ad">$</span>' : '') +
+            '<input type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" data-c="' + f.id + '|' + ci + '" data-f="' + f.id + '" data-t="' + (c.tipo || 'pesos') + '"' +
+            ' aria-label="' + esc(sinHtml(f.celdas[0].t) + ' · ' + sinHtml(t.cols[ci])) + '"' + (c.guion ? ' placeholder="0 o –"' : '') + '>' +
+            '<span class="marca" aria-hidden="true"></span></div><div class="c-fb"></div></td>';
+        }
+      });
+      h += '<td class="c-a">' + (tieneR ? '<button type="button" class="btn chico" data-a="fila" data-f="' + f.id + '" aria-label="Revisar la fila ' + esc(sinHtml(f.celdas[0].t)) + '">Revisar</button>' : '') + '</td></tr>';
+    });
+    h += '</tbody></table></div><p class="desliza">Desliza la tabla hacia el lado para ver todas las columnas →</p>';
+    if (t.cuadre) h += '<div class="cuadre" data-cuadre></div>';
+    h += '<div class="tabla-a"><button type="button" class="btn principal" data-a="tabla-todo">Revisar todo</button>' +
+      '<button type="button" class="btn-l" data-a="sol">Ver solución</button>' +
+      '<button type="button" class="btn-l" data-a="tabla-reset">Borrar y reintentar</button></div>' +
+      '<div class="fb" role="status" aria-live="polite"></div></div>';
+    return h;
+  }
+  const rotCelda = (t, f, ci) => '<b>' + tx(f.celdas[0].t) + (t.cols.length > 2 ? ' · ' + tx(t.cols[ci]) : '') + '</b>';
+  // Líneas de solución (una por celda). resPorCelda: resultados de la corrección, o null para mostrar solo la solución.
+  function lineasTabla(t, resPorCelda, soloFila) {
+    const out = [];
+    t.filas.forEach((f) => {
+      if (soloFila && f.id !== soloFila) return;
+      f.celdas.forEach((c, ci) => {
+        if (c.r === undefined) return;
+        const key = f.id + '|' + ci;
+        const q = celdaQ(c);
+        const valor = c.guion && c.r === 0 && c.tipo !== 'pesos' ? '–' : fijo(c.r, c.tipo);
+        if (!resPorCelda) { out.push('<li class="info">' + rotCelda(t, f, ci) + ': <b>' + valor + '</b>' + (c.s ? ' → ' + tx(c.s) : '') + '</li>'); return; }
+        const res = resPorCelda[key];
+        if (!res) return;
+        if (M.esAcierto(res.estado)) {
+          out.push('<li class="ok">' + rotCelda(t, f, ci) + ': ' + (c.s ? tx(c.s) : valor) +
+            (res.estado !== 'correcta' ? ' <span class="nota-red">Tu valor difiere solo por redondeo: está bien. Valor principal: ' + valor + '.' + (res.alt && res.alt.nota ? ' ' + tx(res.alt.nota) : '') + '</span>' : '') + '</li>');
+        } else {
+          out.push('<li class="mal">' + rotCelda(t, f, ci) + ': la respuesta es <b>' + valor + '</b>.' +
+            (res.estado === 'trampa' ? ' ' + tx(res.trampa.msg) : '') + (c.s ? ' → ' + tx(c.s) : '') + '</li>');
+        }
+      });
+    });
+    return out;
+  }
+  function marcarCelda(inp, ok, c, res) {
+    const campo = inp.closest('.campo');
+    const nota = inp.closest('td').querySelector('.c-fb');
+    campo.classList.toggle('ok', ok === true);
+    campo.classList.toggle('mal', ok === false);
+    nota.className = 'c-fb' + (ok ? ' ok' : '');
+    if (ok === null) nota.textContent = '';
+    else if (ok) nota.textContent = res.estado === 'correcta' ? '' : 'vale por redondeo';
+    else nota.textContent = 'es ' + (c.guion && c.r === 0 && c.tipo !== 'pesos' ? '–' : fijo(c.r, c.tipo));
+  }
+  function revisarTabla(u, filaId) {
+    const t = u.item.ref;
+    const caja = cajaDe(u);
+    const fb = caja.querySelector('.fb');
+    const d = borr(u);
+    d.c = d.c || {}; d.e = d.e || {}; d.f = d.f || {};
+    const limpio = !u.revelado;
+    const res = {};
+    let faltan = 0, revisadas = 0;
+    t.filas.forEach((f) => {
+      if (filaId && f.id !== filaId) return;
+      f.celdas.forEach((c, ci) => {
+        if (c.r === undefined) return;
+        const key = f.id + '|' + ci;
+        const inp = caja.querySelector('input[data-c="' + key + '"]');
+        const r = M.corregir(celdaQ(c), inp.value);
+        if (r.estado === 'vacia' || r.estado === 'invalida') { faltan++; marcarCelda(inp, null); return; }
+        const ok = M.esAcierto(r.estado);
+        if (d.f[key] === undefined) d.f[key] = ok ? 1 : 0;
+        d.e[key] = ok ? 1 : 0;
+        d.c[key] = inp.value;
+        res[key] = r;
+        revisadas++;
+        marcarCelda(inp, ok, c, r);
+      });
+    });
+    if (!revisadas) {
+      fb.className = 'fb aviso';
+      fb.innerHTML = '<p>Completa las celdas ' + (filaId ? 'de esa fila ' : '') + 'antes de revisar. Si una celda no lleva nada, escribe 0 o un guion (–).</p>';
+      guardar();
+      return;
+    }
+    const todas = editables(t);
+    const bien = Object.keys(res).every((k) => M.esAcierto(res[k].estado));
+    fb.className = 'fb ' + (bien ? 'ok' : 'mal');
+    fb.innerHTML = '<ul class="sol-celdas">' + lineasTabla(t, res, filaId).join('') + '</ul>' +
+      (faltan ? '<p class="suave">Te faltan ' + faltan + ' celda' + (faltan > 1 ? 's' : '') + ' por completar.</p>' : '') +
+      (!bien ? '<p class="animo">' + animo() + ' Corrige las celdas marcadas y revisa de nuevo.</p>' : '');
+    abreviar(fb);
+    u.revelado = true;
+    let r = {}, registrado = false, ok = false;
+    if (!d.reg && todas.every((k) => d.f[k] !== undefined)) {
+      ok = todas.every((k) => d.f[k] === 1);
+      r = registrar(u.item.id, ok, { limpio: limpio });
+      d.reg = ok ? 2 : 1;
+      registrado = true;
+    } else if (d.reg === 1 && todas.every((k) => d.e[k] === 1)) {
+      ok = true;
+      r = registrar(u.item.id, true, {});
+      d.reg = 2;
+      registrado = true;
+    }
+    guardar();
+    pintarCuadre(u);
+    if (registrado) despuesDeResponder(u, ok, r, limpio);
+  }
+  function pintarCuadre(u) {
+    const t = u.item.ref;
+    if (!t.cuadre) return;
+    const caja = cajaDe(u);
+    const el = caja.querySelector('[data-cuadre]');
+    let suma = 0, listo = true;
+    t.cuadre.celdas.forEach((fid) => {
+      const inp = caja.querySelector('input[data-c="' + fid + '|' + t.cuadre.col + '"]');
+      const L = M.leer(inp.value);
+      if (L.guion) return;
+      if (!L.ok) { listo = false; return; }
+      suma += L.cands[0];
+    });
+    const obj = t.cuadre.objetivo;
+    if (!listo) { el.className = 'cuadre'; el.innerHTML = tx(t.cuadre.texto) + ' debe sumar <b>$ ' + M.num(obj, 0) + '</b>.'; return; }
+    const dif = Math.abs(suma - obj);
+    if (dif <= 1) { el.className = 'cuadre ok'; el.innerHTML = '✓ Cuadra: ' + tx(t.cuadre.texto) + ' = $ ' + M.num(suma, 0) + '.'; }
+    else if (dif <= Math.max(2, obj * 0.0005)) { el.className = 'cuadre aviso'; el.innerHTML = 'Suma $ ' + M.num(suma, 0) + ' y el total es $ ' + M.num(obj, 0) + ': la diferencia de $ ' + M.num(dif, 0) + ' viene de redondear los costos unitarios.'; }
+    else { el.className = 'cuadre'; el.innerHTML = tx(t.cuadre.texto) + ' suma $ ' + M.num(suma, 0) + '; debe dar <b>$ ' + M.num(obj, 0) + '</b>. Todavía no cuadra.'; }
+  }
+  function reiniciarTabla(u) {
+    const caja = cajaDe(u);
+    if (u.modo === 'flujo') delete S.r[u.item.id]; else u.d = null;
+    caja.querySelectorAll('input').forEach((inp) => { inp.value = ''; marcarCelda(inp, null); delete inp.dataset.manual; });
+    const fb = caja.querySelector('.fb');
+    fb.className = 'fb';
+    fb.innerHTML = '';
+    u.revelado = false;
+    guardar();
+    pintarCuadre(u);
+  }
+
+  // ---------- Verdadero / Falso ----------
+  function hVF(item, o) {
+    const x = item.ref;
+    const u = unidad(item, o);
+    return '<div class="vf" data-u="' + u.uid + '">' + hFuente(x.fuente, true) +
+      '<p class="vf-af">' + (o.num ? '<b>' + o.num + '.</b> ' : '') + tx(x.af) + '</p>' + hConf() +
+      '<div class="vf-b" style="margin-top:12px"><button type="button" class="btn" data-a="vf" data-v="1">Verdadero</button><button type="button" class="btn" data-a="vf" data-v="0">Falso</button></div>' +
+      '<div class="fb" role="status" aria-live="polite"></div></div>';
+  }
+  function pintarVF(u, v) {
+    const x = u.item.ref;
+    const caja = cajaDe(u);
+    const ok = (v === 1) === x.r;
+    caja.querySelectorAll('[data-a="vf"]').forEach((b) => {
+      const bv = Number(b.dataset.v);
+      b.disabled = true;
+      b.classList.toggle('es-ok', (bv === 1) === x.r);
+      b.classList.toggle('es-mal', bv === v && !ok);
+      if (bv === v) b.classList.add('elegido');
+    });
+    const fb = caja.querySelector('.fb');
+    fb.className = 'fb ' + (ok ? 'ok' : 'mal');
+    fb.innerHTML = '<p class="fb-h"><span class="ic">' + (ok ? '✓' : '✗') + '</span><span>' + (ok ? 'Correcto: es ' : 'Era ') + (x.r ? 'verdadero' : 'falso') + '.</span></p>' +
+      '<p>' + tx(x.porque) + '</p>' + (ok ? '' : '<p class="animo">' + animo() + '</p>');
+    abreviar(fb);
+    u.revelado = true;
+    return ok;
+  }
+  function responderVF(u, v) {
+    if (u.revelado) return;
+    const limpio = true;
+    const ok = pintarVF(u, v);
+    borr(u).v = v;
+    const r = registrar(u.item.id, ok, { conf: u.conf, limpio: limpio });
+    despuesDeResponder(u, ok, r, limpio);
+  }
+
+  // ---------- Selección múltiple (y "¿por qué?" de las lecciones) ----------
+  function hMC(item, o) {
+    const x = item.ref;
+    const u = unidad(item, o);
+    return '<div class="mc" data-u="' + u.uid + '">' + hFuente(x.fuente || (item.k === 'pq' ? { k: 'comprension' } : null), true) +
+      '<p class="mc-en">' + (o.num ? '<b>' + o.num + '.</b> ' : '') + tx(x.enunciado || x.pregunta) + '</p>' +
+      hConf() +
+      '<div class="mc-ops" style="margin-top:12px">' + x.opciones.map((op, i) => '<button type="button" class="mc-op" data-a="mc" data-v="' + i + '"><span class="letra">' + 'abcdef'.charAt(i) + '</span><span>' + tx(op) + '</span><span class="res" aria-hidden="true"></span></button>').join('') + '</div>' +
+      '<div class="fb" role="status" aria-live="polite"></div></div>';
+  }
+  function pintarMC(u, v) {
+    const x = u.item.ref;
+    const caja = cajaDe(u);
+    const ok = v === x.correcta;
+    caja.querySelectorAll('[data-a="mc"]').forEach((b, i) => {
+      b.disabled = true;
+      if (i === x.correcta) { b.classList.add('es-ok'); b.querySelector('.res').textContent = '✓'; }
+      else if (i === v) { b.classList.add('es-mal'); b.querySelector('.res').textContent = '✗'; }
+    });
+    const fb = caja.querySelector('.fb');
+    fb.className = 'fb ' + (ok ? 'ok' : 'mal');
+    fb.innerHTML = '<p class="fb-h"><span class="ic">' + (ok ? '✓' : '✗') + '</span><span>' + (ok ? 'Correcto.' : 'La correcta es la ' + 'abcdef'.charAt(x.correcta) + ').') + '</span></p>' +
+      '<p>' + tx(x.porque) + '</p>' + (ok ? '' : '<p class="animo">' + animo() + '</p>');
+    abreviar(fb);
+    u.revelado = true;
+    return ok;
+  }
+  function responderMC(u, v) {
+    if (u.revelado) return;
+    const ok = pintarMC(u, v);
+    borr(u).o = v;
+    const r = registrar(u.item.id, ok, { conf: u.conf, limpio: true });
+    despuesDeResponder(u, ok, r, true);
+  }
+
+  // Devuelve una unidad a su estado sin responder (para "otra vuelta")
+  function limpiarUnidad(u) {
+    if (u.modo === 'flujo') delete S.r[u.item.id];
+    u.d = null;
+    u.revelado = false;
+    u.conf = 0;
+  }
+
+  // ---------- Restaurar lo ya respondido al volver a un bloque ----------
+  function restaurar() {
+    U.forEach((u) => {
+      const caja = cajaDe(u);
+      if (!caja) return;
+      const d = u.modo === 'flujo' ? S.r[u.item.id] : u.d;
+      if (u.k === 'tabla') {
+        if (d && d.c) {
+          const res = {};
+          Object.keys(d.c).forEach((key) => {
+            const inp = caja.querySelector('input[data-c="' + key + '"]');
+            if (!inp) return;
+            inp.value = d.c[key];
+            if (d.e && d.e[key] !== undefined) {
+              const p = key.split('|');
+              const c = u.item.ref.filas.find((f) => f.id === p[0]).celdas[Number(p[1])];
+              const r = M.corregir(celdaQ(c), inp.value);
+              if (r.estado !== 'vacia' && r.estado !== 'invalida') { marcarCelda(inp, M.esAcierto(r.estado), c, r); res[key] = r; u.revelado = true; }
+            }
+          });
+          if (Object.keys(res).length) {
+            const fb = caja.querySelector('.fb');
+            const bien = Object.keys(res).every((k) => M.esAcierto(res[k].estado));
+            fb.className = 'fb ' + (bien ? 'ok' : 'mal');
+            fb.innerHTML = '<ul class="sol-celdas">' + lineasTabla(u.item.ref, res).join('') + '</ul>';
+          }
+        }
+        pintarCuadre(u);
+        return;
+      }
+      if (!d) return;
+      if (u.k === 'preg') {
+        const inp = caja.querySelector('input');
+        if (d.t !== undefined) inp.value = d.t;
+        if (typeof d.c === 'number') caja.querySelectorAll('[data-a="clasif"]').forEach((b, i) => b.setAttribute('aria-pressed', i === d.c ? 'true' : 'false'));
+        if (d.e) {
+          const q = u.item.ref;
+          const res = M.corregir(q, inp.value);
+          if (res.estado !== 'vacia' && res.estado !== 'invalida') pintarPreg(u, res, q.clasif ? d.c === q.clasif.correcta : null, d.c);
+        }
+      } else if (u.k === 'vf') {
+        if (d.v === 0 || d.v === 1) pintarVF(u, d.v);
+      } else if (typeof d.o === 'number') {
+        pintarMC(u, d.o);
+      }
+    });
+  }
+
+  // =====================================================================
+  // Bloques
+  // =====================================================================
+  function hParteLeccion(p) {
+    if (p.k === 'p') return '<p>' + tx(p.h) + '</p>';
+    if (p.k === 'practica') return '<div class="caja practica"><span class="rot">En la práctica</span><p>' + tx(p.h) + '</p></div>';
+    if (p.k === 'trampa') return '<div class="caja trampa"><span class="rot">Trampa típica</span><p>' + tx(p.h) + '</p></div>';
+    if (p.k === 'formula') return '<div class="formula">' + tx(p.h) + '</div>';
+    if (p.k === 'asi') return '<div class="caja asi"><span class="rot">Así lo preguntan</span><ul>' + p.items.map((x) => '<li>' + tx(x) + '</li>').join('') + '</ul></div>';
+    if (p.k === 'lista') return '<ul>' + p.items.map((x) => '<li>' + tx(x) + '</li>').join('') + '</ul>';
+    if (p.k === 'pasos') return '<ol class="pasos">' + p.items.map((x) => '<li><b class="t">' + tx(x.t) + '</b>' + tx(x.h) + '</li>').join('') + '</ol>';
+    if (p.k === 'diagrama') return hDiagrama(p.id);
+    if (p.k === 'comparar') {
+      return '<div class="tabla-scroll"><table class="t-comparar"><thead><tr>' + p.cols.map((c) => '<th scope="col">' + tx(c) + '</th>').join('') + '</tr></thead><tbody>' +
+        p.filas.map((f) => '<tr>' + f.map((c, i) => (i ? '<td>' + tx(c) + '</td>' : '<th scope="row">' + tx(c) + '</th>')).join('') + '</tr>').join('') + '</tbody></table></div>';
+    }
+    return '';
+  }
+  function hDiagrama(id) {
+    const d = DG[id];
+    if (!d) return '';
+    return '<figure class="diagrama">' + d.svg + (d.pie ? '<figcaption>' + tx(d.pie) + '</figcaption>' : '') + '</figure>';
+  }
+  const migas = (b, extra) => '<p class="migas">' + (b.mod.n ? 'Módulo ' + b.mod.n + ' · ' : '') + (extra || TIPO_TXT[b.tipo] || '') + '</p>';
+
+  function hLeccion(b) {
+    let h = '<article class="bloque leccion">' + migas(b) + '<h1 tabindex="-1">' + tx(b.titulo) + '</h1>' +
+      (b.idea ? '<p class="idea"><span>La idea en una frase</span>' + tx(b.idea) + '</p>' : '') +
+      (b.partes || []).map(hParteLeccion).join('');
+    if (b.porque) h += '<section class="porque-sec"><h2>Antes de seguir: ¿por qué?</h2>' + hMC(itemsDe(b)[0], { modo: 'flujo' }) + '</section>';
+    return h + '<div id="zona-nav"></div></article>';
+  }
+
+  function hTablaDatos(td) {
+    if (!td) return '';
+    return '<div class="tabla-scroll"><table class="t-datos"><thead><tr>' + td.cols.map((c) => '<th scope="col">' + tx(c) + '</th>').join('') + '</tr></thead><tbody>' +
+      td.filas.map((f) => '<tr>' + f.map((c, i) => (i ? '<td>' + tx(c) + '</td>' : '<th scope="row">' + tx(c) + '</th>')).join('') + '</tr>').join('') + '</tbody></table></div>' +
+      (td.pie ? '<p class="tabla-pie">' + tx(td.pie) + '</p>' : '');
+  }
+  function hEnunciado(b) {
+    return '<section class="enunciado"><span class="rot">Enunciado</span>' + b.enunciado + hTablaDatos(b.tablaDatos) + (b.diagrama ? hDiagrama(b.diagrama) : '') + '</section>';
+  }
+  function hEjercicio(b) {
+    let n = 0;
+    let h = '<article class="bloque ejercicio ancho">' + migas(b, b.rol === 'extra' ? 'Ejercicio extra' : 'Ejercicio') +
+      hFuente(b.fuente) + (b.etiqueta ? '<span class="etiqueta">' + tx(b.etiqueta) + '</span>' : '') +
+      '<h1 tabindex="-1">' + tx(b.titulo) + '</h1>' + hEnunciado(b);
+    b.partes.forEach((p, pi) => {
+      h += '<section class="parte" data-parte="' + pi + '"><h2>' + tx(p.titulo) + '</h2>' + (p.intro ? '<p class="intro">' + tx(p.intro) + '</p>' : '');
+      if (p.modelo) h += '<div class="modelo-caja"><span class="rot">Paso hecho como modelo</span>' + tx(p.modelo) + (p.nota ? '<small>' + tx(p.nota) + '</small>' : '') + '</div>';
+      if (p.tabla) h += hTabla(ITEMS.get(b.key + '#' + p.tabla.id), { modo: 'flujo' });
+      (p.preguntas || []).forEach((q) => { n++; h += hPreg(ITEMS.get(b.key + '#' + q.id), { modo: 'flujo', num: n }); });
+      if (p.despues) h += '<div class="despues" data-despues hidden>' + p.despues + '</div>';
+      h += '</section>';
+    });
+    if (b.cierre) h += '<section class="cierre" id="zona-cierre" hidden>' + b.cierre + '</section>';
+    return h + '<div id="zona-fin"></div><div id="zona-nav"></div></article>';
+  }
+
+  // Ronda actual de un bloque de V/F o alternativas (grupos de RONDA)
+  function ronda(b) {
+    const its = itemsDe(b);
+    const total = Math.ceil(its.length / RONDA);
+    const i = Math.min((S.r[b.key + '@ronda'] || 0), total - 1);
+    return { i: i, total: total, items: its.slice(i * RONDA, i * RONDA + RONDA) };
+  }
+  function hRonda(b) {
+    const r = ronda(b);
+    const comp = b.tipo === 'vf' ? hVF : hMC;
+    return '<article class="bloque">' + migas(b) + '<h1 tabindex="-1">' + tx(b.titulo) + '</h1>' +
+      '<p>' + (b.tipo === 'vf'
+        ? 'Decide si cada afirmación es verdadera o falsa. Apenas respondes, ves la justificación.'
+        : 'Elige una alternativa. Apenas respondes, ves la justificación.') +
+      (r.total > 1 ? ' <span class="suave">Ronda ' + (r.i + 1) + ' de ' + r.total + '.</span>' : '') + '</p>' +
+      r.items.map((it, k) => comp(it, { modo: 'flujo', num: r.i * RONDA + k + 1 })).join('') +
+      '<div id="zona-fin"></div><div id="zona-nav"></div></article>';
+  }
+
+  // Resultado del módulo: aciertos al primer intento y qué repasar
+  function resultadoModulo(mod) {
+    let resp = 0, bien = 0;
+    const repasar = [];
+    mod.bloques.forEach((b) => {
+      if (b.rol === 'extra') return;
+      let flojo = false;
+      itemsFlujo(b).forEach((it) => {
+        const x = S.it[it.id];
+        if (!x || (!x.n && !x.s)) return;
+        resp++;
+        if (x.p === 1) bien++; else flojo = true;
+      });
+      if (flojo) repasar.push(b);
+    });
+    return { resp: resp, bien: bien, repasar: repasar };
+  }
+  function hCierreSesion(mod) {
+    const i = MODS.indexOf(mod);
+    const sig = MODS.slice(i + 1).find((m) => m.bloques.length);
+    const e = nErrores();
+    return '<p><b>Hoy avanzaste ' + S.ses.n + ' bloque' + (S.ses.n === 1 ? '' : 's') + '.</b> ' +
+      (sig ? 'Siguiente: Módulo ' + sig.n + ' (' + tx(sig.corto) + '). ' : '') +
+      (e ? 'Tienes ' + e + ' error' + (e === 1 ? '' : 'es') + ' para repasar.' : 'No tienes errores pendientes.') + '</p>';
+  }
+  function hResumen(b) {
+    const r = resultadoModulo(b.mod);
+    let h = '<article class="bloque resumen">' + migas(b) + '<h1 tabindex="-1">' + tx(b.titulo) + '</h1>' +
+      '<div class="res-mod">' + (r.resp
+        ? '<p><b>Acertaste ' + r.bien + ' de ' + r.resp + ' al primer intento.</b></p>' +
+          (r.repasar.length ? '<p>Repasa: ' + r.repasar.map((x) => '<a href="' + href(x) + '">' + tx(x.titulo) + '</a>').join(' · ') + '</p>' : '<p>No quedó nada pendiente en este módulo.</p>')
+        : '<p>Todavía no respondes ejercicios de este módulo. Cuando lo hagas, aquí verás cuántos acertaste y qué conviene repasar.</p>') +
+      hCierreSesion(b.mod) + '</div>' +
+      '<h2>Fórmulas clave</h2><ul class="claves">' + b.formulas.map((f) => '<li>' + tx(f) + '</li>').join('') + '</ul>';
+    if (b.asi) h += '<div class="caja asi"><span class="rot">Así lo preguntan en este módulo</span><ul>' + b.asi.map((x) => '<li>' + tx(x) + '</li>').join('') + '</ul></div>';
+    return h + '<div id="zona-nav"></div></article>';
+  }
+
+  function hPortada(b) {
+    const e = nErrores();
+    const ult = S.ult && BLOQUES.get(S.ult);
+    const primero = FLUJO.find((x) => x !== b);
+    let h = '<article class="bloque portada">' + '<p class="migas">ICOFI · Certamen 3</p><h1 tabindex="-1">' + tx(C.titulo) + '</h1>' +
+      '<p class="sub">' + tx(b.bajada) + '</p>';
+    if (e && DIA_ANTERIOR) {
+      h += '<div class="aviso-rep"><p><b>Antes de seguir:</b> tienes ' + e + ' error' + (e === 1 ? '' : 'es') + ' de otro día para repasar. Volver a intentarlos ahora es lo que más ayuda a que no se repitan.</p>' +
+        '<a class="btn principal" href="#/repaso/errores">Repasar mis errores</a></div>';
+    }
+    h += '<div class="acciones">' +
+      (ult ? '<a class="btn principal" href="' + href(ult) + '">Continuar donde quedaste →</a>' : (primero ? '<a class="btn principal" href="' + href(primero) + '">Empezar →</a>' : '')) +
+      (e && !DIA_ANTERIOR ? '<a class="btn" href="#/repaso/errores">Repasar mis errores (' + e + ')</a>' : '') + '</div>' +
+      (ult ? '<p class="suave" style="margin:-14px 0 22px">Quedaste en: ' + tx(ult.titulo) + ' (Módulo ' + ult.mod.n + ').</p>' : '') +
+      '<div class="datos-cert">' + b.ficha.map((f) => '<div><span class="rot">' + tx(f.rot) + '</span><b>' + tx(f.valor) + '</b><span class="suave">' + tx(f.extra) + '</span></div>').join('') + '</div>' +
+      '<h2>Qué entra</h2><ul>' + b.contenidos.map((x) => '<li>' + tx(x) + '</li>').join('') + '</ul>' +
+      '<h2>Los ejercicios que más se repiten</h2><ol>' + b.repiten.map((x) => '<li>' + tx(x) + '</li>').join('') + '</ol>' +
+      '<h2>El mapa del curso</h2><ol class="pasos">' + b.mapa.map((x) => '<li><b class="t">' + tx(x.t) + '</b>' + tx(x.h) + '</li>').join('') + '</ol>' +
+      '<h2>Cómo usar esta guía</h2><ul>' +
+      '<li>Sigue el orden del índice, o salta al tema que quieras: no hay bloqueos.</li>' +
+      '<li>Responde antes de mirar la solución. Equivocarse intentando enseña más que leer la respuesta.</li>' +
+      '<li>Lo que falles queda en «Mis errores para repasar». Sale de ahí cuando lo aciertas dos veces en días distintos.</li>' +
+      '<li>Los números se escriben como en Chile: <b>36.000.000</b>, <b>36,5</b>, <b>70 %</b>.</li></ul>';
+    return h + '<div id="zona-nav"></div></article>';
+  }
+
+  function hBloque(b) {
+    if (b.tipo === 'leccion') return hLeccion(b);
+    if (b.tipo === 'ejercicio') return hEjercicio(b);
+    if (b.tipo === 'vf' || b.tipo === 'mc') return hRonda(b);
+    if (b.tipo === 'resumen') return hResumen(b);
+    if (b.tipo === 'portada') return hPortada(b);
+    return '<article class="bloque"><h1 tabindex="-1">' + tx(b.titulo) + '</h1></article>';
+  }
+
+  // ---------- Navegación entre bloques ----------
+  function vecinos(b) {
+    const base = b.rol === 'extra' ? b.de : b;
+    const i = FLUJO.indexOf(base);
+    return { ant: b.rol === 'extra' ? base : (FLUJO[i - 1] || null), sig: FLUJO[i + 1] || null, base: base };
+  }
+  function hNav(b) {
+    const v = vecinos(b);
+    let h = '<div class="nav">';
+    if (v.ant) h += '<a class="btn" href="' + href(v.ant) + '">← Anterior</a>';
+    let sinMas = false;
+    if (b.tipo === 'ejercicio') {
+      const extras = (v.base.extras || []).filter((x) => x !== b);
+      const otro = extras.find((x) => !hecho(x));
+      if (otro) h += '<a class="btn" href="' + href(otro) + '">¿Hacer otro ejercicio de lo mismo?</a>';
+      else if ((v.base.extras || []).length) sinMas = true;
+    }
+    if ((b.tipo === 'vf' || b.tipo === 'mc')) {
+      const r = ronda(b);
+      if (r.total > 1) h += '<button type="button" class="btn" data-a="otra-ronda">' + (r.i + 1 < r.total ? 'Otra ronda' : 'Volver a la primera ronda') + '</button>';
+    }
+    if (v.sig) h += '<a class="btn principal sig" href="' + href(v.sig) + '">' + (b.tipo === 'ejercicio' ? 'Seguir con el siguiente contenido →' : 'Siguiente →') + '</a>';
+    if (sinMas) h += '<p class="sin-mas">Ya hiciste todos los ejercicios de este tema. Puedes seguir con el siguiente contenido.</p>';
+    return h + '</div>';
+  }
+  function hFin(b) {
+    if (b.tipo !== 'ejercicio' && b.tipo !== 'vf' && b.tipo !== 'mc') return '';
+    const its = b.tipo === 'ejercicio' ? itemsDe(b) : ronda(b).items;
+    const resp = its.filter((it) => estadoItem(it.id) !== 'n').length;
+    if (!resp) return '';
+    const bien = its.filter((it) => S.it[it.id] && S.it[it.id].p === 1).length;
+    const pend = its.filter((it) => S.err[it.id]).length;
+    let h = '<div class="fin">';
+    if (resp < its.length) h += '<p>Llevas ' + resp + ' de ' + its.length + ' respondidas.</p>';
+    else {
+      h += '<p><b>Acertaste ' + bien + ' de ' + its.length + ' al primer intento.</b></p>';
+      if (pend) h += '<p>' + (pend === 1 ? 'La que falló quedó' : 'Las que fallaron quedaron') + ' en <a href="#/repaso/errores">Mis errores para repasar</a>, para volver a intentarlas otro día.</p>';
+      else if (bien === its.length) h += '<p>Este tema está dominado. Sigue con el siguiente.</p>';
+      if (b.tipo !== 'ejercicio') h += '<p><button type="button" class="btn-l" data-a="reintentar-ronda">Responder esta ronda otra vez</button></p>';
+    }
+    return h + '</div>';
+  }
+  // Actualiza lo que depende del avance dentro del bloque visible
+  function refrescarBloque() {
+    const b = VISTA.bloque;
+    if (!b) return;
+    const zn = document.getElementById('zona-nav');
+    if (zn) zn.innerHTML = hNav(b);
+    const zf = document.getElementById('zona-fin');
+    if (zf) zf.innerHTML = hFin(b);
+    if (b.tipo === 'ejercicio') {
+      b.partes.forEach((p, pi) => {
+        if (!p.despues) return;
+        const el = app.querySelector('[data-parte="' + pi + '"] [data-despues]');
+        const its = itemsDe(b).filter((it) => it.parte === p);
+        if (el && its.every((it) => estadoItem(it.id) !== 'n')) { if (el.hidden) { el.hidden = false; abreviar(el); } }
+      });
+      const zc = document.getElementById('zona-cierre');
+      if (zc && zc.hidden && hecho(b)) { zc.hidden = false; abreviar(zc); }
+    }
+  }
+  function despuesDeResponder(u, ok, r, limpio, soloSolucion) {
+    if (u.modo === 'repaso') sesionRespondida(u, ok, r, limpio, soloSolucion);
+    else refrescarBloque();
+    pintarIndice();
+    pintarProgreso();
+  }
+
+  // =====================================================================
+  // Repaso: "Mis errores para repasar" y "Repaso mixto"
+  // =====================================================================
+  function rotuloItem(it) {
+    const r = it.ref;
+    if (it.k === 'vf') return corto(r.af, 90);
+    if (it.k === 'mc') return corto(r.enunciado, 90);
+    if (it.k === 'pq') return corto(r.pregunta, 90);
+    if (it.k === 'tabla') return 'Tabla: ' + corto(it.parte.titulo, 70);
+    return corto(r.texto, 90);
+  }
+  function hItem(it, ns) {
+    const b = it.b;
+    const o = { ns: ns, modo: 'repaso' };
+    let h = '<p class="ctx">Módulo ' + b.mod.n + ' · ' + tx(b.titulo) + ' · <a href="' + href(b) + '">ver en su contexto</a></p>';
+    if (it.k === 'vf') return h + hVF(it, o);
+    if (it.k === 'mc' || it.k === 'pq') return h + hMC(it, o);
+    h += hFuente(b.fuente) + hEnunciado(b);
+    if (it.k === 'tabla') return h + '<section class="parte"><h2>' + tx(it.parte.titulo) + '</h2>' + (it.parte.intro ? '<p class="intro">' + tx(it.parte.intro) + '</p>' : '') + hTabla(it, o) + '</section>';
+    return h + hPreg(it, o);
+  }
+  function mezclar(a) {
+    a = a.slice();
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function modulosVistos() {
+    return MODS.filter((m) => m.n > 0 && m.bloques.some((b) => S.vistos[b.key] || itemsDe(b).some((it) => S.it[it.id])));
+  }
+  function iniciarSesion(tipo) {
+    let cola;
+    if (tipo === 'errores') cola = Object.keys(S.err).filter((id) => ITEMS.has(id));
+    else {
+      const pool = [];
+      modulosVistos().forEach((m) => m.bloques.forEach((b) => itemsDe(b).forEach((it) => { if (it.k !== 'tabla') pool.push(it.id); })));
+      cola = mezclar(pool).slice(0, 10);
+    }
+    SES = { tipo: tipo, cola: cola, i: 0, res: [], salieron: 0, n: (SES ? SES.n : 0) + 1 };
+    pintar();
+  }
+  function sesionRespondida(u, ok, r, limpio, soloSolucion) {
+    if (!SES) return;
+    const id = u.item.id;
+    if (!SES.res.some((x) => x.id === id)) {
+      SES.res.push({ id: id, ok: ok && limpio && !soloSolucion });
+      if (r && r.salio) SES.salieron++;
+    }
+    const z = document.getElementById('zona-ses');
+    if (z) {
+      const ultimo = SES.i >= SES.cola.length - 1;
+      z.innerHTML = '<div class="nav">' + (r && r.salio ? '<p class="sin-mas" style="color:var(--ok)">✓ Dos aciertos en días distintos: este ítem salió de tu lista de errores.</p>' : '') +
+        '<button type="button" class="btn principal sig" data-a="ses-sig">' + (ultimo ? 'Ver el resultado →' : 'Siguiente →') + '</button></div>';
+    }
+  }
+  function hSesion() {
+    const titulo = SES.tipo === 'errores' ? 'Mis errores para repasar' : 'Repaso mixto';
+    if (SES.i >= SES.cola.length) {
+      const bien = SES.res.filter((x) => x.ok).length;
+      const quedan = nErrores();
+      let h = '<article class="bloque"><p class="migas">Repaso</p><h1 tabindex="-1">' + titulo + ': resultado</h1>' +
+        '<div class="res-mod"><p><b>Acertaste ' + bien + ' de ' + SES.cola.length + '.</b></p>' +
+        (SES.salieron ? '<p>' + SES.salieron + ' ítem' + (SES.salieron === 1 ? ' salió' : 's salieron') + ' de tu lista de errores.</p>' : '') +
+        '<p>' + (quedan ? 'Te quedan ' + quedan + ' para repasar. Un ítem sale de la lista cuando lo aciertas dos veces en días distintos, así que conviene volver otro día.' : 'No te quedan errores pendientes.') + '</p></div>' +
+        '<ul class="lista-res">' + SES.cola.map((id) => { const it = ITEMS.get(id); const r = SES.res.find((x) => x.id === id); return '<li class="' + (r && r.ok ? 'ok' : 'mal') + '"><a href="' + href(it.b) + '">' + esc(rotuloItem(it)) + '</a></li>'; }).join('') + '</ul>' +
+        '<div class="nav"><button type="button" class="btn" data-a="ses-fin">Volver</button>' +
+        (SES.tipo === 'mixto' ? '<button type="button" class="btn principal sig" data-a="mixto-iniciar">Otro repaso mixto →</button>' : '') + '</div></article>';
+      return h;
+    }
+    const it = ITEMS.get(SES.cola[SES.i]);
+    return '<article class="bloque ancho"><p class="migas">Repaso</p><h1 tabindex="-1">' + titulo + '</h1>' +
+      '<div class="ses-cab"><span>' + (SES.i + 1) + ' de ' + SES.cola.length + '</span><div class="prog"><i style="width:' + Math.round(100 * SES.i / SES.cola.length) + '%"></i></div>' +
+      '<button type="button" class="btn-l" data-a="ses-fin">Salir</button></div>' +
+      hItem(it, 'rep' + SES.n + ':') + '<div id="zona-ses"></div></article>';
+  }
+  function hErrores() {
+    const ids = Object.keys(S.err).filter((id) => ITEMS.has(id));
+    let h = '<article class="bloque"><p class="migas">Repaso</p><h1 tabindex="-1">Mis errores para repasar</h1>' +
+      '<p>Aquí queda todo lo que fallaste (y lo que acertaste adivinando). Un ítem sale de la lista cuando lo aciertas <b>dos veces en días distintos</b>: repasar con días de por medio es lo que hace que se quede.</p>';
+    if (!ids.length) return h + '<div class="res-mod"><p><b>No tienes errores pendientes.</b></p><p>Cuando falles un ejercicio, un verdadero o falso o una alternativa, aparecerá aquí.</p></div><div class="nav"><a class="btn" href="#/">← Volver al inicio</a></div></article>';
+    h += '<div class="acciones"><button type="button" class="btn principal" data-a="errores-iniciar">Repasar ahora (' + ids.length + ')</button></div><ul class="lista-err">' +
+      ids.map((id) => {
+        const it = ITEMS.get(id);
+        const e = S.err[id];
+        return '<li><a href="' + href(it.b) + '">' + esc(rotuloItem(it)) + '</a><small>Módulo ' + it.b.mod.n + ' · ' + sinHtml(it.b.titulo) + ' · ' +
+          (e.d.length ? '1 de 2 aciertos' + (e.d[0] === hoy() ? ' (hoy)' : '') : '0 de 2 aciertos') + '</small></li>';
+      }).join('') + '</ul></article>';
+    return h;
+  }
+  function hMixto() {
+    const vistos = modulosVistos();
+    let h = '<article class="bloque"><p class="migas">Repaso</p><h1 tabindex="-1">Repaso mixto</h1>' +
+      '<p>10 preguntas al azar de todos los módulos que ya viste, mezcladas. En el certamen nadie te dice de qué tema es cada pregunta: reconocerlo es parte de lo que hay que practicar.</p>';
+    if (!vistos.length) return h + '<div class="res-mod"><p><b>Todavía no hay módulos vistos.</b></p><p>Avanza en algún módulo y vuelve: el repaso mixto toma preguntas solo de lo que ya estudiaste.</p></div><div class="nav"><a class="btn" href="#/">← Volver al inicio</a></div></article>';
+    return h + '<p class="suave">Módulos incluidos: ' + vistos.map((m) => m.n + '. ' + sinHtml(m.corto)).join(' · ') + '</p>' +
+      '<div class="acciones"><button type="button" class="btn principal" data-a="mixto-iniciar">Empezar repaso mixto →</button></div></article>';
+  }
+
+  // =====================================================================
+  // Índice lateral y progreso
+  // =====================================================================
+  const EST_TXT = { n: 'sin ver', visto: 'visto', ok: 'correcto', err: 'con errores', parcial: 'a medias' };
+  const EST_ICO = { n: '', visto: '✓', ok: '✓', err: '!', parcial: '…' };
+  const abiertos = {};
+  function hEst(b) {
+    const e = estadoBloque(b);
+    const inter = b.tipo === 'ejercicio' || b.tipo === 'vf' || b.tipo === 'mc';
+    const txt = e === 'n' ? (inter ? 'sin intentar' : 'no visto') : EST_TXT[e];
+    return '<span class="est ' + e + '" title="' + txt + '">' + EST_ICO[e] + '<span class="sr"> (' + txt + ')</span></span>';
+  }
+  function pintarIndice() {
+    const act = VISTA.bloque;
+    const e = nErrores();
+    let h = '<div class="idx-cab"><b>Índice</b><button type="button" class="barra-btn" data-a="cerrar-idx" aria-label="Cerrar el índice">✕</button></div>' +
+      '<a class="idx-esp" href="#/repaso/errores"' + (VISTA.esp === 'errores' ? ' aria-current="page"' : '') + '><span>Mis errores para repasar<small>Salen al acertarlos 2 veces en días distintos</small></span><span class="cuenta' + (e ? '' : ' cero') + '">' + e + '</span></a>' +
+      '<a class="idx-esp" href="#/repaso/mixto"' + (VISTA.esp === 'mixto' ? ' aria-current="page"' : '') + '><span>Repaso mixto<small>10 preguntas al azar de lo ya visto</small></span></a>' +
+      '<p class="idx-sep">Módulos</p>';
+    MODS.forEach((mod) => {
+      const prin = mod.bloques.filter((b) => b.rol !== 'extra');
+      const listos = prin.filter(completo).length;
+      const esActual = act && act.mod === mod;
+      const abierto = abiertos[mod.id] !== undefined ? abiertos[mod.id] : esActual;
+      h += '<details class="idx-mod' + (esActual ? ' actual' : '') + '" data-mod="' + mod.id + '"' + (abierto ? ' open' : '') + '><summary><span class="idx-n">' + mod.n + '</span><span>' + tx(mod.corto || mod.titulo) + '</span>' +
+        '<span class="idx-cta">' + (mod.pendiente ? '' : listos + '/' + prin.length) + '</span>' +
+        (mod.pendiente ? '' : '<span class="idx-mini"><i style="width:' + (prin.length ? Math.round(100 * listos / prin.length) : 0) + '%"></i></span>') + '</summary>';
+      if (mod.pendiente) h += '<p class="idx-pend">En construcción. En este prototipo solo está cargado el Módulo 4.</p>';
+      else {
+        h += '<ul>';
+        mod.bloques.forEach((b) => {
+          h += '<li' + (b.rol === 'extra' ? ' class="extra"' : '') + '><a href="' + href(b) + '"' + (b === act ? ' aria-current="page"' : '') + '>' + hEst(b) +
+            '<span>' + tx(b.titulo) + '<small>' + (b.rol === 'extra' ? 'Ejercicio extra' : TIPO_TXT[b.tipo]) + (b.fuente && b.fuente.k === 'certamen' ? ' · C3 ' + b.fuente.sem + 'S-' + b.fuente.anio : '') + '</small></span></a></li>';
+        });
+        h += '</ul>';
+      }
+      h += '</details>';
+    });
+    h += '<div class="idx-pie"><p>Hoy: ' + S.ses.n + ' bloque' + (S.ses.n === 1 ? '' : 's') + ' avanzado' + (S.ses.n === 1 ? '' : 's') + (e ? ' · ' + e + ' para repasar' : '') + '.</p>' +
+      '<button type="button" class="enlace" data-a="reiniciar">Reiniciar progreso</button></div>';
+    const y = indice.scrollTop;
+    indice.innerHTML = h;
+    indice.scrollTop = y;
+  }
+  indice.addEventListener('toggle', (e) => {
+    const d = e.target.closest && e.target.closest('details[data-mod]');
+    if (d) abiertos[d.dataset.mod] = d.open;
+  }, true);
+  function pintarProgreso() {
+    const total = FLUJO.length;
+    const listos = FLUJO.filter(completo).length;
+    const pct = total ? Math.round(100 * listos / total) : 0;
+    document.getElementById('prog-barra').style.width = pct + '%';
+    document.getElementById('prog-txt').textContent = listos + ' de ' + total + ' · ' + pct + ' %';
+  }
+
+  // =====================================================================
+  // Rutas (hash) y pintado
+  // =====================================================================
+  let VISTA = { bloque: null, esp: null };
+  function leerRuta() {
+    const p = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
+    if (p[0] === 'repaso') return { esp: p[1] === 'mixto' ? 'mixto' : 'errores' };
+    if (p.length >= 2 && BLOQUES.has(p[0] + '/' + p[1])) return { bloque: BLOQUES.get(p[0] + '/' + p[1]) };
+    if (p.length === 1) { const m = MODS.find((x) => x.id === p[0] && x.bloques.length); if (m) return { bloque: m.bloques[0] }; }
+    return { bloque: FLUJO[0] };
+  }
+  function pintar() {
+    U = new Map();
+    ocultarTip();
+    const b = VISTA.bloque;
+    if (VISTA.esp) app.innerHTML = SES ? hSesion() : (VISTA.esp === 'errores' ? hErrores() : hMixto());
+    else {
+      app.innerHTML = hBloque(b);
+      if (!S.vistos[b.key]) { S.vistos[b.key] = 1; marcarAvance(b); }
+      if (b.tipo !== 'portada') S.ult = b.key;
+      guardar();
+    }
+    abreviar(app, b && b.sinAb);
+    restaurar();
+    marcarScroll();
+    if (b) refrescarBloque();
+    pintarIndice();
+    pintarProgreso();
+    document.title = (b ? sinHtml(b.titulo) : (VISTA.esp === 'mixto' ? 'Repaso mixto' : 'Mis errores para repasar')) + ' · Estudio ICOFI interactivo';
+  }
+  // Avisa cuando una tabla no cabe a lo ancho y hay que deslizarla
+  function marcarScroll() {
+    app.querySelectorAll('.tabla-scroll').forEach((el) => el.classList.toggle('con-scroll', el.scrollWidth > el.clientWidth + 4));
+  }
+  window.addEventListener('resize', marcarScroll);
+  function irA() {
+    const r = leerRuta();
+    const cambio = r.bloque !== VISTA.bloque || r.esp !== VISTA.esp;
+    VISTA = { bloque: r.bloque || null, esp: r.esp || null };
+    if (cambio) SES = null;
+    pintar();
+    document.body.classList.remove('idx-abierto');
+    document.getElementById('btn-indice').setAttribute('aria-expanded', String(!esMovil() && !document.body.classList.contains('sin-indice')));
+    window.scrollTo(0, 0);
+    const enIndice = indice.querySelector('[aria-current]');
+    if (enIndice && enIndice.scrollIntoView) enIndice.scrollIntoView({ block: 'nearest' });
+    const h1 = app.querySelector('h1');
+    if (h1 && cambio) { try { h1.focus({ preventScroll: true }); } catch (e) { /* nada */ } }
+  }
+  const esMovil = () => window.matchMedia('(max-width: 959px)').matches;
+
+  // =====================================================================
+  // Eventos
+  // =====================================================================
+  function unidadDe(el) {
+    const caja = el.closest('[data-u]');
+    return caja ? U.get(caja.dataset.u) : null;
+  }
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-a]');
+    if (!el) {
+      if (e.target.id === 'velo') document.body.classList.remove('idx-abierto');
+      return;
+    }
+    const a = el.dataset.a;
+    const u = unidadDe(el);
+    if (a === 'revisar' && u) revisarPreg(u);
+    else if (a === 'pista' && u) verPista(u);
+    else if (a === 'sol' && u) verSolucion(u, false);
+    else if (a === 'sol-si' && u) verSolucion(u, true);
+    else if (a === 'sol-no' && u) { const fb = cajaDe(u).querySelector('.fb'); fb.className = 'fb'; fb.innerHTML = ''; const i = cajaDe(u).querySelector('input'); if (i) i.focus(); }
+    else if (a === 'conf' && u) {
+      const v = Number(el.dataset.v);
+      u.conf = u.conf === v ? 0 : v;
+      el.parentElement.querySelectorAll('[data-a="conf"]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.v) === u.conf)));
+    } else if (a === 'clasif' && u) {
+      const d = borr(u);
+      d.c = Number(el.dataset.v);
+      el.parentElement.querySelectorAll('[data-a="clasif"]').forEach((b, i) => { b.setAttribute('aria-pressed', String(i === d.c)); b.classList.remove('ok', 'mal'); });
+      guardar();
+    } else if (a === 'fila' && u) revisarTabla(u, el.dataset.f);
+    else if (a === 'tabla-todo' && u) revisarTabla(u, null);
+    else if (a === 'tabla-reset' && u) reiniciarTabla(u);
+    else if (a === 'vf' && u) responderVF(u, Number(el.dataset.v));
+    else if (a === 'mc' && u) responderMC(u, Number(el.dataset.v));
+    else if (a === 'otra-ronda') {
+      const b = VISTA.bloque, r = ronda(b);
+      S.r[b.key + '@ronda'] = (r.i + 1) % r.total;
+      ronda(b).items.forEach((it) => { delete S.r[it.id]; });
+      guardar(); pintar(); window.scrollTo(0, 0);
+    } else if (a === 'reintentar-ronda') {
+      ronda(VISTA.bloque).items.forEach((it) => { delete S.r[it.id]; });
+      guardar(); pintar(); window.scrollTo(0, 0);
+    } else if (a === 'errores-iniciar') { iniciarSesion('errores'); window.scrollTo(0, 0); }
+    else if (a === 'mixto-iniciar') { iniciarSesion('mixto'); window.scrollTo(0, 0); }
+    else if (a === 'ses-sig') { SES.i++; pintar(); window.scrollTo(0, 0); const h1 = app.querySelector('h1'); if (h1) { try { h1.focus({ preventScroll: true }); } catch (err) { /* nada */ } } }
+    else if (a === 'ses-fin') { SES = null; pintar(); window.scrollTo(0, 0); }
+    else if (a === 'cerrar-idx') document.body.classList.remove('idx-abierto');
+    else if (a === 'reiniciar') {
+      if (window.confirm('¿Reiniciar todo tu progreso? Se borran tus respuestas, tu avance y tu lista de errores. No se puede deshacer.')) {
+        S = VACIO(); S.dias = [hoy()]; S.ses = { dia: hoy(), n: 0 };
+        guardar(); SES = null;
+        if (location.hash && location.hash !== '#/') location.hash = '#/'; else irA();
+      }
+    }
+  });
+  // Al tocar una abreviatura en celular se muestra su significado; tocar fuera lo cierra
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('abbr.ab');
+    if (a) mostrarTip(a); else ocultarTip();
+  });
+
+  // Puntos de miles mientras se escribe un monto entero (solo si el estudiante no puso separadores a mano)
+  function autoMiles(inp, ev) {
+    const t = inp.dataset.t;
+    if (t !== 'pesos' && t !== 'unidades') return;
+    if (!inp.value) { delete inp.dataset.manual; return; }
+    if (ev && (ev.data === '.' || ev.data === ',' || ev.inputType === 'insertFromPaste')) inp.dataset.manual = '1';
+    if (inp.dataset.manual || !/^\d[\d.]*$/.test(inp.value) || inp.selectionStart !== inp.value.length) return;
+    inp.value = inp.value.replace(/\./g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+  app.addEventListener('input', (e) => {
+    const inp = e.target;
+    if (!inp.matches || !inp.matches('.campo input')) return;
+    autoMiles(inp, e);
+    const u = unidadDe(inp);
+    if (!u) return;
+    const campo = inp.closest('.campo');
+    campo.classList.remove('ok', 'mal');
+    const d = borr(u);
+    if (u.k === 'tabla') {
+      d.c = d.c || {}; d.c[inp.dataset.c] = inp.value;
+      if (d.e) delete d.e[inp.dataset.c];
+      const nota = inp.closest('td').querySelector('.c-fb');
+      nota.textContent = '';
+      pintarCuadre(u);
+    } else { d.t = inp.value; d.e = 0; }
+    if (u.modo === 'flujo') guardarLuego();
+  });
+  let tGuardar = 0;
+  function guardarLuego() { clearTimeout(tGuardar); tGuardar = setTimeout(guardar, 400); }
+  app.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || !e.target.matches || !e.target.matches('.campo input')) return;
+    const u = unidadDe(e.target);
+    if (!u) return;
+    e.preventDefault();
+    if (u.k === 'tabla') revisarTabla(u, e.target.dataset.f); else revisarPreg(u);
+  });
+
+  document.getElementById('btn-indice').addEventListener('click', () => {
+    if (esMovil()) document.body.classList.toggle('idx-abierto');
+    else document.body.classList.toggle('sin-indice');
+    document.getElementById('btn-indice').setAttribute('aria-expanded', String(esMovil() ? document.body.classList.contains('idx-abierto') : !document.body.classList.contains('sin-indice')));
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { document.body.classList.remove('idx-abierto'); ocultarTip(); } });
+  window.addEventListener('hashchange', irA);
+  window.addEventListener('pagehide', guardar);
+
+  irA();
+})();
