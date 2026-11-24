@@ -490,7 +490,10 @@
     @media (max-width: 959px) {
       .marco, body.sin-indice .marco { display: block; max-width: none; }
       .indice, body.sin-indice .indice {
-        display: block; position: fixed; z-index: 50; top: 0; left: 0; bottom: 0; height: auto;
+        /* align-self: start (útil en escritorio) hacía que en celular el panel tomara el alto de su contenido
+           en vez del alto de la pantalla, y por eso no se podía desplazar */
+        display: block; position: fixed; z-index: 50; top: 0; left: 0; bottom: auto; align-self: auto;
+        height: 100vh; height: 100dvh; max-height: 100dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y;
         width: min(88vw, 348px); padding: 14px 12px calc(28px + env(safe-area-inset-bottom));
         background: var(--panel); border-right: 1px solid var(--metal-borde);
         transform: translateX(-104%); transition: transform 0.22s ease; visibility: hidden;
@@ -595,6 +598,6 @@
   <script defer src="datos/m7-simulacro.js?v=1"></script>
   <script defer src="datos/m8-formulas.js?v=1"></script>
   <script defer src="diagramas.js?v=1"></script>
-  <script defer src="app.js?v=5"></script>
+  <script defer src="app.js?v=6"></script>
 </body>
 </html>

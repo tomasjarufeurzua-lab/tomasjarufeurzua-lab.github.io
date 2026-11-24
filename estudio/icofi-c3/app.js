@@ -1571,8 +1571,12 @@
   });
 
   document.getElementById('btn-indice').addEventListener('click', () => {
-    if (esMovil()) document.body.classList.toggle('idx-abierto');
-    else document.body.classList.toggle('sin-indice');
+    if (esMovil()) {
+      document.body.classList.toggle('idx-abierto');
+      // Al abrir el índice en celular, deja a la vista el bloque en que estás
+      const actual = indice.querySelector('[aria-current]');
+      if (actual && document.body.classList.contains('idx-abierto')) indice.scrollTop = Math.max(0, actual.offsetTop - indice.clientHeight / 2);
+    } else document.body.classList.toggle('sin-indice');
     document.getElementById('btn-indice').setAttribute('aria-expanded', String(esMovil() ? document.body.classList.contains('idx-abierto') : !document.body.classList.contains('sin-indice')));
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { document.body.classList.remove('idx-abierto'); ocultarTip(); } });
