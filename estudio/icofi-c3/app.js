@@ -1375,10 +1375,9 @@
       const esActual = act && act.mod === mod;
       const abierto = abiertos[mod.id] !== undefined ? abiertos[mod.id] : esActual;
       h += '<details class="idx-mod' + (esActual ? ' actual' : '') + '" data-mod="' + mod.id + '"' + (abierto ? ' open' : '') + '><summary><span class="idx-n">' + mod.n + '</span><span>' + tx(mod.corto || mod.titulo) + '</span>' +
-        '<span class="idx-cta">' + (mod.pendiente ? '' : listos + '/' + prin.length) + '</span>' +
-        (mod.pendiente ? '' : '<span class="idx-mini"><i style="width:' + (prin.length ? Math.round(100 * listos / prin.length) : 0) + '%"></i></span>') + '</summary>';
-      if (mod.pendiente) h += '<p class="idx-pend">En construcción. En este prototipo solo está cargado el Módulo 4.</p>';
-      else {
+        '<span class="idx-cta">' + listos + '/' + prin.length + '</span>' +
+        '<span class="idx-mini"><i style="width:' + (prin.length ? Math.round(100 * listos / prin.length) : 0) + '%"></i></span></summary>';
+      {
         h += '<ul>';
         mod.bloques.forEach((b) => {
           h += '<li' + (b.rol === 'extra' ? ' class="extra"' : '') + '><a href="' + href(b) + '"' + (b === act ? ' aria-current="page"' : '') + '>' + hEst(b) +

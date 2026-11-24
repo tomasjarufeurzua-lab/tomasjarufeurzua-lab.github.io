@@ -154,7 +154,6 @@
     .est.ok { background: var(--ok); color: #10301c; }
     .est.err { border-color: var(--mal-borde); background: var(--mal-bg); color: var(--mal); }
     .est.parcial { border-color: var(--oro); color: var(--oro); }
-    .idx-pend { padding: 6px 8px 8px 34px; color: var(--dim); font-size: 0.8rem; }
     .idx-pie { margin: 18px 4px 0; padding-top: 14px; border-top: 1px solid var(--borde); color: var(--dim); font-size: 0.8rem; }
     .idx-pie p { margin: 0 0 10px; }
     .enlace { background: none; border: 0; padding: 6px 0; color: var(--dim); font: inherit; font-size: 0.82rem; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
@@ -522,8 +521,13 @@
       main { padding: 0; }
       .bloque, .bloque.ancho { max-width: none; }
       .formula { background: #fff; }
-      .formulas .hoja { grid-template-columns: 1fr 1fr; gap: 8px; }
-      .formulas .hoja-g li { font-size: 0.86rem; padding: 4px 0; }
+      .formulas .hoja { grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+      .formulas .hoja-g { padding: 8px 10px; }
+      .formulas .hoja-g li { font-size: 0.8rem; padding: 3px 0; line-height: 1.55; }
+      .formulas .migas, .formulas > p:not(.hoja-ley) { display: none; }
+      .formulas > h1 { font-size: 1.25rem; margin: 0 0 8px; }
+      .formulas .hoja-ley { font-size: 0.72rem; line-height: 1.5; margin: 0; }
+      .cred { padding: 0 0 6px; font-size: 0.7rem; }
       abbr.ab { text-decoration: none; }
     }
   </style>
