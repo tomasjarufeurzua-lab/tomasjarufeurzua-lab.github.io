@@ -25,14 +25,12 @@
         idea: 'Si se fabrica a pedido, el costo se junta por pedido. Si se fabrica en serie, se junta por departamento.',
         partes: [
           { k: 'practica', h: 'Una imprenta sabe qué papel y cuántas horas usó en cada pedido, porque cada pedido es distinto. Una fábrica de cemento no puede distinguir un saco de otro: todos salen iguales del mismo proceso.' },
-          { k: 'p', h: 'Por eso hay dos sistemas para acumular el costo de producción, según cómo se produce:' },
           { k: 'comparar', cols: ['', 'Órdenes específicas', 'Por procesos'], filas: [
             ['Producción', 'Discontinua, a pedido del cliente.', 'Continua o en serie.'],
             ['Productos', 'Heterogéneos (distintos entre sí).', 'Homogéneos (todos iguales).'],
             ['¿Dónde se acumula el costo?', 'Por orden, en una <b>hoja de costos</b>.', 'Por <b>departamento o centro de costo</b>; se pierde la identidad del producto.'],
             ['Ejemplos', 'Imprenta, maquinaria a pedido.', 'Harina, champú, cemento.']
           ] },
-          { k: 'p', h: 'Este módulo trata las órdenes específicas. El sistema por procesos se ve en el módulo 4.' },
           { k: 'asi', items: [
             'Verdadero o falso y alternativas del tipo «mencione la que no corresponde». En órdenes: la producción parte con un pedido, los costos van a una hoja de costos y los productos son heterogéneos. «En serie o en masa» es de procesos.'
           ] }
@@ -69,11 +67,7 @@
         idea: 'Los costos indirectos reales se conocen a fin de mes, pero el costo de la orden se necesita antes. Por eso se aplican con una cuota estimada y después se compara con lo real.',
         partes: [
           { k: 'practica', h: 'Una imprenta tiene dos pedidos y una sola cuenta de luz, que llega a fin de mes. Pero el cliente pidió el precio el día 3.' },
-          { k: 'p', h: 'La materia prima directa (MPD) y la mano de obra directa (MOD) se cargan directo a cada orden. Los costos indirectos de fabricación (CIF) no se pueden cargar así, por dos razones:' },
-          { k: 'lista', items: [
-            'Cuando hay dos o más productos, hay que <b>repartirlos</b> entre ellos.',
-            'Los CIF reales se conocen recién <b>al final del período</b>, pero el costo de la orden se necesita antes, para cotizar o fijar el precio.'
-          ] },
+          { k: 'p', h: 'La materia prima directa (MPD) y la mano de obra directa (MOD) se cargan directo a cada orden. Los costos indirectos de fabricación (CIF) no, por dos razones: hay que repartirlos entre los productos, y los CIF reales se conocen recién **al final del período**, pero el costo de la orden se necesita antes, para cotizar.' },
           { k: 'p', h: '**La solución** es una **cuota de asignación** calculada por adelantado, con los CIF presupuestados:' },
           { k: 'formula', h: 'Cuota de asignación = {{CIF presupuestados // Base de asignación}}' },
           { k: 'formula', h: 'CIF aplicado = Cuota × Base de la orden' },

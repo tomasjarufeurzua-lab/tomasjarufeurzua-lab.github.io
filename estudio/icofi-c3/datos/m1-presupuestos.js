@@ -28,14 +28,13 @@
         titulo: 'La planificación estratégica y dónde entra el presupuesto',
         idea: 'El presupuesto no es la estrategia: es la herramienta que la traduce a números.',
         partes: [
-          { k: 'practica', h: 'Una cadena de cafeterías detecta barrios universitarios sin oferta (<b>diagnóstico</b>), se propone abrir 3 locales (<b>formulación</b>), el presupuesto dice cuánto cuesta y cuánto se espera vender (<b>implementación</b>) y en junio compara lo vendido con lo presupuestado y corrige (<b>control</b>).' },
-          { k: 'p', h: 'La gestión de una empresa se ordena como un proceso de **planificación estratégica** con cuatro fases. El presupuesto aparece recién en la tercera.' },
+          { k: 'practica', h: 'Una cadena de cafeterías detecta barrios universitarios sin oferta (<b>diagnóstico</b>), decide abrir 3 locales (<b>formulación</b>), presupuesta cuánto cuesta y cuánto venderá (<b>implementación</b>) y en junio compara lo vendido con lo presupuestado (<b>control</b>).' },
           { k: 'diagrama', id: 'fases-planificacion' },
-          { k: 'pasos', items: [
-            { t: 'Fase I · Diagnóstico', h: 'Se hace el análisis FODA (fortalezas, oportunidades, debilidades y amenazas). El <b>medio externo</b> tiene variables incontrolables: oportunidades y amenazas. El <b>medio interno</b> tiene variables controlables: fortalezas y debilidades.' },
-            { t: 'Fase II · Formulación', h: 'Se definen la misión, los objetivos, las estrategias y las políticas, considerando a los grupos de interés: clientes, proveedores, trabajadores, bancos, dueños y Estado.' },
-            { t: 'Fase III · Implementación', h: 'Los planes son genéricos; los programas, específicos; y los <b>presupuestos</b> son la cuantificación de esos planes y programas.' },
-            { t: 'Fase IV · Evaluación y control', h: 'Se fijan parámetros, se mide, se compara lo real con lo presupuestado, se calculan las desviaciones, se buscan sus causas y se toman <b>acciones correctivas</b>. Lo aprendido vuelve a la fase I (retroalimentación).' }
+          { k: 'lista', items: [
+            '<b>I · Diagnóstico:</b> análisis FODA (fortalezas, oportunidades, debilidades y amenazas). El medio externo trae oportunidades y amenazas (variables incontrolables); el interno, fortalezas y debilidades (controlables).',
+            '<b>II · Formulación:</b> misión, objetivos, estrategias y políticas, considerando a clientes, proveedores, trabajadores, bancos, dueños y Estado.',
+            '<b>III · Implementación:</b> planes (genéricos) → programas (específicos) → <b>presupuestos</b>, que cuantifican esos planes y programas.',
+            '<b>IV · Evaluación y control:</b> se compara lo real con lo presupuestado, se buscan las causas de las desviaciones y se toman <b>acciones correctivas</b>. Lo aprendido vuelve a la fase I.'
           ] },
           { k: 'formula', h: 'Presupuesto = expresión cuantitativa de los objetivos gerenciales y medio para controlar el avance hacia ellos' },
           { k: 'trampa', h: '«El presupuesto corresponde a la fase de formulación» es <b>falso</b>: corresponde a la fase de implementación.' },
@@ -64,25 +63,10 @@
         titulo: 'Ventajas, objetivos y proceso del presupuesto',
         idea: 'Presupuestar obliga a conocer la empresa, coordina a todas las áreas y deja una vara para medir lo que pasó.',
         partes: [
-          { k: 'practica', h: 'Al armar el presupuesto, una empresa descubre que nadie es responsable de cobrar a los clientes morosos (conocimiento de la empresa); a fin de año compara lo gastado en marketing con lo presupuestado y pide explicaciones (control); y a cada vendedor le asigna una meta mensual (motivación).' },
-          { k: 'sub', h: 'Las cinco ventajas' },
-          { k: 'lista', items: [
-            'Obliga al <b>estudio y conocimiento</b> de la empresa.',
-            'Permite la <b>planificación y coordinación</b> entre áreas.',
-            'Es un <b>instrumento de gestión</b>.',
-            'Permite la <b>evaluación y el control</b>.',
-            'Sirve de <b>motivación</b>.'
-          ] },
-          { k: 'sub', h: 'Los objetivos' },
-          { k: 'lista', items: [
-            'Analizar y planificar el futuro.',
-            'Coordinar las áreas.',
-            'Asignar recursos a departamentos y productos.',
-            'Establecer bases de comparación.'
-          ] },
-          { k: 'p', h: '**No** son objetivos del presupuesto: proyectar el monto exacto de impuestos ni servir de respaldo del Libro Diario.' },
-          { k: 'sub', h: 'El proceso' },
-          { k: 'p', h: 'El proceso presupuestario anual **involucra a todas las áreas**, cada una con sus responsables (no solo a Contabilidad). Sus fases: normas orientadoras → presupuestos operacionales y de inversión → negociación → revisión y coordinación → estados financieros proyectados → aprobación.' },
+          { k: 'practica', h: 'Al presupuestar, una empresa descubre que nadie es responsable de cobrar a los morosos (conocer la empresa), le pone una meta a cada vendedor (motivación) y a fin de año compara lo gastado con lo presupuestado (control).' },
+          { k: 'p', h: '**Cinco ventajas:** obliga a estudiar y conocer la empresa; permite planificar y coordinar las áreas; es un instrumento de gestión; permite evaluar y controlar; y motiva.' },
+          { k: 'p', h: '**Objetivos:** analizar y planificar el futuro, coordinar las áreas, asignar recursos a departamentos y productos, y establecer bases de comparación. **No** son objetivos proyectar el monto exacto de impuestos ni respaldar el Libro Diario.' },
+          { k: 'p', h: '**Proceso:** participan todas las áreas, cada una con sus responsables (no solo Contabilidad). Fases: normas orientadoras → presupuestos operacionales y de inversión → negociación → revisión y coordinación → estados financieros proyectados → aprobación.' },
           { k: 'trampa', h: 'Basarse <b>solo</b> en la información histórica. El presupuesto cambia si cambian el plan comercial o la macroeconomía.' },
           { k: 'asi', items: [
             '«¿Cuáles son objetivos del presupuesto?» → proyectar impuestos y respaldar el Libro Diario <b>no son</b> objetivos del presupuesto: elimina las alternativas que los incluyan. Sí son objetivos: analizar y planificar el futuro, coordinar las áreas, asignar recursos y establecer bases de comparación.',
@@ -129,16 +113,16 @@
         id: 'tipos',
         teorica: true,
         titulo: 'Tipos de presupuesto',
-        idea: 'Los presupuestos se clasifican según cuánto tiempo cubren, si se ajustan al nivel de actividad, para qué sirven y quién los hace.',
+        idea: 'Los presupuestos se clasifican por plazo, por flexibilidad, por función y por sector.',
         partes: [
-          { k: 'practica', h: 'Una fábrica tiene costos de $ 200.000 fijos + $ 300 por unidad. Su presupuesto <b>estático</b> para 1.000 unidades es $ 500.000. Produce 1.200 unidades y gasta $ 560.000: el estático dice “se gastó $ 60.000 de más”. El <b>flexible</b> calcula lo que debía costar producir 1.200 unidades (200.000 + 300 × 1.200 = $ 560.000) y muestra que no hubo ineficiencia.' },
           { k: 'comparar', cols: ['Criterio', 'Tipos'], filas: [
-            ['Período', '<b>Corto plazo:</b> hasta 1 año. <b>Largo plazo:</b> 3 a 5 años o más.'],
-            ['Flexibilidad', '<b>Estático:</b> un solo nivel de actividad. <b>Flexible:</b> varios niveles; se recalcula al nivel real. <b>Móvil:</b> se va actualizando período a período.'],
-            ['Función', '<b>Operativos o económicos:</b> ventas, producción, compras, materiales, mano de obra (MO), costos indirectos de fabricación (CIF), gastos operacionales (incluidas las comisiones de venta), costo de venta y estado de resultados (EERR) proyectado.<br><b>Financieros:</b> caja o tesorería, inversión o capital y balance proyectado. Definen la aplicación y el uso de fondos, y sí afectan la rentabilidad sobre el patrimonio (ROE).'],
+            ['Plazo', '<b>Corto plazo:</b> hasta 1 año. <b>Largo plazo:</b> 3 a 5 años o más.'],
+            ['Flexibilidad', '<b>Estático:</b> un solo nivel de actividad. <b>Flexible:</b> se recalcula al nivel real. <b>Móvil:</b> se actualiza período a período.'],
+            ['Función', '<b>Operativos o económicos:</b> ventas, producción, compras, materiales, mano de obra (MO), costos indirectos de fabricación (CIF), gastos operacionales (incluidas las comisiones de venta), costo de venta y estado de resultados (EERR) proyectado. <b>Financieros:</b> caja o tesorería, inversión o capital y balance proyectado; definen la aplicación y el uso de fondos y sí afectan la rentabilidad sobre el patrimonio (ROE).'],
             ['Sector', '<b>Público:</b> se rige por la Ley de Presupuestos. <b>Privado:</b> presupuesta ingresos, costos, gastos e inversiones.']
           ] },
-          { k: 'p', h: '**Se construyen en cascada:** ventas → producción o compras → materiales, mano de obra y CIF → costo de venta → gastos → resultado → caja → balance. Todo parte del presupuesto de ventas.' },
+          { k: 'practica', h: 'Estático versus flexible: una fábrica tiene costos de $ 200.000 fijos + $ 300 por unidad. Presupuesto estático para 1.000 unidades: $ 500.000. Produce 1.200 y gasta $ 560.000. El estático dice “se gastó $ 60.000 de más”; el flexible recalcula para 1.200 unidades (200.000 + 300 × 1.200 = $ 560.000) y muestra que no hubo ineficiencia.' },
+          { k: 'p', h: 'Se construyen en cascada, partiendo de las ventas: ventas → producción o compras → materiales, mano de obra y CIF → costo de venta → gastos → resultado → caja → balance.' },
           { k: 'asi', items: [
             'Verdadero o falso: «un presupuesto de corto plazo planifica entre 2 y 5 años» → falso: el corto plazo es hasta 1 año.',
             '«¿Cuál no es un presupuesto operativo?» → el de tesorería (caja): es financiero.',
@@ -166,7 +150,6 @@
         idea: 'El incremental parte del año anterior y lo ajusta; el base cero obliga a justificar cada peso desde cero.',
         partes: [
           { k: 'practica', h: 'Un municipio que cada año repite el presupuesto anterior más un 5 % usa el <b>incremental</b>. Si en cambio exige justificar cada actividad desde cero y financia solo las mejor rankeadas, usa el <b>base cero</b>.' },
-          { k: 'p', h: 'Hay dos formas de armar el presupuesto de un año: el **incremental** (también llamado tradicional) y el **presupuesto base cero (PBC)**.' },
           { k: 'comparar', cols: ['', 'Incremental', 'Base cero'], filas: [
             ['Punto de partida', 'El presupuesto del año anterior, al que se le suman o restan cambios.', 'No parte del año anterior: cada peso se justifica desde cero.'],
             ['Qué examina', 'Solo lo nuevo.', 'Todas las actividades.'],
@@ -233,16 +216,15 @@
         tipo: 'leccion',
         id: 'formula-bodega',
         titulo: 'La fórmula de bodega: producción y compras',
-        idea: 'Lo que tengo al inicio + lo que entra − lo que sale = lo que me queda al final. Todo presupuesto de producción o de compras es esa cuenta despejada.',
+        idea: 'Lo que hay al inicio + lo que entra − lo que sale = lo que queda. Todo presupuesto de producción o de compras es esa cuenta despejada.',
         partes: [
-          { k: 'practica', h: 'Piensa en la bodega de un almacén: lo que había al abrir, más lo que llegó, menos lo que se vendió, es lo que queda al cerrar. Si sabes cuánto vas a vender y cuánto quieres que quede, puedes despejar cuánto tiene que llegar.' },
-          { k: 'p', h: 'En símbolos, con saldo inicial (SI) y saldo final (SF):' },
-          { k: 'formula', h: 'SI + Entradas − Salidas = SF' },
-          { k: 'p', h: 'En un inventario, el SI es el **inventario inicial (II)** y el SF es el **inventario final (IF)**. En una industria, lo que se vende sale de la bodega de productos terminados (PT) y lo que se produce consume materia prima (MP). Lo que hay que presupuestar es la entrada, así que se despeja:' },
+          { k: 'practica', h: 'En la bodega de un almacén: lo que había al abrir + lo que llegó − lo que se vendió = lo que queda al cerrar. Si sabes cuánto venderás y cuánto quieres que quede, despejas cuánto tiene que llegar.' },
+          { k: 'formula', h: 'Saldo inicial (SI) + Entradas − Salidas = Saldo final (SF)' },
+          { k: 'p', h: 'En un inventario, el SI es el **inventario inicial (II)** y el SF es el **inventario final (IF)**. Lo que se presupuesta es la entrada, así que se despeja. PT son los productos terminados y MP, la materia prima:' },
           { k: 'formula', h: 'Producción (u) = Ventas (u) + IF deseado de PT − II de PT' },
           { k: 'formula', h: 'Compras (empresa comercial) = Ventas o costo de venta + IF deseado − II' },
           { k: 'formula', h: 'Compras de MP = Producción × consumo por unidad + IF de MP − II de MP' },
-          { k: 'p', h: '**Dos claves.** El II de un mes es el IF del mes anterior. Y el “IF deseado” lo fija la política de la empresa, por ejemplo “25 % de las ventas del mes siguiente”, a veces más un stock de seguridad. Por eso los enunciados dan un mes más de ventas que los que preguntan.' },
+          { k: 'p', h: '**Dos claves.** El II de un mes es el IF del mes anterior. Y el “IF deseado” lo fija la política de la empresa (por ejemplo, “25 % de las ventas del mes siguiente”, a veces más un stock de seguridad): por eso los enunciados dan un mes más de ventas que los que preguntan.' },
           { k: 'asi', items: [
             '«¿Compras (o producción) presupuestadas del mes X?» → ventas + IF − II, con el IF según la política.',
             '«¿Inventario final deseado?» → la política aplicada al mes siguiente.'
@@ -512,7 +494,6 @@
         titulo: 'Proyección por relaciones históricas',
         idea: 'Para proyectar el año que viene, los ingresos crecen según el dato que entregan y los costos se calculan como un porcentaje de esos ingresos.',
         partes: [
-          { k: 'p', h: 'Algunos ejercicios entregan los resultados de varios años y piden proyectar el siguiente. Siempre son los mismos tres pasos:' },
           { k: 'pasos', items: [
             { t: 'Ingresos', h: 'Calcula el crecimiento con el dato dado (“2 veces el PIB”, “1 % por cada punto del PIB”) y aplícalo a los ingresos del último año. El PIB es el producto interno bruto.' },
             { t: 'Costos y gastos', h: 'Calcúlalos con su proporción histórica sobre los ingresos, o con la nueva proporción si el enunciado la cambia.' },
@@ -662,15 +643,14 @@
         tipo: 'leccion',
         id: 'caja',
         titulo: 'El presupuesto de caja: devengado versus percibido',
-        idea: 'El resultado cuenta lo que se facturó; la caja, lo que de verdad se cobró y se pagó. Por eso se puede ganar plata y quedarse sin caja.',
+        idea: 'El resultado cuenta lo que se facturó; la caja, lo que de verdad se cobró y se pagó.',
         partes: [
           { k: 'practica', h: 'Vender $ 1.000.000 en marzo a 30 días da ingreso en marzo, pero la caja lo recibe en abril. Por eso se puede ganar plata y quedarse sin caja.' },
-          { k: 'p', h: 'El **presupuesto de caja** resume las entradas y salidas de efectivo de cada mes. Sirve para anticipar **excedentes** (invertirlos, aprovechar descuentos) y **déficits** (financiarlos con crédito o postergando pagos), y da una base para pedir créditos. Se arma con lo disponible en caja, bancos y valores de fácil realización.' },
-          { k: 'p', h: 'El resultado registra las ventas cuando se facturan (**devengado**); la caja, cuando se cobran (**percibido**). Lo que todavía no se cobra queda en **cuentas por cobrar (CxC)**.' },
-          { k: 'comparar', cols: ['', 'En el resultado', 'En la caja'], filas: [
-            ['Venta a crédito', 'Cuenta en el mes en que se factura.', 'Entra cuando se cobra.'],
-            ['Depreciación', 'Sí: es gasto.', '<b>No</b> sale de caja.'],
-            ['Incobrable', 'Es gasto (una pérdida).', '<b>Nunca</b> entra a caja.'],
+          { k: 'p', h: 'El **presupuesto de caja** resume las entradas y salidas de efectivo de cada mes. Sirve para anticipar **excedentes** (invertirlos, aprovechar descuentos) y **déficits** (financiarlos con crédito o postergando pagos). Se arma con lo disponible en caja, bancos y valores de fácil realización.' },
+          { k: 'comparar', cols: ['', 'En el resultado (devengado)', 'En la caja (percibido)'], filas: [
+            ['Venta a crédito', 'Cuenta en el mes en que se factura.', 'Entra cuando se cobra. Mientras tanto queda en cuentas por cobrar (CxC).'],
+            ['Depreciación', 'Es gasto.', 'No sale de caja.'],
+            ['Incobrable', 'Es gasto.', 'Nunca entra a caja.'],
             ['IVA (impuesto al valor agregado, 19 %)', 'No se considera: el resultado va siempre con valores <b>netos</b>.', 'Si el precio es neto, el cliente paga el <b>bruto</b> (× 1,19), salvo que el enunciado diga omitir el IVA.']
           ] },
           { k: 'formula', h: 'Cobranzas del mes = % al contado × venta del mes + % a crédito × venta del mes anterior' },

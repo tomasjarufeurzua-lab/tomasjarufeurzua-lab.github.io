@@ -765,7 +765,8 @@
     if (p.k === 'practica') return '<div class="caja practica"><span class="rot">En la práctica</span><p>' + tx(p.h) + '</p></div>';
     if (p.k === 'trampa') return '<div class="caja trampa"><span class="rot">Trampa típica</span><p>' + tx(p.h) + '</p></div>';
     if (p.k === 'formula') return '<div class="formula">' + tx(p.h) + '</div>';
-    if (p.k === 'asi') return '<div class="caja asi"><span class="rot">Así lo preguntan</span><ul>' + p.items.map((x) => '<li>' + tx(x) + '</li>').join('') + '</ul></div>';
+    // "Así lo preguntan": plegado, para que la lección se vea corta; se abre con un toque
+    if (p.k === 'asi') return '<details class="caja asi plegable"><summary><span class="rot">Así lo preguntan en el certamen</span><span class="cuantas">' + p.items.length + '</span></summary><ul>' + p.items.map((x) => '<li>' + tx(x) + '</li>').join('') + '</ul></details>';
     if (p.k === 'lista') return '<ul>' + p.items.map((x) => '<li>' + tx(x) + '</li>').join('') + '</ul>';
     if (p.k === 'pasos') return '<ol class="pasos">' + p.items.map((x) => '<li><b class="t">' + tx(x.t) + '</b>' + tx(x.h) + '</li>').join('') + '</ol>';
     if (p.k === 'diagrama') return hDiagrama(p.id);
@@ -773,8 +774,9 @@
     if (p.k === 'sub') return '<h2 class="sub">' + tx(p.h) + '</h2>';
     if (p.k === 'datos') return hTablaDatos(p);
     if (p.k === 'comparar') {
-      return '<div class="tabla-scroll"><table class="t-comparar"><thead><tr>' + p.cols.map((c) => '<th scope="col">' + tx(c) + '</th>').join('') + '</tr></thead><tbody>' +
-        p.filas.map((f) => '<tr>' + f.map((c, i) => (i ? '<td>' + tx(c) + '</td>' : '<th scope="row">' + tx(c) + '</th>')).join('') + '</tr>').join('') + '</tbody></table></div>';
+      // En celular cada fila se apila (ver CSS): por eso cada celda lleva el nombre de su columna
+      return '<div class="tabla-scroll apilable"><table class="t-comparar' + (p.cols.length === 2 ? ' dos' : '') + '"><thead><tr>' + p.cols.map((c) => '<th scope="col">' + tx(c) + '</th>').join('') + '</tr></thead><tbody>' +
+        p.filas.map((f) => '<tr>' + f.map((c, i) => (i ? '<td data-l="' + esc(sinHtml(p.cols[i])) + '">' + tx(c) + '</td>' : '<th scope="row">' + tx(c) + '</th>')).join('') + '</tr>').join('') + '</tbody></table></div>';
     }
     return '';
   }

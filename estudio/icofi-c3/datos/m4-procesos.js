@@ -23,9 +23,7 @@
         partes: [
           { k: 'practica', h: 'Dos tortas hechas hasta la mitad consumieron, en trabajo, lo mismo que una torta terminada: equivalen a <b>1 torta</b>. Pero si a las dos ya se les puso todo el bizcocho, en materia prima equivalen a <b>2 tortas</b> completas.' },
           { k: 'diagrama', id: 'tortas' },
-          { k: 'p', h: 'El **costeo por procesos** se usa cuando la producción es continua y todas las unidades son iguales (harina, champú, cemento). El costo se acumula por **departamento** y al final del mes se reparte entre las unidades que pasaron por él.' },
-          { k: 'p', h: '**El problema:** al cierre hay unidades terminadas y unidades a medio hacer, que se llaman **productos en proceso (PenP)**. No se puede dividir el costo por todas las unidades como si estuvieran listas, porque las que están en proceso consumieron solo una parte.' },
-          { k: 'p', h: '**La solución:** expresar todo en **unidades equivalentes (UE)**, es decir, cuántas unidades terminadas representa el trabajo hecho.' },
+          { k: 'p', h: 'En el **costeo por procesos** (producción continua de unidades iguales: harina, champú, cemento) el costo se acumula por **departamento**. Al cierre hay unidades terminadas y otras a medio hacer, los **productos en proceso (PenP)**, que consumieron solo una parte del costo. Por eso todo se expresa en **unidades equivalentes (UE)**: cuántas unidades terminadas representa el trabajo hecho.' },
           { k: 'formula', h: 'UE = Unidades terminadas + Unidades en proceso × % de avance' },
           { k: 'p', h: 'Si el avance es distinto según el elemento del costo, se calcula **una UE por elemento**. Por ejemplo, las unidades en proceso pueden tener 100 % de la materia prima (MP) pero solo 70 % del costo de conversión (CC), que es la mano de obra directa (MOD) más los costos indirectos de fabricación (CIF).' },
           { k: 'asi', items: [
@@ -233,7 +231,7 @@
         idea: 'Si la pérdida es inevitable, la pagan las unidades buenas. Si es un accidente, se saca aparte y va directo a pérdida.',
         partes: [
           { k: 'practica', h: 'Una fábrica de jugo pone 1.000 litros y siempre se evaporan 100: los 900 buenos cargan con todo el costo (merma <b>normal</b>). Si un día se rompe un estanque y se pierden 100 litros más, esa pérdida no se le cobra al jugo bueno: es pérdida del período (merma <b>anormal</b>).' },
-          { k: 'p', h: 'Una **merma** es una unidad que entra al proceso y se pierde o se daña. Hay dos tipos y se tratan distinto:' },
+          { k: 'p', h: 'Una **merma** es una unidad que entra al proceso y se pierde o se daña.' },
           { k: 'comparar', cols: ['', 'Merma normal', 'Merma anormal'], filas: [
             ['¿Qué es?', 'Inevitable, propia del proceso.', 'Excede lo esperado.'],
             ['¿Se cuenta en las UE?', '<b>No.</b>', '<b>Sí</b>, con su avance.'],

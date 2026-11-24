@@ -22,7 +22,6 @@
         idea: 'El costo se guarda en el producto y espera en bodega hasta que se vende. El gasto se consume en el período, se venda o no.',
         partes: [
           { k: 'practica', h: 'En una panadería, la harina, el panadero y la luz del horno son <b>costo</b>. Si hace 100 panes y vende 70, el costo de los 70 va a costo de venta y el de los otros 30 queda en inventario. La secretaria y la publicidad son <b>gastos</b> del mes, se venda o no.' },
-          { k: 'p', h: 'Los dos son **recursos** que la empresa usa. Lo que cambia es para qué se usan y dónde quedan anotados:' },
           { k: 'comparar', cols: ['', 'Costo', 'Gasto'], filas: [
             ['¿Qué es?', 'Recurso para producir o comprar lo que se venderá.', 'Recurso consumido para operar en el período (administrar, vender).'],
             ['Propósito', 'Generar beneficios futuros.', 'Generar los ingresos del período.'],
@@ -62,13 +61,7 @@
             ['Costo de venta', 'Costo de los PT vendidos.', 'Costo de lo comprado y vendido.', 'Costos principalmente de mano de obra e indirectos.']
           ] },
           { k: 'diagrama', id: 'flujo-costos' },
-          { k: 'p', h: 'En la producción, a la materia prima se le agregan dos cosas más: el trabajo de quienes la transforman y los demás costos de la fábrica. Eso se ve en la lección siguiente.' },
-          { k: 'p', h: '**Valorización de inventarios.** La norma de inventarios (NIC 2) contempla métodos para decidir a qué costo sale lo que se vende:' },
-          { k: 'lista', items: [
-            '<b>FIFO</b>: primero en entrar, primero en salir.',
-            '<b>LIFO</b>: último en entrar, primero en salir.',
-            '<b>PPP</b>: precio promedio ponderado.'
-          ] }
+          { k: 'p', h: '**Valorización de inventarios** (norma NIC 2): FIFO, primero en entrar, primero en salir; LIFO, último en entrar, primero en salir; y PPP, precio promedio ponderado.' }
         ],
         porque: {
           pregunta: '¿Por qué una empresa industrial tiene tres inventarios y una comercial solo uno?',
@@ -96,13 +89,11 @@
             ['Mano de obra directa (MOD)', 'Quien transforma el producto. Ejemplo: el carpintero.', 'Directa; normalmente variable, pero puede ser fija. Costo MOD = tarifa por hora hombre (HH) × horas hombre usadas.'],
             ['Costos indirectos de fabricación (CIF)', 'Todo lo de la fábrica que no es MPD ni MOD. También se llaman gastos de fabricación (GF).', 'Indirectos; pueden ser fijos o variables.']
           ] },
-          { k: 'p', h: '**¿Qué entra en los CIF?** Materiales indirectos (clavos, pegamento, lija, lubricantes), mano de obra indirecta (supervisor, mantención, bodeguero), luz, agua y gas de la planta, arriendo de la planta, seguros de la planta y la depreciación de la planta productiva (costo fijo si es lineal; variable si es por rendimiento, es decir, por unidades producidas).' },
-          { k: 'p', h: 'Los gastos de administración y de venta **no** son CIF: no ocurren en la fábrica.' },
+          { k: 'p', h: '**¿Qué entra en los CIF?** Materiales indirectos (clavos, pegamento, lija), mano de obra indirecta (supervisor, mantención, bodeguero), luz, agua, gas, arriendo y seguros de la planta, y la depreciación de la planta productiva (costo fijo si es lineal; variable si es por unidades producidas). Los gastos de administración y de venta **no** son CIF.' },
           { k: 'formula', h: 'Costo primo = MPD + MOD' },
           { k: 'formula', h: 'Costo de conversión = MOD + CIF' },
           { k: 'formula', h: 'Costo de producción = MPD + MOD + CIF = MPD + Costo de conversión' },
-          { k: 'p', h: 'Lo **indirecto** del material (materia prima indirecta, MPI) y de la mano de obra (mano de obra indirecta, MOI) se **suma al CIF**.' },
-          { k: 'p', h: 'Directo no es lo mismo que variable: son clasificaciones distintas. Y “costeo directo” significa costeo variable, que es otra cosa (se ve en el módulo 5).' },
+          { k: 'p', h: 'Lo **indirecto** del material (materia prima indirecta, MPI) y de la mano de obra (mano de obra indirecta, MOI) **se suma al CIF**. Ojo: directo no es lo mismo que variable; son clasificaciones distintas. Y “costeo directo” es otra cosa (módulo 5).' },
           { k: 'asi', items: [
             '«¿Costos primos totales?», «¿gastos de fabricación?», «¿costos de conversión?» → primero separa lo directo de lo indirecto con los % del enunciado.',
             '«¿Costo unitario de producción (costeo total)?» → (MPD + MOD + CIF) ÷ unidades, sin administración ni ventas.',
@@ -242,7 +233,7 @@
         titulo: 'Clasificaciones de costos',
         idea: 'Un mismo costo se puede mirar de varias formas: cómo se comporta, si se identifica con el producto, en qué área ocurre, cuándo se calcula y si importa para una decisión.',
         partes: [
-          { k: 'practica', h: 'Una pizzería paga $ 1.000.000 de arriendo. Con 1.000 pizzas son $ 1.000 por pizza; con 2.000 pizzas son $ 500. El arriendo total no cambió, pero por unidad sí. La masa de cada pizza, en cambio, cuesta lo mismo por pizza y el total sube con cada una.' },
+          { k: 'practica', h: 'Una pizzería paga $ 1.000.000 de arriendo: con 1.000 pizzas son $ 1.000 por pizza; con 2.000, $ 500. El total no cambia; el unitario, sí. La masa es al revés: cuesta lo mismo por pizza y el total sube con cada una.' },
           { k: 'sub', h: 'Por comportamiento' },
           { k: 'comparar', cols: ['Tipo', 'Costo total', 'Costo unitario', 'Ejemplo'], filas: [
             ['Variable', 'Cambia con la actividad.', '<b>Constante.</b>', 'La masa de cada pizza.'],
@@ -423,21 +414,17 @@
         id: 'estado-de-costos',
         teorica: true,
         titulo: 'Del costo de producción al costo de venta',
-        idea: 'Cada inventario funciona como una bodega: lo que había, más lo que entra, menos lo que sale, es lo que queda. Encadenando las tres bodegas se llega al costo de venta.',
+        idea: 'Cada inventario funciona como una bodega. Encadenando las tres bodegas de una industria se llega al costo de venta.',
         partes: [
-          { k: 'p', h: 'Cada inventario cumple la misma regla, con saldo inicial (SI) y saldo final (SF):' },
-          { k: 'formula', h: 'SI + Entradas − Salidas = SF' },
-          { k: 'p', h: 'En una empresa industrial hay tres inventarios seguidos. Recorriéndolos en orden se arma el **estado de costos**. Aquí el saldo inicial se llama inventario inicial (II) y el saldo final, inventario final (IF):' },
+          { k: 'p', h: 'En una empresa industrial hay tres inventarios seguidos, y cada uno cumple: saldo inicial + entradas − salidas = saldo final. Recorriéndolos en orden se arma el **estado de costos**. II es el inventario inicial e IF, el inventario final:' },
           { k: 'pasos', items: [
             { t: 'Materia prima utilizada', h: 'II de MP + compras − IF de MP.' },
             { t: 'Costo puesto en producción', h: 'MP utilizada + mano de obra directa (MOD) + costos indirectos de fabricación (CIF).' },
             { t: 'Costo de los productos terminados (PT)', h: 'Costo puesto en producción + II de productos en proceso (PenP) − IF de PenP.' },
             { t: 'Costo de venta', h: 'Costo de PT + II de PT − IF de PT.' }
           ] },
-          { k: 'diagrama', id: 'flujo-costos' },
           { k: 'formula', h: 'Ventas − Costo de venta = Margen bruto' },
           { k: 'formula', h: 'Margen bruto − Gastos operacionales = Resultado operacional' },
-          { k: 'p', h: '**Ciclo contable:** la MP, la MOD y los CIF se cargan a productos en proceso; lo que se termina pasa a productos terminados; y al vender, ese costo pasa a costo de venta.' },
           { k: 'asi', items: [
             'Verdadero o falso: «el costo de venta de una industria son los productos terminados y no vendidos» (falso: eso es el inventario de PT; el costo de venta es lo terminado <b>y vendido</b>).',
             'Verdadero o falso: «los componentes del costo de producción son materia prima más costos de conversión» (verdadero).'

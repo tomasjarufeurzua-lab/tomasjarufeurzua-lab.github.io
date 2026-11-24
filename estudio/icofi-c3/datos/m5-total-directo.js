@@ -34,7 +34,6 @@
         idea: 'En costeo total, los costos fijos de producción se guardan en el inventario hasta que el producto se vende. En costeo directo, se van completos al resultado del mes.',
         partes: [
           { k: 'practica', h: 'Una fábrica paga $ 1.000.000 de arriendo de planta. Produce 100 mesas y vende 60. Con <b>costeo total</b>, $ 400.000 del arriendo quedan “guardados” en las 40 mesas que siguen en bodega. Con <b>costeo directo</b>, el millón completo va al resultado del período.' },
-          { k: 'p', h: 'Los dos métodos tratan igual los costos variables de producción (materia prima, mano de obra directa, costos indirectos de fabricación (CIF) variables): van al producto. La diferencia está solo en los **costos fijos de producción**:' },
           { k: 'comparar', cols: ['', 'Costeo total (absorción)', 'Costeo directo (variable)'], filas: [
             ['¿Qué costos lleva el producto?', 'Todos los de producción: fijos y variables.', 'Solo los variables de producción.'],
             ['¿Y los costos fijos de producción?', 'Quedan en el inventario hasta que el producto se vende.', 'Van completos al resultado del período.'],

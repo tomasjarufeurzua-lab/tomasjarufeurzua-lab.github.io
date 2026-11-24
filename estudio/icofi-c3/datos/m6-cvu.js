@@ -69,11 +69,7 @@
         partes: [
           { k: 'practica', h: 'Un carrito de completos paga $ 300.000 al mes entre arriendo y permiso. Vende cada completo a $ 2.500 y gasta $ 1.000 en ingredientes: cada completo deja $ 1.500. Los primeros 200 completos del mes solo pagan el arriendo; desde el 201, cada uno deja $ 1.500 de ganancia.' },
           { k: 'p', h: 'La **relación costo–volumen–utilidad (CVU)** es una herramienta de gestión de corto plazo. Separa los costos en fijos y variables para responder una pregunta: **¿qué nivel de actividad (ventas) se necesita para lograr un resultado?**' },
-          { k: 'lista', items: [
-            '<b>Costo:</b> no expirado mientras está en el balance (inventario); expirado cuando pasa al estado de resultados (EERR).',
-            '<b>Volumen:</b> el nivel de actividad. En CVU es lo mismo que las ventas, porque se supone que se vende todo lo que se produce.',
-            '<b>Utilidad:</b> ingresos − gastos. Puede ser ganancia o pérdida.'
-          ] },
+          { k: 'p', h: 'En CVU, el **volumen** es el nivel de actividad y equivale a las ventas, porque se supone que se vende todo lo que se produce.' },
           { k: 'sub', h: 'La base de datos: el estado de resultados por costeo directo' },
           { k: 'p', h: 'Todo sale de un EERR por costeo directo. Se anota **p** = precio unitario, **q** = unidades vendidas y **t** = tasa de impuesto. El costo variable unitario se anota cvᵤ y el margen de contribución unitario, mcᵤ.' },
           { k: 'datos', cols: ['EERR por costeo directo', 'Cómo se calcula', 'Como proporción de la venta'], filas: [
