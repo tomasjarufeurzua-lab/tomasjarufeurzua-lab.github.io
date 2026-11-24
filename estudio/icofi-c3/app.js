@@ -316,7 +316,10 @@
     if (!s) return '';
     return '<ol class="sol"><li><b>Dato:</b> ' + tx(s.d) + '</li><li><b>Fórmula:</b> ' + tx(s.f) + '</li><li><b>Cálculo:</b> ' + tx(s.c) + '</li><li><b>Resultado:</b> ' + M.formatear(q.respuesta, q) + '</li></ol>';
   }
+  // Una alternativa puede ser un redondeo distinto o un valor que la pauta también acepta (pauta / equivalente)
+  const altDePauta = (res) => !!(res.alt && (res.alt.pauta || res.alt.equivalente));
   function notaRedondeo(q, res) {
+    if (altDePauta(res)) return '<p class="nota-red">Tu respuesta también es válida. Valor principal: <b>' + M.formatear(q.respuesta, q) + '</b>. ' + tx(res.alt.nota) + '</p>';
     return '<p class="nota-red">Tu resultado difiere solo por redondeo: está bien. Valor principal: <b>' + M.formatear(q.respuesta, q) + '</b>.' +
       (res.alt && res.alt.nota ? ' ' + tx(res.alt.nota) : ' La diferencia viene de redondear pasos intermedios.') + '</p>';
   }
@@ -525,7 +528,7 @@
         if (!res) return;
         if (M.esAcierto(res.estado)) {
           out.push('<li class="ok">' + rotCelda(t, f, ci) + ': ' + (c.s ? tx(c.s) : valor) +
-            (res.estado !== 'correcta' ? ' <span class="nota-red">Tu valor difiere solo por redondeo: está bien. Valor principal: ' + valor + '.' + (res.alt && res.alt.nota ? ' ' + tx(res.alt.nota) : '') + '</span>' : '') + '</li>');
+            (res.estado !== 'correcta' ? ' <span class="nota-red">' + (altDePauta(res) ? 'Tu respuesta también es válida.' : 'Tu valor difiere solo por redondeo: está bien.') + ' Valor principal: ' + valor + '.' + (res.alt && res.alt.nota ? ' ' + tx(res.alt.nota) : '') + '</span>' : '') + '</li>');
         } else {
           out.push('<li class="mal">' + rotCelda(t, f, ci) + ': la respuesta es <b>' + valor + '</b>.' +
             (res.estado === 'trampa' ? ' ' + tx(mayus(res.trampa.msg)) : '') + (c.s ? ' → ' + tx(c.s) : '') + '</li>');
@@ -541,7 +544,7 @@
     campo.classList.toggle('mal', ok === false);
     nota.className = 'c-fb' + (ok ? ' ok' : '');
     if (ok === null) nota.textContent = '';
-    else if (ok) nota.textContent = res.estado === 'correcta' ? '' : 'vale por redondeo';
+    else if (ok) nota.textContent = res.estado === 'correcta' ? '' : (altDePauta(res) ? 'también vale' : 'vale por redondeo');
     else nota.textContent = 'es ' + (c.guion && c.r === 0 && c.tipo !== 'pesos' ? '–' : fijo(c.r, c.tipo));
   }
   function revisarTabla(u, filaId) {
@@ -1161,7 +1164,7 @@
       det.push({ it: it, resp: resp, ok: ok, res: res, pts: ok ? valor : 0, max: valor });
     }));
     const puntaje = M.entero(pts);
-    return { det: det, puntaje: puntaje, nota: M.nota(puntaje), valor: valor };
+    return { det: det, puntaje: puntaje, valor: valor };
   }
   function entregarSimulacro(b, forzado) {
     const sim = S.sim;
@@ -1171,7 +1174,7 @@
     clearInterval(simReloj);
     const seg = Math.min(simUsado(sim), b.minutos * 60);
     const c = corregirSimulacro(b, sim, true);
-    S.simRes = { vf: sim.vf, ej: sim.ej, r: sim.r, seg: seg, fecha: hoy(), puntaje: c.puntaje, nota: c.nota, agotado: !!forzado };
+    S.simRes = { vf: sim.vf, ej: sim.ej, r: sim.r, seg: seg, fecha: hoy(), puntaje: c.puntaje, buenas: c.det.filter((d) => d.ok).length, total: c.det.length, agotado: !!forzado };
     S.simPrev = sim.ej;
     S.sim = null;
     guardar();
@@ -1257,7 +1260,7 @@
         }
         h += '<div class="rev ' + (d.ok ? 'ok' : 'mal') + '"><p class="rev-t">' + marca(d) + '<span><b>' + (j + 1) + '.</b> ' + tx(q.texto) + '</span>' + pts(d) + '</p>' +
           '<p>Tu respuesta: <b>' + tuya + '</b> · Correcta: <b>' + correcta + '</b></p>' +
-          (d.ok && d.res && d.res.estado !== 'correcta' ? '<p class="nota-red">Tu resultado difiere solo por redondeo: está bien.' + (d.res.alt && d.res.alt.nota ? ' ' + tx(d.res.alt.nota) : '') + '</p>' : '') +
+          (d.ok && d.res && d.res.estado !== 'correcta' ? '<p class="nota-red">' + (altDePauta(d.res) ? 'Tu respuesta también es válida.' : 'Tu resultado difiere solo por redondeo: está bien.') + (d.res.alt && d.res.alt.nota ? ' ' + tx(d.res.alt.nota) : '') + '</p>' : '') +
           (!d.ok && d.res && d.res.estado === 'trampa' ? '<p><b>Qué pasó:</b> ' + tx(d.res.trampa.msg) + '</p>' : '') +
           (q.tipo === 'opcion' ? '<p class="suave">' + tx(q.porque) + '</p>' : hSol(q)) + '</div>';
       });
@@ -1271,11 +1274,12 @@
     const nVf = Array.from(ITEMS.values()).filter((it) => it.k === 'vf').length;
     let h = '<article class="bloque ancho sim"><p class="migas">Módulo 7 · Simulacro</p>';
     if (sr) {
+      if (typeof sr.buenas !== 'number') { const c0 = corregirSimulacro(b, sr, false); sr.buenas = c0.det.filter((d) => d.ok).length; sr.total = c0.det.length; }
       const min = Math.max(1, Math.round(sr.seg / 60));
       const e = nErrores();
       h += '<h1 tabindex="-1">Resultado del simulacro</h1>' +
         '<div class="datos-cert"><div><span class="rot">Puntaje</span><b class="grande">' + sr.puntaje + ' / 100</b></div>' +
-        '<div><span class="rot">Nota</span><b class="grande">' + M.num(sr.nota, 1) + '</b><span class="suave">Escala 1 a 7: 1 + 6 × puntaje ÷ 100</span></div>' +
+        '<div><span class="rot">Respuestas correctas</span><b class="grande">' + sr.buenas + ' de ' + sr.total + '</b><span class="suave">Verdadero o falso y ejercicios</span></div>' +
         '<div><span class="rot">Tiempo usado</span><b class="grande">' + min + ' min</b><span class="suave">de ' + b.minutos + (sr.agotado ? ' · se acabó el tiempo' : '') + '</span></div></div>' +
         '<div class="res-mod"><p>' + (sr.puntaje >= 85 ? '<b>Muy bien.</b> Estás al nivel del certamen; repasa solo lo que falló.' : sr.puntaje >= 55 ? '<b>Vas bien encaminado.</b> Lo que falló es justo lo que conviene repasar antes del certamen.' : '<b>Ya sabes dónde poner el esfuerzo.</b> Cada pregunta fallada trae abajo su desarrollo: revísalo y vuelve a intentarlo otro día.') + '</p>' +
         '<p>' + (e ? 'Lo que fallaste quedó en <a href="#/repaso/errores">Mis errores para repasar</a> (' + e + ' en total).' : 'No tienes errores pendientes.') + '</p></div>' +
@@ -1288,7 +1292,7 @@
         '<div><span class="rot">Parte 2</span><b>' + b.areas.length + ' ejercicios</b><span class="suave">Presupuestos, costos y CVU · 4–5 preguntas, 20–25 puntos cada uno</span></div>' +
         '<div><span class="rot">Tiempo</span><b>' + b.minutos + ' minutos</b><span class="suave">Se puede pausar</span></div></div>' +
         '<ul><li>Durante el simulacro no hay pistas ni corrección: respondes todo y entregas, como en la prueba.</li>' +
-        '<li>Al entregar ves tu puntaje sobre 100, tu nota (1 + 6 × puntaje ÷ 100) y la revisión de cada pregunta con su desarrollo.</li>' +
+        '<li>Al entregar ves tu puntaje de 0 a 100 y la revisión de cada pregunta con su desarrollo.</li>' +
         '<li>Ten a mano una calculadora simple y papel.</li></ul>';
       if (nVf < b.vf.n) h += '<div class="res-mod"><p>Todavía no hay suficientes preguntas cargadas para armar el simulacro.</p></div>';
       else h += '<div class="acciones"><button type="button" class="btn principal" data-a="sim-iniciar">Empezar simulacro →</button></div>';
@@ -1381,7 +1385,7 @@
         h += '<ul>';
         mod.bloques.forEach((b) => {
           h += '<li' + (b.rol === 'extra' ? ' class="extra"' : '') + '><a href="' + href(b) + '"' + (b === act ? ' aria-current="page"' : '') + '>' + hEst(b) +
-            '<span>' + tx(b.titulo) + '<small>' + (b.tipo === 'simulacro' ? (S.sim ? 'En curso' : (S.simRes ? 'Último: ' + S.simRes.puntaje + ' puntos · nota ' + M.num(S.simRes.nota, 1) : 'Formato del certamen · 70 min')) : b.rol === 'extra' ? 'Ejercicio extra' : TIPO_TXT[b.tipo]) + (b.fuente && b.fuente.k === 'certamen' ? ' · C3 ' + b.fuente.sem + 'S-' + b.fuente.anio : '') + '</small></span></a></li>';
+            '<span>' + tx(b.titulo) + '<small>' + (b.tipo === 'simulacro' ? (S.sim ? 'En curso' : (S.simRes ? 'Último: ' + S.simRes.puntaje + ' de 100 puntos' : 'Formato del certamen · 70 min')) : b.rol === 'extra' ? 'Ejercicio extra' : TIPO_TXT[b.tipo]) + (b.fuente && b.fuente.k === 'certamen' ? ' · C3 ' + b.fuente.sem + 'S-' + b.fuente.anio : '') + '</small></span></a></li>';
         });
         h += '</ul>';
       }

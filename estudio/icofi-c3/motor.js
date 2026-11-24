@@ -229,11 +229,6 @@
     return estado === 'correcta' || estado === 'alternativa' || estado === 'redondeo';
   }
 
-  // Nota en escala chilena: 1 + 6·puntaje/100, con un decimal.
-  function nota(puntaje) {
-    return redondear(1 + 6 * puntaje / 100, 1);
-  }
-
   g.ICOFI_MOTOR = {
     num: num,
     decimales: decimales,
@@ -246,7 +241,6 @@
     margenExacto: margenExacto,
     margenValor: margenValor,
     corregir: corregir,
-    esAcierto: esAcierto,
-    nota: nota
+    esAcierto: esAcierto
   };
 })(typeof window !== 'undefined' ? window : globalThis);

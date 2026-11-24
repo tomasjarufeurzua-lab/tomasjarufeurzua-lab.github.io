@@ -300,7 +300,6 @@ Object.keys(CALC).forEach((k) => chk(ids.has(k), 'hay un recálculo para «' + k
   [{ tipo: 'pesos', respuesta: 36000000, trampas: [{ valor: 42840000, msg: 'x' }] }, ['42.840.000'], 'trampa']
 ].forEach(([q, textos, esperado]) => textos.forEach((t) => chk(M.corregir(q, t).estado === esperado, 'corrector: «' + t + '» debería ser ' + esperado + ' y es ' + M.corregir(q, t).estado)));
 chk(M.entero(6837.5) === 6838 && M.entero(4437.5) === 4438, 'redondeo: un ,5 debe subir');
-chk(M.nota(100) === 7 && M.nota(0) === 1 && M.nota(50) === 4, 'nota: 1 + 6·puntaje/100');
 
 // ---------------------------------------------------------------- informe
 const col = (s, n) => String(s).padEnd(n).slice(0, Math.max(n, String(s).length));

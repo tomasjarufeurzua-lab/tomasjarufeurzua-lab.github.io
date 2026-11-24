@@ -388,7 +388,7 @@
               },
               {
                 id: 'p2', texto: 'Ventas en equilibrio:', tipo: 'pesos', respuesta: 60000000,
-                tambien: [{ valor: 300, nota: 'La pauta también acepta la respuesta en unidades: 300 unidades, que es el punto de equilibrio del enunciado.' }],
+                tambien: [{ valor: 300, equivalente: true, nota: 'La pauta también acepta la respuesta en unidades: 300 unidades, que es el punto de equilibrio del enunciado.' }],
                 sol: { d: 'Punto de equilibrio: 300 unidades. Precio: $ 200.000.', f: 'V<sub>PE</sub> = p × q<sub>PE</sub>', c: '300 × 200.000 = $ 60.000.000' }
               },
               {
