@@ -140,7 +140,9 @@ function revisarPregunta(key, q, calc, secMd, secPauta, esCertamen, enPauta) {
     const e = M.corregir(q, M.soloNumero(a.valor, { tipo: tipo === 'unitario' ? 'unitario' : tipo }).replace(/\./g, tipo === 'unitario' ? '.' : '')).estado;
     chk(e === 'alternativa' || e === 'correcta', rot + ': el corrector no acepta la alternativa ' + a.valor + ' (' + e + ')');
     chk(!!a.nota, rot + ': la alternativa ' + a.valor + ' no tiene nota');
-    if (secMd) chk(aparece(secMd, comoTexto(a.valor, tipo, true)), rot + ': la alternativa ' + comoTexto(a.valor, tipo, true) + ' no aparece en el .md');
+    // Una alternativa viene del .md o, si lleva pauta: true, de la pauta del certamen ("$ X o $ Y")
+    if (a.pauta) { if (secPauta) chk(aparece(secPauta, comoTexto(a.valor, tipo, true)), rot + ': la alternativa ' + comoTexto(a.valor, tipo, true) + ' no aparece en la pauta'); }
+    else if (secMd) chk(aparece(secMd, comoTexto(a.valor, tipo, true)), rot + ': la alternativa ' + comoTexto(a.valor, tipo, true) + ' no aparece en el .md');
   });
   altsCalc.forEach((v) => { if (!igual(v, q.respuesta)) chk((q.tambien || []).some((a) => igual(a.valor, v)) || M.esAcierto(M.corregir(q, String(v).replace('.', ',')).estado), rot + ': el valor alternativo ' + v + ' no se acepta'); });
   // 4. Trampas
