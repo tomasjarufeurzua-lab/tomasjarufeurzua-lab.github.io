@@ -20,6 +20,7 @@
       {
         tipo: 'leccion',
         id: 'ordenes-vs-procesos',
+        teorica: true,
         titulo: 'Órdenes específicas versus procesos',
         idea: 'Si se fabrica a pedido, el costo se junta por pedido. Si se fabrica en serie, se junta por departamento.',
         partes: [
@@ -87,7 +88,7 @@
             '«¿Costos de conversión aplicados?» → MOD + CIF aplicado.',
             '«¿Costo total real?» → MPD + MOD + CIF <b>real</b>.',
             '«¿Variación del CIF?» → aplicado versus real, indicando si es sub o sobreaplicación.',
-            '«¿Margen bruto con el ajuste al costo de venta?» → ventas − (costo aplicado − sobreaplicación, o + subaplicación).'
+            '«¿Margen bruto con el ajuste al costo de venta?» → ventas − costo de venta ajustado. Al costo aplicado se le <b>resta</b> la sobreaplicación o se le <b>suma</b> la subaplicación.'
           ] }
         ],
         porque: {
@@ -422,7 +423,7 @@
           '«¿Costos de conversión aplicados?» → MOD + CIF aplicado.',
           '«¿Costo total real?» → MPD + MOD + CIF <b>real</b>.',
           '«¿Variación del CIF?» → aplicado versus real, indicando si es sub o sobreaplicación.',
-          '«¿Margen bruto con el ajuste al costo de venta?» → ventas − (costo aplicado − sobreaplicación, o + subaplicación).'
+          '«¿Margen bruto con el ajuste al costo de venta?» → ventas − costo de venta ajustado. Al costo aplicado se le <b>resta</b> la sobreaplicación o se le <b>suma</b> la subaplicación.'
         ]
       }
     ]

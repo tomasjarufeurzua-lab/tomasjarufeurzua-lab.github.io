@@ -51,6 +51,7 @@
       {
         tipo: 'leccion',
         id: 'tipos-de-empresa',
+        teorica: true,
         titulo: 'Tipos de empresa e inventarios',
         idea: 'Según lo que hace la empresa, cambia cuántos inventarios tiene y qué significa su costo de venta.',
         partes: [
@@ -257,7 +258,8 @@
             '<b>Para tomar decisiones:</b> incrementales (por un aumento de actividad) y decrementales (por una disminución), ambos diferenciales; de <b>oportunidad</b> (lo que se renuncia: es hipotético y <b>no se registra</b> en la contabilidad); <b>hundidos o sumergidos</b> (ya incurridos: no cambian con la decisión); relevantes; evitables e inevitables.'
           ] },
           { k: 'asi', items: [
-            'Verdadero o falso: «el costo fijo unitario no varía con el nivel de producción» (falso) y «el costo de oportunidad se registra en la contabilidad» (falso).',
+            'Verdadero o falso: «el costo fijo unitario no varía con el nivel de producción» → es falso: el costo fijo por unidad baja cuando se produce más.',
+            'Verdadero o falso: «el costo de oportunidad se registra en la contabilidad» → es falso: es un costo hipotético y no se registra.',
             '«¿Cuál es el costo unitario si se producen N unidades?» → costo variable por unidad + costos fijos ÷ N. Revisa si a ese nivel cambia algún costo fijo.'
           ] }
         ]
@@ -419,6 +421,7 @@
       {
         tipo: 'leccion',
         id: 'estado-de-costos',
+        teorica: true,
         titulo: 'Del costo de producción al costo de venta',
         idea: 'Cada inventario funciona como una bodega: lo que había, más lo que entra, menos lo que sale, es lo que queda. Encadenando las tres bodegas se llega al costo de venta.',
         partes: [

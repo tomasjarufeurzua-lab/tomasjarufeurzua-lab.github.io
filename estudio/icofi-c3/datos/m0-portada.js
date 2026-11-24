@@ -14,9 +14,9 @@
         titulo: 'Cómo es el Certamen 3',
         bajada: 'Una guía para aprender desde cero presupuestos, contabilidad de costos y la relación costo–volumen–utilidad. Siempre igual: un poco de materia, un ejercicio, y la página te corrige y te explica.',
         ficha: [
-          { rot: 'Fecha', valor: 'Sábado 28 de noviembre de 2026', extra: '08:15 hrs · presencial (teoría y ejercicios)' },
-          { rot: 'Formato', valor: '10 V/F + 3 ejercicios', extra: 'V/F: 30 puntos · ejercicios de 4–5 preguntas, 20–25 puntos cada uno' },
-          { rot: 'Tiempo', valor: '70 minutos', extra: 'Con calculadora simple' }
+          { rot: 'Fecha', valor: 'Sábado 28 de noviembre de 2026', extra: 'Presencial (teoría y ejercicios)' },
+          { rot: 'Formato probable', valor: 'Probablemente 10 V/F + 3 ejercicios', extra: 'Como en los certámenes anteriores: V/F por 30 puntos y ejercicios de 4–5 preguntas, 20–25 puntos cada uno' },
+          { rot: 'Tiempo', valor: 'Probablemente 70 minutos', extra: 'Con calculadora simple' }
         ],
         contenidos: [
           '<b>Presupuestos:</b> operacionales y financieros.',

@@ -23,6 +23,7 @@
       {
         tipo: 'leccion',
         id: 'planificacion',
+        teorica: true,
         sinAb: ['II'],
         titulo: 'La planificación estratégica y dónde entra el presupuesto',
         idea: 'El presupuesto no es la estrategia: es la herramienta que la traduce a números.',
@@ -59,6 +60,7 @@
       {
         tipo: 'leccion',
         id: 'ventajas-objetivos',
+        teorica: true,
         titulo: 'Ventajas, objetivos y proceso del presupuesto',
         idea: 'Presupuestar obliga a conocer la empresa, coordina a todas las áreas y deja una vara para medir lo que pasó.',
         partes: [
@@ -83,9 +85,9 @@
           { k: 'p', h: 'El proceso presupuestario anual **involucra a todas las áreas**, cada una con sus responsables (no solo a Contabilidad). Sus fases: normas orientadoras → presupuestos operacionales y de inversión → negociación → revisión y coordinación → estados financieros proyectados → aprobación.' },
           { k: 'trampa', h: 'Basarse <b>solo</b> en la información histórica. El presupuesto cambia si cambian el plan comercial o la macroeconomía.' },
           { k: 'asi', items: [
-            '«¿Cuáles son objetivos del presupuesto?» → descarta proyectar impuestos y respaldar el Libro Diario.',
-            '«Ventaja de los presupuestos» → instrumento de gestión, coordinación, control, motivación.',
-            'Verdadero o falso: «el proceso presupuestario involucra solo al área contable» → falso: a todas las áreas.'
+            '«¿Cuáles son objetivos del presupuesto?» → proyectar impuestos y respaldar el Libro Diario <b>no son</b> objetivos del presupuesto: elimina las alternativas que los incluyan. Sí son objetivos: analizar y planificar el futuro, coordinar las áreas, asignar recursos y establecer bases de comparación.',
+            '«¿Cuál es una ventaja de los presupuestos?» → la alternativa correcta es una de las cinco ventajas: conocer la empresa, planificar y coordinar, ser instrumento de gestión, evaluar y controlar, o motivar.',
+            'Verdadero o falso: «el proceso presupuestario involucra solo al área contable» → es falso: participan todas las áreas, cada una con sus responsables.'
           ] }
         ]
       },
@@ -125,6 +127,7 @@
       {
         tipo: 'leccion',
         id: 'tipos',
+        teorica: true,
         titulo: 'Tipos de presupuesto',
         idea: 'Los presupuestos se clasifican según cuánto tiempo cubren, si se ajustan al nivel de actividad, para qué sirven y quién los hace.',
         partes: [
@@ -139,7 +142,7 @@
           { k: 'asi', items: [
             'Verdadero o falso: «un presupuesto de corto plazo planifica entre 2 y 5 años» → falso: el corto plazo es hasta 1 año.',
             '«¿Cuál no es un presupuesto operativo?» → el de tesorería (caja): es financiero.',
-            '«Las comisiones de los vendedores no son parte del presupuesto operativo» → falso: son un gasto operacional.'
+            '«Las comisiones de los vendedores no son parte del presupuesto operativo» → es falso: las comisiones son un gasto operacional, así que <b>sí</b> forman parte del presupuesto operativo.'
           ] }
         ],
         porque: {
@@ -519,7 +522,7 @@
           { k: 'p', h: '**El incobrable es un gasto aparte:** no cambia los ingresos por venta.' },
           { k: 'asi', items: [
             '«¿Utilidad neta proyectada?» → ingresos proyectados − costos − gastos y, al final, × (1 − tasa de impuesto).',
-            '«Si se proyecta incobrabilidad, ¿cambian los ingresos por ventas?» → no.'
+            '«Si se proyecta incobrabilidad, ¿cambian los ingresos por ventas?» → no cambian: el incobrable es un gasto aparte y los ingresos por venta quedan igual.'
           ] }
         ]
       },
@@ -673,9 +676,9 @@
           { k: 'formula', h: 'Cobranzas del mes = % al contado × venta del mes + % a crédito × venta del mes anterior' },
           { k: 'asi', items: [
             '«¿Cobranzas del mes?» → % al contado del mes + % del mes anterior, <b>con IVA</b> si el precio es neto.',
-            '«¿Cuentas por cobrar al cierre?» → lo que falta cobrar del último mes.',
+            '«¿Cuentas por cobrar al cierre?» → es lo vendido que todavía no se cobra: normalmente, la parte a crédito de las ventas del último mes.',
             '«¿Resultado neto?» → estado de resultados con valores netos, con los incobrables y la depreciación como gasto, × (1 − tasa de impuesto).',
-            'Verdadero o falso: «la depreciación es una salida de efectivo en el presupuesto de caja» → falso.'
+            'Verdadero o falso: «la depreciación es una salida de efectivo en el presupuesto de caja» → es falso: la depreciación es un gasto, pero no sale plata de la caja.'
           ] }
         ]
       },
@@ -868,7 +871,7 @@
           '«¿Compras o producción presupuestadas del mes X?» → ventas + IF − II, con el IF según la política.',
           '«¿Inventario final deseado?» → la política aplicada al mes siguiente.',
           '«¿Cobranzas del mes?» → % al contado del mes + % del mes anterior, <b>con IVA</b> si el precio es neto.',
-          '«¿Cuentas por cobrar al cierre?» → lo que falta cobrar del último mes.',
+          '«¿Cuentas por cobrar al cierre?» → es lo vendido que todavía no se cobra: normalmente, la parte a crédito de las ventas del último mes.',
           '«¿Resultado neto?» → estado de resultados con valores netos, con los incobrables y la depreciación como gasto, × (1 − tasa de impuesto).'
         ]
       }

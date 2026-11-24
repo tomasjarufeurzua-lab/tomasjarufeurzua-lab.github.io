@@ -111,18 +111,18 @@
     if (hecho(b) && !S.hechos[b.key]) { S.hechos[b.key] = 1; S.ses.n++; }
   }
 
-  // Registra un intento. o.conf: 1 seguro · 2 más o menos · 3 adiviné. o.limpio: respondió sin haber visto la respuesta.
+  // Registra un intento. o.limpio: respondió sin haber visto la respuesta.
   function registrar(id, ok, o) {
     o = o || {};
     const x = S.it[id] || (S.it[id] = { n: 0, u: null, p: null, s: 0, h: [] });
     if (x.p === null) x.p = ok && !x.s ? 1 : 0;
     x.n++;
     x.u = ok ? 1 : 0;
-    x.h.push([hoy(), ok ? 1 : 0, o.conf || 0]);
+    x.h.push([hoy(), ok ? 1 : 0]);
     if (x.h.length > 10) x.h.shift();
     let salio = false;
-    if (!ok || o.conf === 3) {
-      // Falló, o acertó adivinando: entra (o vuelve a empezar) en la lista de repaso
+    if (!ok) {
+      // Falló: entra (o vuelve a empezar) en la lista de repaso
       S.err[id] = { desde: S.err[id] ? S.err[id].desde : hoy(), d: [] };
     } else if (S.err[id] && o.limpio) {
       const e = S.err[id];
@@ -247,7 +247,7 @@
 
   function unidad(item, o) {
     const uid = (o.ns || '') + item.id;
-    const u = { uid: uid, item: item, k: item.k, modo: o.modo || 'flujo', revelado: false, conf: 0, d: null, nuevo: true };
+    const u = { uid: uid, item: item, k: item.k, modo: o.modo || 'flujo', revelado: false, d: null, nuevo: true };
     U.set(uid, u);
     return u;
   }
@@ -258,12 +258,6 @@
   }
   const cajaDe = (u) => app.querySelector('[data-u="' + u.uid + '"]');
 
-  function hConf() {
-    return '<div class="conf" role="group" aria-label="¿Qué tan seguro estás? (opcional)"><span>¿Qué tan seguro? <span class="suave">(opcional)</span></span>' +
-      '<button type="button" class="chip" data-a="conf" data-v="1" aria-pressed="false">Seguro</button>' +
-      '<button type="button" class="chip" data-a="conf" data-v="2" aria-pressed="false">Más o menos</button>' +
-      '<button type="button" class="chip" data-a="conf" data-v="3" aria-pressed="false">Adiviné</button></div>';
-  }
   const ANIMO = [
     'Equivocarse intentando es la forma más rápida de aprenderlo.',
     'Este error es de los más comunes en el certamen; ahora ya lo conoces.',
@@ -304,8 +298,7 @@
       h += '<div class="clasif"><span>' + tx(q.clasif.texto) + '</span><div class="chips">' +
         q.clasif.opciones.map((op, i) => '<button type="button" class="chip" data-a="clasif" data-v="' + i + '" aria-pressed="false">' + tx(op) + '</button>').join('') + '</div></div>';
     }
-    h += hConf() +
-      '<div class="preg-a"><button type="button" class="btn principal" data-a="revisar">Revisar</button>' +
+    h += '<div class="preg-a"><button type="button" class="btn principal" data-a="revisar">Revisar</button>' +
       (q.pista ? '<button type="button" class="btn-l" data-a="pista">Ver pista</button>' : '') +
       '<button type="button" class="btn-l" data-a="sol">Ver solución</button></div>' +
       '<div class="fb" role="status" aria-live="polite"></div></div>';
@@ -401,7 +394,7 @@
       const limpioO = !u.revelado;
       const okO = d.c === q.correcta;
       d.e = 1;
-      const rO = registrar(u.item.id, okO, { conf: u.conf, limpio: limpioO });
+      const rO = registrar(u.item.id, okO, { limpio: limpioO });
       pintarOpcion(u, d.c);
       despuesDeResponder(u, okO, rO, limpioO);
       return;
@@ -433,7 +426,7 @@
     const limpio = !u.revelado;
     d.t = inp.value;
     d.e = 1;
-    const r = registrar(u.item.id, ok, { conf: u.conf, limpio: limpio });
+    const r = registrar(u.item.id, ok, { limpio: limpio });
     pintarPreg(u, res, okC, d.c);
     despuesDeResponder(u, ok, r, limpio);
   }
@@ -640,7 +633,7 @@
     const x = item.ref;
     const u = unidad(item, o);
     return '<div class="vf" data-u="' + u.uid + '">' + hFuente(x.fuente, true) +
-      '<p class="vf-af">' + (o.num ? '<b>' + o.num + '.</b> ' : '') + tx(x.af) + '</p>' + hConf() +
+      '<p class="vf-af">' + (o.num ? '<b>' + o.num + '.</b> ' : '') + tx(x.af) + '</p>' +
       '<div class="vf-b" style="margin-top:12px"><button type="button" class="btn" data-a="vf" data-v="1">Verdadero</button><button type="button" class="btn" data-a="vf" data-v="0">Falso</button></div>' +
       '<div class="fb" role="status" aria-live="polite"></div></div>';
   }
@@ -668,7 +661,7 @@
     const limpio = true;
     const ok = pintarVF(u, v);
     borr(u).v = v;
-    const r = registrar(u.item.id, ok, { conf: u.conf, limpio: limpio });
+    const r = registrar(u.item.id, ok, { limpio: limpio });
     despuesDeResponder(u, ok, r, limpio);
   }
 
@@ -678,8 +671,7 @@
     const u = unidad(item, o);
     return '<div class="mc" data-u="' + u.uid + '">' + hFuente(x.fuente || (item.k === 'pq' ? { k: 'comprension' } : null), true) +
       '<p class="mc-en">' + (o.num ? '<b>' + o.num + '.</b> ' : '') + tx(x.enunciado || x.pregunta) + '</p>' +
-      hConf() +
-      '<div class="mc-ops" style="margin-top:12px">' + x.opciones.map((op, i) => '<button type="button" class="mc-op" data-a="mc" data-v="' + i + '"><span class="letra">' + 'abcdef'.charAt(i) + '</span><span>' + tx(op) + '</span><span class="res" aria-hidden="true"></span></button>').join('') + '</div>' +
+      '<div class="mc-ops">' + x.opciones.map((op, i) => '<button type="button" class="mc-op" data-a="mc" data-v="' + i + '"><span class="letra">' + 'abcdef'.charAt(i) + '</span><span>' + tx(op) + '</span><span class="res" aria-hidden="true"></span></button>').join('') + '</div>' +
       '<div class="fb" role="status" aria-live="polite"></div></div>';
   }
   function pintarMC(u, v) {
@@ -703,7 +695,7 @@
     if (u.revelado) return;
     const ok = pintarMC(u, v);
     borr(u).o = v;
-    const r = registrar(u.item.id, ok, { conf: u.conf, limpio: true });
+    const r = registrar(u.item.id, ok, { limpio: true });
     despuesDeResponder(u, ok, r, true);
   }
 
@@ -712,7 +704,6 @@
     if (u.modo === 'flujo') delete S.r[u.item.id];
     u.d = null;
     u.revelado = false;
-    u.conf = 0;
   }
 
   // ---------- Restaurar lo ya respondido al volver a un bloque ----------
@@ -795,10 +786,17 @@
   const migas = (b, extra) => '<p class="migas">' + (b.mod.n ? 'Módulo ' + b.mod.n + ' · ' : '') + (extra || TIPO_TXT[b.tipo] || '') + '</p>';
 
   function hLeccion(b) {
-    let h = '<article class="bloque leccion">' + migas(b) + '<h1 tabindex="-1">' + tx(b.titulo) + '</h1>' +
+    const sig = vecinos(b).sig;
+    let h = '<article class="bloque leccion">' + migas(b) +
+      (b.teorica ? '<div class="aviso-teo"><p><b>Sección más bien teórica.</b> No es fundamental para el certamen: no se necesita para resolver los ejercicios y, si aparece, es en el verdadero o falso.</p>' +
+        (sig ? '<a class="btn chico" href="' + href(sig) + '">Saltar esta sección →</a>' : '') + '</div>' : '') +
+      '<h1 tabindex="-1">' + tx(b.titulo) + '</h1>' +
       (b.idea ? '<p class="idea"><span>La idea en una frase</span>' + tx(b.idea) + '</p>' : '') +
       (b.partes || []).map(hParteLeccion).join('');
-    if (b.porque) h += '<section class="porque-sec"><h2>Antes de seguir: ¿por qué?</h2>' + hMC(itemsDe(b)[0], { modo: 'flujo' }) + '</section>';
+    if (b.porque) {
+      const hecha = !!(S.r[b.key + '#porque'] && typeof S.r[b.key + '#porque'].o === 'number');
+      h += '<details class="porque-sec"' + (hecha ? ' open' : '') + '><summary>Pregunta de comprensión <span class="suave">(opcional)</span></summary>' + hMC(itemsDe(b)[0], { modo: 'flujo' }) + '</details>';
+    }
     return h + '<div id="zona-nav"></div></article>';
   }
 
@@ -1067,7 +1065,7 @@
   function hErrores() {
     const ids = Object.keys(S.err).filter((id) => ITEMS.has(id));
     let h = '<article class="bloque"><p class="migas">Repaso</p><h1 tabindex="-1">Mis errores para repasar</h1>' +
-      '<p>Aquí queda todo lo que fallaste (y lo que acertaste adivinando). Un ítem sale de la lista cuando lo aciertas <b>dos veces en días distintos</b>: repasar con días de por medio es lo que hace que se quede.</p>';
+      '<p>Aquí queda todo lo que fallaste. Un ítem sale de la lista cuando lo aciertas <b>dos veces en días distintos</b>: repasar con días de por medio es lo que hace que se quede.</p>';
     if (!ids.length) return h + '<div class="res-mod"><p><b>No tienes errores pendientes.</b></p><p>Cuando falles un ejercicio, un verdadero o falso o una alternativa, aparecerá aquí.</p></div><div class="nav"><a class="btn" href="#/">← Volver al inicio</a></div></article>';
     h += '<div class="acciones"><button type="button" class="btn principal" data-a="errores-iniciar">Repasar ahora (' + ids.length + ')</button></div><ul class="lista-err">' +
       ids.map((id) => {
@@ -1287,7 +1285,7 @@
         hSimRevision(b, sr);
     } else {
       h += '<h1 tabindex="-1">Simulacro final</h1>' +
-        '<p>El mismo formato del certamen, con tiempo y sin ayuda. Las preguntas salen mezcladas de todos los módulos, porque en el certamen hay que reconocer de qué tipo es cada problema.</p>' +
+        '<p>El formato probable del certamen (el de los certámenes anteriores), con tiempo y sin ayuda. Las preguntas salen mezcladas de todos los módulos, porque en el certamen hay que reconocer de qué tipo es cada problema.</p>' +
         '<div class="datos-cert"><div><span class="rot">Parte 1</span><b>' + b.vf.n + ' verdadero o falso</b><span class="suave">' + (b.vf.n * b.vf.puntos) + ' puntos, ' + b.vf.puntos + ' cada uno</span></div>' +
         '<div><span class="rot">Parte 2</span><b>' + b.areas.length + ' ejercicios</b><span class="suave">Presupuestos, costos y CVU · 4–5 preguntas, 20–25 puntos cada uno</span></div>' +
         '<div><span class="rot">Tiempo</span><b>' + b.minutos + ' minutos</b><span class="suave">Se puede pausar</span></div></div>' +
@@ -1385,7 +1383,7 @@
         h += '<ul>';
         mod.bloques.forEach((b) => {
           h += '<li' + (b.rol === 'extra' ? ' class="extra"' : '') + '><a href="' + href(b) + '"' + (b === act ? ' aria-current="page"' : '') + '>' + hEst(b) +
-            '<span>' + tx(b.titulo) + '<small>' + (b.tipo === 'simulacro' ? (S.sim ? 'En curso' : (S.simRes ? 'Último: ' + S.simRes.puntaje + ' de 100 puntos' : 'Formato del certamen · 70 min')) : b.rol === 'extra' ? 'Ejercicio extra' : TIPO_TXT[b.tipo]) + (b.fuente && b.fuente.k === 'certamen' ? ' · C3 ' + b.fuente.sem + 'S-' + b.fuente.anio : '') + '</small></span></a></li>';
+            '<span>' + tx(b.titulo) + '<small>' + (b.teorica ? 'Lección · teórica, se puede saltar' : b.tipo === 'simulacro' ? (S.sim ? 'En curso' : (S.simRes ? 'Último: ' + S.simRes.puntaje + ' de 100 puntos' : 'Formato probable del certamen · 70 min')) : b.rol === 'extra' ? 'Ejercicio extra' : TIPO_TXT[b.tipo]) + (b.fuente && b.fuente.k === 'certamen' ? ' · C3 ' + b.fuente.sem + 'S-' + b.fuente.anio : '') + '</small></span></a></li>';
         });
         h += '</ul>';
       }
@@ -1485,11 +1483,7 @@
     else if (a === 'sol' && u) verSolucion(u, false);
     else if (a === 'sol-si' && u) verSolucion(u, true);
     else if (a === 'sol-no' && u) { const fb = cajaDe(u).querySelector('.fb'); fb.className = 'fb'; fb.innerHTML = ''; const i = cajaDe(u).querySelector('input'); if (i) i.focus(); }
-    else if (a === 'conf' && u) {
-      const v = Number(el.dataset.v);
-      u.conf = u.conf === v ? 0 : v;
-      el.parentElement.querySelectorAll('[data-a="conf"]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.v) === u.conf)));
-    } else if (a === 'clasif' && u) {
+    else if (a === 'clasif' && u) {
       const d = borr(u);
       d.c = Number(el.dataset.v);
       el.parentElement.querySelectorAll('[data-a="clasif"]').forEach((b, i) => { b.setAttribute('aria-pressed', String(i === d.c)); b.classList.remove('ok', 'mal'); });

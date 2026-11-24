@@ -137,7 +137,7 @@
           { k: 'p', h: 'En los costos fijos entran **todos**: los de producción, los de administración y los de venta. En el costo variable unitario también entran todos los que se pagan por cada unidad.' },
           { k: 'asi', items: [
             '«¿Punto de equilibrio en unidades?» → CF ÷ mcᵤ. «¿En pesos?» → CF ÷ rc, o el precio por las unidades de equilibrio.',
-            '«¿Costos fijos?» → a veces hay que sumarlos; otras veces salen del punto de equilibrio: CF = q<sub>PE</sub> × mcᵤ.',
+            '«¿Costos fijos?» → a veces se suman los que entrega el enunciado; otras veces el enunciado da el punto de equilibrio y se despejan: CF = q<sub>PE</sub> × mcᵤ.',
             '«¿Impuesto en el punto de equilibrio?» → <b>$ 0</b>.'
           ] }
         ],
@@ -289,7 +289,7 @@
           { k: 'p', h: 'Precio = costo variable unitario + costo fijo unitario + utilidad unitaria deseada. El **costo fijo unitario (cfᵤ)** es CF ÷ q, así que depende del volumen planeado.' },
           { k: 'formula', h: 'p = cvᵤ + cfᵤ + u &nbsp;&nbsp;·&nbsp;&nbsp; p = cvᵤ + cfᵤ + {{udiᵤ // 1 − t}}' },
           { k: 'asi', items: [
-            '«¿Unidades para una utilidad neta de $ X?» → primero divide por (1 − t); después q = (CF + UAI) ÷ mcᵤ.',
+            '«¿Unidades para una utilidad neta de $ X?» → primero pasa la utilidad neta a utilidad antes de impuesto dividiéndola por (1 − t); después q = (CF + UAI) ÷ mcᵤ.',
             '«¿Impuesto a pagar?» → UAI − UDI.',
             '«¿Precio para mantener la razón de contribución?» → el costo variable debe seguir siendo la misma proporción del precio.',
             'Fíjate siempre si la utilidad que dan es <b>antes</b> o <b>después</b> de impuesto, y si piden <b>unidades</b> o <b>pesos</b>.'
@@ -698,8 +698,8 @@
           { k: 'sub', h: 'Para qué sirve' },
           { k: 'p', h: 'Para saber cuántas unidades vender para una utilidad, cuánto vender para no perder, decidir precios y ajustes de costos, evaluar el cierre de una planta, o decidir entre hacer y comprar.' },
           { k: 'asi', items: [
-            'Verdadero o falso: «si suben los costos fijos, el punto de equilibrio disminuye» (falso), y parecidos.',
-            '«¿Cuál no es un supuesto?» o «¿cuál es una limitante?» → repasa las dos listas.',
+            'Verdadero o falso: «si suben los costos fijos, el punto de equilibrio disminuye» → es falso: el punto de equilibrio sube. Todo lo que encarece (más costos fijos o más costo variable) sube el punto de equilibrio.',
+            '«¿Cuál no es un supuesto?» o «¿cuál es una limitante?» → se responden con las dos listas de esta lección: los supuestos y las limitaciones.',
             '«¿Qué escenario conviene?» → calcula el resultado de cada escenario y compáralos.'
           ] }
         ],
@@ -852,7 +852,7 @@
           '«¿Costos fijos?» (a veces desde el punto de equilibrio: CF = q de equilibrio × mcᵤ).',
           '«¿Punto de equilibrio en unidades y en pesos?»',
           '«¿Margen de seguridad en %, en pesos o en unidades?»',
-          '«¿Unidades para una utilidad neta de $ X?» → divide por (1 − t) primero.',
+          '«¿Unidades para una utilidad neta de $ X?» → primero pasa la utilidad neta a antes de impuesto dividiéndola por (1 − t).',
           '«¿Impuesto a pagar?» → UAI − UDI. «¿Impuesto en el punto de equilibrio?» → $ 0.',
           '«¿Precio para mantener la razón de contribución?»',
           '«¿Qué escenario conviene?» → compara resultados.'
