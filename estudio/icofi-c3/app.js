@@ -180,6 +180,7 @@
     .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')(?![' + LETRA + '])', 'g');
 
   function abreviar(raiz, omitir) {
+    if (!omitir && VISTA && VISTA.bloque) omitir = VISTA.bloque.sinAb;
     const w = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT, {
       acceptNode: (n) => (n.parentElement && n.parentElement.closest('abbr, input, textarea, svg, button, a, .sin-ab, script, style')
         ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT)
@@ -281,10 +282,21 @@
     const u = unidad(item, o);
     const ad = adornos(q);
     let h = '<div class="preg" data-u="' + u.uid + '">' +
-      '<label class="preg-t" for="in-' + u.uid + '">' + (o.num ? '<span class="preg-n">' + o.num + '</span>' : '') + '<span>' + tx(q.texto) + '</span></label>' +
-      '<div class="campo">' + (ad.pre ? '<span class="ad">' + ad.pre + '</span>' : '') +
-      '<input id="in-' + u.uid + '" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="Tu respuesta" data-t="' + (q.tipo || 'pesos') + '">' +
-      (ad.suf ? '<span class="ad">' + esc(ad.suf) + '</span>' : '') + '<span class="marca" aria-hidden="true"></span></div>';
+      '<label class="preg-t" for="in-' + u.uid + '">' + (o.num ? '<span class="preg-n">' + o.num + '</span>' : '') + '<span>' + tx(q.texto) + '</span></label>';
+    if (q.tipo === 'opcion') {
+      // Pregunta que se responde eligiendo una opción (sin número)
+      h += '<div class="chips">' + q.opciones.map((op, i) => '<button type="button" class="chip" data-a="clasif" data-v="' + i + '" aria-pressed="false">' + tx(op) + '</button>').join('') + '</div>';
+    } else {
+      h += '<div class="campo">' + (ad.pre ? '<span class="ad">' + ad.pre + '</span>' : '') +
+        '<input id="in-' + u.uid + '" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="Tu respuesta" data-t="' + (q.tipo || 'pesos') + '">' +
+        (ad.suf ? '<span class="ad">' + esc(ad.suf) + '</span>' : '') + '<span class="marca" aria-hidden="true"></span></div>';
+    }
+    if (q.signo) {
+      // Resultado que puede ser negativo: se elige el signo (el teclado numérico del celular no trae "−")
+      h += '<div class="clasif"><span>¿Qué es?</span><div class="chips">' +
+        '<button type="button" class="chip" data-a="signo" data-v="0" aria-pressed="false">' + tx(q.signo.pos) + '</button>' +
+        '<button type="button" class="chip" data-a="signo" data-v="1" aria-pressed="false">' + tx(q.signo.neg) + '</button></div></div>';
+    }
     if (q.clasif) {
       h += '<div class="clasif"><span>' + tx(q.clasif.texto) + '</span><div class="chips">' +
         q.clasif.opciones.map((op, i) => '<button type="button" class="chip" data-a="clasif" data-v="' + i + '" aria-pressed="false">' + tx(op) + '</button>').join('') + '</div></div>';
@@ -306,6 +318,32 @@
       (res.alt && res.alt.nota ? ' ' + tx(res.alt.nota) : ' La diferencia viene de redondear pasos intermedios.') + '</p>';
   }
   // Pinta el resultado de una pregunta ya corregida. okC: null si no hay clasificación.
+  function pintarOpcion(u, sel) {
+    const q = u.item.ref;
+    const caja = cajaDe(u);
+    const fb = caja.querySelector('.fb');
+    const ok = sel === q.correcta;
+    caja.querySelectorAll('[data-a="clasif"]').forEach((b, i) => {
+      b.setAttribute('aria-pressed', String(i === sel));
+      b.classList.toggle('ok', i === sel && ok);
+      b.classList.toggle('mal', i === sel && !ok);
+    });
+    fb.className = 'fb ' + (ok ? 'ok' : 'mal');
+    fb.innerHTML = '<p class="fb-h"><span class="ic">' + (ok ? '✓' : '✗') + '</span><span>' + (ok ? 'Correcto: ' : 'Todavía no. La respuesta correcta es: ') + '<b>' + tx(q.opciones[q.correcta]) + '</b></span></p>' +
+      '<p>' + (ok ? '<b>Por qué:</b> ' : '') + tx(q.porque) + '</p>' + (q.sol ? hSolOpcion(q) : '') +
+      (ok ? '' : '<p class="animo">' + animo() + ' Puedes cambiar tu respuesta y revisar de nuevo.</p>');
+    abreviar(fb);
+    u.revelado = true;
+  }
+  function hSolOpcion(q) {
+    const s = q.sol;
+    return '<ol class="sol"><li><b>Dato:</b> ' + tx(s.d) + '</li><li><b>Fórmula:</b> ' + tx(s.f) + '</li><li><b>Cálculo:</b> ' + tx(s.c) + '</li></ol>';
+  }
+  // Texto del campo con el signo elegido aplicado
+  function textoConSigno(q, valor, d) {
+    if (!q.signo || d.s !== 1 || /^\s*[-−–(]/.test(valor) || !valor.trim()) return valor;
+    return '-' + valor.trim();
+  }
   function pintarPreg(u, res, okC, selC) {
     const q = u.item.ref;
     const caja = cajaDe(u);
@@ -335,7 +373,8 @@
       if (res.estado !== 'correcta') h += notaRedondeo(q, res);
       fb.className = 'fb mal';
     } else {
-      h = '<p class="fb-h"><span class="ic">✗</span><span>' + (res.estado === 'trampa' ? 'Casi: ' + tx(res.trampa.msg) : 'Todavía no.') + '</span></p>' +
+      const soloSigno = q.signo && res.estado === 'incorrecta' && Math.abs(Math.abs(res.valor) - Math.abs(q.respuesta)) <= M.tolerancia(q);
+      h = '<p class="fb-h"><span class="ic">✗</span><span>' + (res.estado === 'trampa' ? 'Casi: ' + tx(res.trampa.msg) : (soloSigno ? 'Casi: el monto está bien, pero es ' + tx((q.respuesta < 0 ? q.signo.neg : q.signo.pos).toLowerCase()) + '.' : 'Todavía no.')) + '</span></p>' +
         '<p>La respuesta correcta es ' + correcta + (q.clasif ? ' · ' + tx(q.clasif.opciones[q.clasif.correcta]) : '') + '.</p>' + hSol(q) +
         (q.clasif && okC === false ? '<p>' + tx(q.clasif.porque) + '</p>' : '') +
         '<p class="animo">' + animo() + ' Puedes corregir tu respuesta y revisar de nuevo.</p>';
@@ -350,8 +389,23 @@
     const caja = cajaDe(u);
     const inp = caja.querySelector('input');
     const fb = caja.querySelector('.fb');
-    const res = M.corregir(q, inp.value);
     const d = borr(u);
+    if (q.tipo === 'opcion') {
+      if (typeof d.c !== 'number') { fb.className = 'fb aviso'; fb.innerHTML = '<p>Elige una opción antes de revisar.</p>'; return; }
+      const limpioO = !u.revelado;
+      const okO = d.c === q.correcta;
+      d.e = 1;
+      const rO = registrar(u.item.id, okO, { conf: u.conf, limpio: limpioO });
+      pintarOpcion(u, d.c);
+      despuesDeResponder(u, okO, rO, limpioO);
+      return;
+    }
+    if (q.signo && typeof d.s !== 'number' && !/^\s*[-−–(]/.test(inp.value) && inp.value.trim()) {
+      fb.className = 'fb aviso';
+      fb.innerHTML = '<p>Te falta indicar si es ' + tx(q.signo.pos.toLowerCase()) + ' o ' + tx(q.signo.neg.toLowerCase()) + '.</p>';
+      return;
+    }
+    const res = M.corregir(q, textoConSigno(q, inp.value, d));
     if (res.estado === 'vacia' || res.estado === 'invalida') {
       fb.className = 'fb aviso';
       fb.innerHTML = res.estado === 'vacia'
@@ -401,7 +455,8 @@
     } else {
       const q = u.item.ref;
       fb.className = 'fb';
-      fb.innerHTML = '<p><b>Solución:</b> ' + M.formatear(q.respuesta, q) + (q.clasif ? ' · ' + tx(q.clasif.opciones[q.clasif.correcta]) : '') + '</p>' + hSol(q) +
+      if (q.tipo === 'opcion') fb.innerHTML = '<p><b>Solución:</b> ' + tx(q.opciones[q.correcta]) + '</p><p>' + tx(q.porque) + '</p>' + (q.sol ? hSolOpcion(q) : '');
+      else fb.innerHTML = '<p><b>Solución:</b> ' + M.formatear(q.respuesta, q) + (q.clasif ? ' · ' + tx(q.clasif.opciones[q.clasif.correcta]) : '') + '</p>' + hSol(q) +
         (q.tambien && q.tambien.length ? '<p class="suave">También se acepta: ' + q.tambien.map((a) => M.formatear(a.valor, q)).join(' · ') + ' (diferencias de redondeo).</p>' : '');
     }
     abreviar(fb);
@@ -686,12 +741,15 @@
       }
       if (!d) return;
       if (u.k === 'preg') {
+        const q0 = u.item.ref;
+        if (typeof d.c === 'number') caja.querySelectorAll('[data-a="clasif"]').forEach((b, i) => b.setAttribute('aria-pressed', i === d.c ? 'true' : 'false'));
+        if (typeof d.s === 'number') caja.querySelectorAll('[data-a="signo"]').forEach((b, i) => b.setAttribute('aria-pressed', i === d.s ? 'true' : 'false'));
+        if (q0.tipo === 'opcion') { if (d.e && typeof d.c === 'number') pintarOpcion(u, d.c); return; }
         const inp = caja.querySelector('input');
         if (d.t !== undefined) inp.value = d.t;
-        if (typeof d.c === 'number') caja.querySelectorAll('[data-a="clasif"]').forEach((b, i) => b.setAttribute('aria-pressed', i === d.c ? 'true' : 'false'));
         if (d.e) {
           const q = u.item.ref;
-          const res = M.corregir(q, inp.value);
+          const res = M.corregir(q, textoConSigno(q, inp.value, d));
           if (res.estado !== 'vacia' && res.estado !== 'invalida') pintarPreg(u, res, q.clasif ? d.c === q.clasif.correcta : null, d.c);
         }
       } else if (u.k === 'vf') {
@@ -714,6 +772,9 @@
     if (p.k === 'lista') return '<ul>' + p.items.map((x) => '<li>' + tx(x) + '</li>').join('') + '</ul>';
     if (p.k === 'pasos') return '<ol class="pasos">' + p.items.map((x) => '<li><b class="t">' + tx(x.t) + '</b>' + tx(x.h) + '</li>').join('') + '</ol>';
     if (p.k === 'diagrama') return hDiagrama(p.id);
+    if (p.k === 'html') return p.h;
+    if (p.k === 'sub') return '<h2 class="sub">' + tx(p.h) + '</h2>';
+    if (p.k === 'datos') return hTablaDatos(p);
     if (p.k === 'comparar') {
       return '<div class="tabla-scroll"><table class="t-comparar"><thead><tr>' + p.cols.map((c) => '<th scope="col">' + tx(c) + '</th>').join('') + '</tr></thead><tbody>' +
         p.filas.map((f) => '<tr>' + f.map((c, i) => (i ? '<td>' + tx(c) + '</td>' : '<th scope="row">' + tx(c) + '</th>')).join('') + '</tr>').join('') + '</tbody></table></div>';
@@ -1096,7 +1157,7 @@
       if (b.tipo !== 'portada') S.ult = b.key;
       guardar();
     }
-    abreviar(app, b && b.sinAb);
+    abreviar(app);
     restaurar();
     marcarScroll();
     if (b) refrescarBloque();
@@ -1153,6 +1214,11 @@
       const d = borr(u);
       d.c = Number(el.dataset.v);
       el.parentElement.querySelectorAll('[data-a="clasif"]').forEach((b, i) => { b.setAttribute('aria-pressed', String(i === d.c)); b.classList.remove('ok', 'mal'); });
+      guardar();
+    } else if (a === 'signo' && u) {
+      const d = borr(u);
+      d.s = Number(el.dataset.v);
+      el.parentElement.querySelectorAll('[data-a="signo"]').forEach((b, i) => b.setAttribute('aria-pressed', String(i === d.s)));
       guardar();
     } else if (a === 'fila' && u) revisarTabla(u, el.dataset.f);
     else if (a === 'tabla-todo' && u) revisarTabla(u, null);

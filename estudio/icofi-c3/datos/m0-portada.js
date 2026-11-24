@@ -37,14 +37,4 @@
     ]
   });
 
-  // Módulos todavía no cargados (prototipo: por ahora solo está completo el Módulo 4).
-  [
-    { id: 'presupuestos', n: 1, titulo: 'Presupuestos', corto: 'Presupuestos' },
-    { id: 'costos', n: 2, titulo: 'Fundamentos de costos', corto: 'Fundamentos de costos' },
-    { id: 'ordenes', n: 3, titulo: 'Sistemas de costeo: órdenes específicas y el problema de los CIF', corto: 'Órdenes específicas y CIF' },
-    { id: 'total-directo', n: 5, titulo: 'Costeo total (absorción) vs costeo directo (variable)', corto: 'Costeo total vs directo' },
-    { id: 'cvu', n: 6, titulo: 'Relación Costo–Volumen–Utilidad (CVU)', corto: 'Costo–Volumen–Utilidad' },
-    { id: 'simulacro', n: 7, titulo: 'Simulacro final', corto: 'Simulacro final' },
-    { id: 'formulas', n: 8, titulo: 'Hoja de fórmulas', corto: 'Hoja de fórmulas' }
-  ].forEach(function (m) { m.pendiente = true; m.bloques = []; g.ICOFI_C3.modulos.push(m); });
 })(typeof window !== 'undefined' ? window : globalThis);

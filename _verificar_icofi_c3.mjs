@@ -15,7 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { execFileSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const RAIZ = path.dirname(fileURLToPath(import.meta.url));
 const DIR = path.join(RAIZ, 'estudio', 'icofi-c3');
@@ -92,148 +92,39 @@ function seccionPauta(ancla, lineas) {
 }
 
 // =====================================================================================
-// RECÁLCULOS: una función por ejercicio. Recibe solo los "datos" del enunciado y devuelve
-//   v:  { idPregunta | 'tabla:fila|col' : valor con todos los decimales }
-//   alt:{ misma clave : [valores alternativos por redondeo] }
-//   tr: { misma clave : [valores de las trampas (el error que describe cada una)] }
-// y, para cotejar: md (título de la sección en el encargo) y pauta (texto ancla en el PDF).
+// RECÁLCULOS: están en _verificar_icofi_c3/mN.mjs, una función por ejercicio.
+// Cada una recibe solo los "datos" del enunciado y devuelve:
+//   v:   { idPregunta | 'tabla:fila|col' : valor con todos los decimales }
+//        (en una pregunta de opción, el índice de la opción correcta)
+//   alt: { misma clave : [valores alternativos por redondeo] }
+//   tr:  { misma clave : [valores de las trampas: el resultado de cometer el error que describe cada una] }
+//   cl:  { idPregunta : índice correcto de la clasificación (sub/sobreaplicación, etc.) }
+//   fijos, modelo: celdas dadas de las tablas · suma: controles de cuadre · partidas: unidades físicas
+// y, para cotejar: md (título de la sección en el encargo), pauta (texto ancla en el PDF),
+// sinMd / sinPauta: ids que no se buscan en esa fuente (con el motivo en un comentario).
 // =====================================================================================
 const CALC = {};
-
-// ---------- Módulo 4 ----------
-CALC['procesos/ejemplo-base'] = {
-  md: '**E4.1 Ejemplo base',
-  f(d) {
-    const ue = d.terminadas + d.enProceso * d.avance;
-    const unit = d.costo / ue;
-    return { v: { unitario: unit, pt: d.terminadas * unit, penp: d.enProceso * d.avance * unit }, extra: { ue }, suma: [[['pt', 'penp'], d.costo]] };
-  }
-};
-CALC['procesos/lean-harina'] = {
-  md: '**E4.2 Lean Ltda.',
-  pauta: 'LEAN LIMITADA',
-  f(d) {
-    const enp = d.recibidos - d.terminados;
-    const uePrimo = d.terminados + enp * d.avancePrimo, ueCif = d.terminados + enp * d.avanceCif;
-    const uPrimo = d.costosPrimos / uePrimo, uCif = d.cif / ueCif;
-    return {
-      v: {
-        'ue:tt|2': d.terminados, 'ue:tt|3': d.terminados, 'ue:enp|1': enp, 'ue:enp|2': enp * d.avancePrimo, 'ue:enp|3': enp * d.avanceCif,
-        'ue:tot|2': uePrimo, 'ue:tot|3': ueCif, 'ue:unit|2': uPrimo, 'ue:unit|3': uCif,
-        p1: enp * d.avancePrimo * uPrimo + enp * d.avanceCif * uCif,
-        p2: d.terminados * (uPrimo + uCif),
-        p3: enp * d.avancePrimo,
-        p4: uPrimo + uCif
-      },
-      fijos: { 'ue:tt|1': d.terminados, 'ue:tot|1': d.recibidos, 'ue:costo|2': d.costosPrimos, 'ue:costo|3': d.cif },
-      suma: [[['p1', 'p2'], d.costosPrimos + d.cif]]
-    };
-  }
-};
-CALC['procesos/abon-champu'] = {
-  md: '**E4.3 ABON S.A.',
-  pauta: '“ABON S.A.”',
-  f(d) {
-    const enp = d.iniciadas - d.transferidas;
-    const mo = d.mod + d.moi;
-    const ueMpd = d.transferidas + enp * d.avMpd, ueMo = d.transferidas + enp * d.avMo, ueMpi = d.transferidas + enp * d.avMpi;
-    const uMpd = d.mpd / ueMpd, uMo = mo / ueMo, uMpi = d.mpi / ueMpi;
-    const unit = uMpd + uMo + uMpi;
-    return {
-      v: {
-        'ue:mpd|2': ueMpd, 'ue:mpd|3': uMpd, 'ue:mo|1': mo, 'ue:mo|2': ueMo, 'ue:mo|3': uMo, 'ue:mpi|2': ueMpi, 'ue:mpi|3': uMpi, 'ue:tot|3': unit,
-        p1: enp * d.avMpd * uMpd + enp * d.avMo * uMo + enp * d.avMpi * uMpi,
-        p2: d.transferidas * unit,
-        p3: ueMo,
-        p4: unit
-      },
-      fijos: { 'ue:mpd|1': d.mpd, 'ue:mpi|1': d.mpi, 'ue:tot|1': d.mpd + mo + d.mpi },
-      suma: [[['p1', 'p2'], d.mpd + mo + d.mpi]]
-    };
-  }
-};
-CALC['procesos/mermas-dos-casos'] = {
-  md: '**E4.1b Mermas',
-  f(d) {
-    const uNormal = d.costo / d.buenas;                 // la merma normal no se cuenta
-    const uAnormal = d.costo / (d.buenas + d.malas);    // la merma anormal sí se cuenta
-    return { v: { normal: uNormal, anormal: uAnormal, perdida: d.malas * uAnormal }, extra: { produccion: d.buenas + d.malas } };
-  }
-};
-CALC['procesos/etc-dos-departamentos'] = {
-  md: '**E4.4 Producto "ETC"',
-  f(d) {
-    const a = d.d1, b = d.d2;
-    // --- Depto. 1 (merma normal: no entra a las UE)
-    const ue1mp = a.terminadas + a.enProceso * a.avMat, ue1cc = a.terminadas + a.enProceso * a.avConv;
-    const u1mp = a.materiales / ue1mp, u1cc = a.conversion / ue1cc, u1 = u1mp + u1cc;
-    const tt = a.terminadas * u1, pmp = a.enProceso * a.avMat * u1mp, pcc = a.enProceso * a.avConv * u1cc;
-    const costo1 = a.materiales + a.conversion;
-    // --- Depto. 2 (costo transferido = MP1 al 100 %; merma anormal terminada: entra a las UE)
-    const ue2mp1 = b.terminadas + b.enProceso + b.mermaAnormal;
-    const ue2mp = b.terminadas + b.enProceso * b.avMat + b.mermaAnormal, ue2cc = b.terminadas + b.enProceso * b.avConv + b.mermaAnormal;
-    const u2mp1 = tt / ue2mp1, u2mp = b.materiales / ue2mp, u2cc = b.conversion / ue2cc, u2 = u2mp1 + u2mp + u2cc;
-    const pt = b.terminadas * u2, qmp1 = b.enProceso * u2mp1, qmp = b.enProceso * b.avMat * u2mp, qcc = b.enProceso * b.avConv * u2cc, ma = b.mermaAnormal * u2;
-    const costo2 = tt + b.materiales + b.conversion;
-    // --- Camino de la resolución de clase: costos unitarios redondeados a UN decimal
-    const c1mp = r1(u1mp), c1cc = r1(u1cc), c1 = r1(c1mp + c1cc);
-    const ctt = a.terminadas * c1, cpmp = a.enProceso * a.avMat * c1mp;
-    const cpenp1 = costo1 - ctt;                       // en clase el depto. 1 cuadra en 244.000
-    const cpcc = cpenp1 - cpmp;
-    const c2mp1 = r1(ctt / ue2mp1), c2mp = r1(u2mp), c2cc = r1(u2cc), c2 = r1(c2mp1 + c2mp + c2cc);
-    const cpt = b.terminadas * c2, cqmp1 = b.enProceso * c2mp1, cqmp = b.enProceso * b.avMat * c2mp, cqcc = b.enProceso * b.avConv * c2cc;
-    const cpenp2 = cqmp1 + cqmp + cqcc;
-    const ccosto2 = ctt + b.materiales + b.conversion;
-    const cmaDif = ccosto2 - cpt - cpenp2;             // merma anormal por diferencia (clase)
-    const cmaDir = b.mermaAnormal * c2;                // merma anormal = 100 × 508,1
-    return {
-      v: {
-        'd1-ue:enp|2': a.enProceso * a.avMat, 'd1-ue:enp|3': a.enProceso * a.avConv, 'd1-ue:mn|2': 0, 'd1-ue:mn|3': 0, 'd1-ue:tot|2': ue1mp, 'd1-ue:tot|3': ue1cc,
-        'd1-unit:mp|2': u1mp, 'd1-unit:cc|2': u1cc, 'd1-unit:tot|2': u1,
-        'd1-dist:tt|1': tt, 'd1-dist:pmp|1': pmp, 'd1-dist:pcc|1': pcc, 'd1-dist:penp|1': pmp + pcc, 'd1-dist:mn|1': 0,
-        'd2-ue:tt|2': b.terminadas, 'd2-ue:tt|3': b.terminadas, 'd2-ue:tt|4': b.terminadas,
-        'd2-ue:enp|2': b.enProceso, 'd2-ue:enp|3': b.enProceso * b.avMat, 'd2-ue:enp|4': b.enProceso * b.avConv,
-        'd2-ue:ma|2': b.mermaAnormal, 'd2-ue:ma|3': b.mermaAnormal, 'd2-ue:ma|4': b.mermaAnormal,
-        'd2-ue:tot|2': ue2mp1, 'd2-ue:tot|3': ue2mp, 'd2-ue:tot|4': ue2cc,
-        'd2-unit:mp1|1': tt, 'd2-unit:mp1|2': u2mp1, 'd2-unit:mp|2': u2mp, 'd2-unit:cc|2': u2cc, 'd2-unit:tot|1': costo2, 'd2-unit:tot|2': u2,
-        'd2-dist:pt|1': pt, 'd2-dist:pmp1|1': qmp1, 'd2-dist:pmp|1': qmp, 'd2-dist:pcc|1': qcc, 'd2-dist:penp|1': qmp1 + qmp + qcc, 'd2-dist:ma|1': ma,
-        p1: u2, p2: a.enProceso + b.enProceso, p3: pmp + pcc + qmp1 + qmp + qcc, p4: 0, p5: ma
-      },
-      alt: {
-        'd1-unit:mp|2': [c1mp], 'd1-unit:tot|2': [c1],
-        'd1-dist:tt|1': [ctt], 'd1-dist:pmp|1': [cpmp], 'd1-dist:pcc|1': [cpcc], 'd1-dist:penp|1': [cpenp1],
-        'd2-unit:mp1|1': [ctt], 'd2-unit:mp1|2': [c2mp1], 'd2-unit:mp|2': [c2mp], 'd2-unit:cc|2': [c2cc], 'd2-unit:tot|1': [ccosto2], 'd2-unit:tot|2': [c2],
-        'd2-dist:pt|1': [cpt], 'd2-dist:pmp1|1': [cqmp1], 'd2-dist:pmp|1': [cqmp], 'd2-dist:pcc|1': [cqcc], 'd2-dist:penp|1': [cpenp2], 'd2-dist:ma|1': [cmaDif, cmaDir],
-        p1: [c2], p3: [cpenp1 + cpenp2], p5: [cmaDif, cmaDir]
-      },
-      fijos: {
-        'd1-ue:tt|1': a.terminadas, 'd1-ue:enp|1': a.enProceso, 'd1-ue:mn|1': a.mermaNormal, 'd1-ue:tot|1': a.puestas,
-        'd1-unit:mp|1': a.materiales, 'd1-unit:cc|1': a.conversion, 'd1-unit:tot|1': costo1, 'd1-dist:tot|1': costo1,
-        'd2-ue:tt|1': b.terminadas, 'd2-ue:enp|1': b.enProceso, 'd2-ue:ma|1': b.mermaAnormal, 'd2-ue:tot|1': a.terminadas,
-        'd2-unit:mp|1': b.materiales, 'd2-unit:cc|1': b.conversion, 'd2-dist:tot|1': costo2
-      },
-      modelo: { 'd1-ue:tt|2': a.terminadas, 'd1-ue:tt|3': a.terminadas },
-      suma: [
-        [['d1-dist:tt|1', 'd1-dist:penp|1', 'd1-dist:mn|1'], costo1],
-        [['d2-dist:pt|1', 'd2-dist:penp|1', 'd2-dist:ma|1'], costo2]
-      ],
-      partidas: [a.puestas === a.terminadas + a.enProceso + a.mermaNormal + a.mermaAnormal, a.terminadas === b.terminadas + b.enProceso + b.mermaNormal + b.mermaAnormal]
-    };
-  }
-};
-
-// V/F y alternativas: a qué ronda y número del .md corresponde cada ítem de la página
-const TEORIA = {
-  'procesos/vf-procesos': { md: '**VF4.A**', items: { a1: 1, a2: 2, a3: 3, a4: 4, a5: 5 } },
-  'procesos/mc-procesos': { mc: { m1: '**MC4.A**' } }
-};
+const TEORIA = {};
+for (const f of fs.readdirSync(path.join(RAIZ, '_verificar_icofi_c3')).filter((x) => /^m\d.*\.mjs$/.test(x)).sort()) {
+  const mod = await import(pathToFileURL(path.join(RAIZ, '_verificar_icofi_c3', f)).href);
+  Object.assign(CALC, mod.CALC || {});
+  Object.assign(TEORIA, mod.TEORIA || {});
+}
 
 // =====================================================================================
 // Revisión
 // =====================================================================================
 function revisarPregunta(key, q, calc, secMd, secPauta, esCertamen, enPauta) {
   const tipo = q.tipo || 'pesos';
+  if (tipo === 'opcion') {
+    if (!(key in calc.v)) { falla(key + ': no tiene recálculo'); return; }
+    chk(calc.v[key] === q.correcta, key + ': la opción correcta recalculada (' + calc.v[key] + ') ≠ guardada (' + q.correcta + ')');
+    chk(q.correcta >= 0 && q.correcta < q.opciones.length && !!q.porque, key + ': pregunta de opción incompleta');
+    return;
+  }
   const rot = key + ' (' + M.formatear(q.respuesta, q) + ')';
+  if (q.clasif) chk(calc.cl && calc.cl[key] === q.clasif.correcta, rot + ': la clasificación recalculada (' + (calc.cl || {})[key] + ') ≠ guardada (' + q.clasif.correcta + ')');
+  if (q.signo) chk(q.respuesta < 0 || q.signo.pos, rot + ': signo mal definido');
   // 1. Recalculado == guardado
   if (!(key in calc.v)) { falla(key + ': no tiene recálculo'); return; }
   const esperado = redondeoTipo(calc.v[key], tipo);
@@ -260,23 +151,27 @@ function revisarPregunta(key, q, calc, secMd, secPauta, esCertamen, enPauta) {
     chk(r.estado === 'trampa' && r.trampa === t, rot + ': el corrector no muestra el mensaje de la trampa ' + t.valor + ' (' + r.estado + ')');
     chk(Math.abs(t.valor - q.respuesta) > M.tolerancia(q), rot + ': la trampa ' + t.valor + ' cae dentro de la tolerancia de la respuesta');
     chk(!!t.msg, rot + ': trampa sin mensaje');
-    if (secMd) chk(aparece(secMd, comoTexto(t.valor, tipo)), rot + ': la trampa ' + comoTexto(t.valor, tipo) + ' no aparece en el .md');
+    if (secMd && !t.propia) chk(aparece(secMd, comoTexto(t.valor, tipo)), rot + ': la trampa ' + comoTexto(t.valor, tipo) + ' no aparece en el .md (si es una trampa derivada de la lección, márcala con propia: true)');
+    if (actual) { if (t.propia) actual.propias++; }
   });
+  trCalc.forEach((v) => chk((q.trampas || []).some((t) => igual(t.valor, v)), rot + ': la trampa recalculada ' + v + ' no está cargada en la página'));
   // 5. Aparece en el .md y en la pauta
+  const idCorto = key.indexOf(':') < 0 ? key : null;
   if (q.respuesta !== 0) {
-    if (secMd) chk(aparece(secMd, comoTexto(q.respuesta, tipo)), rot + ': «' + comoTexto(q.respuesta, tipo) + '» no aparece en la sección del .md');
-    if (secPauta && esCertamen && enPauta) chk(aparece(secPauta, comoTexto(q.respuesta, tipo)), rot + ': «' + comoTexto(q.respuesta, tipo) + '» no aparece en la pauta del certamen');
+    if (secMd && !(calc.sinMd || []).includes(key)) chk(aparece(secMd, comoTexto(q.respuesta, tipo)), rot + ': «' + comoTexto(q.respuesta, tipo) + '» no aparece en la sección del .md');
+    if (secPauta && esCertamen && enPauta && !(calc.sinPauta || []).includes(key)) chk(aparece(secPauta, comoTexto(q.respuesta, tipo)), rot + ': «' + comoTexto(q.respuesta, tipo) + '» no aparece en la pauta del certamen');
   }
 }
 
 function revisarEjercicio(b) {
-  actual = { key: b.key, ok: 0, fallas: 0, n: 0, alts: 0, trampas: 0, md: '-', pauta: '-' };
+  actual = { key: b.key, ok: 0, fallas: 0, n: 0, alts: 0, trampas: 0, propias: 0, md: '-', pauta: '-' };
   porEjercicio.push(actual);
   const reg = CALC[b.key];
   if (!reg) { falla('no tiene función de recálculo'); return; }
   chk(!!b.fuente, 'sin fuente');
   chk(!!b.datos, 'sin "datos" del enunciado');
   const calc = reg.f(b.datos);
+  calc.sinMd = reg.sinMd; calc.sinPauta = reg.sinPauta;
   const secMd = seccionMd(reg.md);
   if (secMd === undefined) falla('no encuentro la sección «' + reg.md + '» en el .md');
   actual.md = secMd ? 'sí' : (MD ? 'NO' : 'sin material');
@@ -294,7 +189,7 @@ function revisarEjercicio(b) {
     Object.keys(o).forEach((k) => {
       const v = o[k];
       if (v && typeof v === 'object') return recorrer(v, ruta + k + '.');
-      if (typeof v !== 'number' || v === 0) return;
+      if (typeof v !== 'number' || v === 0 || k.charAt(0) === '_') return; // las claves que empiezan con "_" son datos implícitos (no se buscan en el texto)
       const txt = v <= 1 ? M.num(v * 100, M.decimales(v * 100, 2)) + ' %' : M.num(v, M.decimales(v, 2));
       chk(textoEnunciado.indexOf(txt) >= 0, 'el dato ' + ruta + k + ' = ' + txt + ' no aparece en el enunciado');
     });
@@ -323,8 +218,8 @@ function revisarEjercicio(b) {
     }
     (p.preguntas || []).forEach((q) => {
       actual.n++; actual.alts += (q.tambien || []).length; actual.trampas += (q.trampas || []).length;
-      vistos[q.id] = q.respuesta;
-      chk(!!q.sol && !!q.sol.d && !!q.sol.f && !!q.sol.c, q.id + ': falta el desarrollo (dato, fórmula, cálculo)');
+      if (q.tipo !== 'opcion') chk(!!q.sol && !!q.sol.d && !!q.sol.f && !!q.sol.c, q.id + ': falta el desarrollo (dato, fórmula, cálculo)');
+      vistos[q.id] = q.tipo === 'opcion' ? q.correcta : q.respuesta;
       if (q.clasif) chk(q.clasif.correcta >= 0 && q.clasif.correcta < q.clasif.opciones.length && !!q.clasif.porque, q.id + ': clasificación mal definida');
       revisarPregunta(q.id, q, calc, secMd, secPauta, esCertamen, true);
     });
@@ -340,7 +235,7 @@ function revisarEjercicio(b) {
 }
 
 function revisarTeoria(b) {
-  actual = { key: b.key, ok: 0, fallas: 0, n: b.items.length, alts: 0, trampas: 0, md: '-', pauta: '-' };
+  actual = { key: b.key, ok: 0, fallas: 0, n: b.items.length, alts: 0, trampas: 0, propias: 0, md: '-', pauta: '-' };
   porEjercicio.push(actual);
   const reg = TEORIA[b.key];
   if (!reg) { falla('no está en la tabla TEORIA del verificador'); return; }
@@ -410,8 +305,9 @@ const col = (s, n) => String(s).padEnd(n).slice(0, Math.max(n, String(s).length)
 console.log('\nVerificación de la guía ICOFI · Certamen 3');
 console.log('Encargo (.md): ' + (MD ? 'encontrado' : 'NO disponible (falta material_icofi/)') + ' · Pautas (PDF): ' + (PAUTAS ? 'leídas' : 'NO disponibles') + '\n');
 console.log(col('Bloque', 38) + col('Resp.', 7) + col('Altern.', 9) + col('Trampas', 9) + col('.md', 6) + col('Pauta', 7) + 'Resultado');
+console.log(col('', 38) + col('', 7) + col('', 9) + col('(propias)', 9));
 console.log('-'.repeat(92));
-porEjercicio.forEach((e) => console.log(col(e.key, 38) + col(e.n, 7) + col(e.alts, 9) + col(e.trampas, 9) + col(e.md, 6) + col(e.pauta, 7) + (e.fallas ? 'FALLA (' + e.fallas + ')' : 'OK · ' + e.ok + ' comprobaciones')));
+porEjercicio.forEach((e) => console.log(col(e.key, 38) + col(e.n, 7) + col(e.alts, 9) + col(e.trampas + (e.propias ? ' (' + e.propias + ')' : ''), 9) + col(e.md, 6) + col(e.pauta, 7) + (e.fallas ? 'FALLA (' + e.fallas + ')' : 'OK · ' + e.ok + ' comprobaciones')));
 console.log('-'.repeat(92));
 const tot = porEjercicio.reduce((a, e) => ({ n: a.n + e.n, alts: a.alts + e.alts, tr: a.tr + e.trampas }), { n: 0, alts: 0, tr: 0 });
 console.log(col('Total: ' + porEjercicio.length + ' bloques', 38) + col(tot.n, 7) + col(tot.alts, 9) + col(tot.tr, 9));
