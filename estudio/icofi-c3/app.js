@@ -1397,10 +1397,11 @@
     indice.innerHTML = h;
     indice.scrollTop = y;
   }
-  indice.addEventListener('toggle', (e) => {
-    const d = e.target.closest && e.target.closest('details[data-mod]');
-    if (d) abiertos[d.dataset.mod] = d.open;
-  }, true);
+  // Solo se recuerda lo que el estudiante abre o cierra a mano; el módulo actual se abre solo
+  indice.addEventListener('click', (e) => {
+    const sm = e.target.closest && e.target.closest('details[data-mod] > summary');
+    if (sm) abiertos[sm.parentElement.dataset.mod] = !sm.parentElement.open;
+  });
   function pintarProgreso() {
     const total = FLUJO.length;
     const listos = FLUJO.filter(completo).length;
