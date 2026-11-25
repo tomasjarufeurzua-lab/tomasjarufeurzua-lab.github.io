@@ -183,6 +183,7 @@
     .go-fila { display: flex; flex-wrap: wrap; gap: 12px; }
     .go-fila .go-material { margin: 0; }
     .go-fila.go-mobile { margin: 24px 0 16px; }
+    .go-temporal[hidden], .go-icofi[hidden] { display: none; }
     .go-fila.go-desktop { display: none; }
     .go-sobre { display: none; }
     .go-sobre:hover .arrow { transform: translateX(4px); }
@@ -874,7 +875,8 @@
         <p class="location">Valparaíso, Chile · <a class="mail" href="mailto:tjarufe@usm.cl">tjarufe@usm.cl</a></p>
         <div class="go-fila go-desktop">
         <a class="go-material" href="#material"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>Ver apuntes y material <span class="arrow" aria-hidden="true">↓</span></a>
-        <a class="go-material go-azul" href="/estudio/icofi-c3/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h.01M16 19h.01"/></svg>Estudio ICOFI interactivo <span class="arrow" aria-hidden="true">→</span></a>
+        <a class="go-material go-azul go-icofi" href="/estudio/icofi-c3/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h.01M16 19h.01"/></svg>Estudio ICOFI interactivo <span class="arrow" aria-hidden="true">→</span></a>
+        <a class="go-material go-azul go-temporal" hidden href="material/Probabilidad%20y%20Estad%C3%ADstica/1%20-%20Certamen%203/Pre%20Certamen%203%20Inferencia.pdf" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>Ver precertamen estadística <span class="arrow" aria-hidden="true">↗</span></a>
         </div>
 
         <nav class="toc" aria-label="Secciones">
@@ -910,7 +912,8 @@
 
       <div class="go-fila go-mobile">
       <a class="go-material" href="#material"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>Ver apuntes y material <span class="arrow" aria-hidden="true">↓</span></a>
-      <a class="go-material go-azul" href="/estudio/icofi-c3/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h.01M16 19h.01"/></svg>Estudio ICOFI interactivo <span class="arrow" aria-hidden="true">→</span></a>
+      <a class="go-material go-azul go-icofi" href="/estudio/icofi-c3/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h.01M16 19h.01"/></svg>Estudio ICOFI interactivo <span class="arrow" aria-hidden="true">→</span></a>
+      <a class="go-material go-azul go-temporal" hidden href="material/Probabilidad%20y%20Estad%C3%ADstica/1%20-%20Certamen%203/Pre%20Certamen%203%20Inferencia.pdf" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>Ver precertamen estadística <span class="arrow" aria-hidden="true">↗</span></a>
       </div>
     </header>
 
@@ -2556,6 +2559,22 @@
         });
         det.addEventListener('toggle', () => { if (!det.open) cerrar(); });
       })();
+    })();
+  </script>
+  <script>
+    // Boton temporal de la portada: "Ver precertamen estadistica" reemplaza al de ICOFI hasta el
+    // 26 de noviembre de 2026 a las 18:00 (hora de Chile); despues vuelve el de ICOFI solo.
+    (function () {
+      const LIMITE = Date.parse('2026-11-26T18:00:00-03:00');
+      const temporales = document.querySelectorAll('.go-temporal');
+      const icofi = document.querySelectorAll('.go-icofi');
+      const mostrar = (antes) => {
+        temporales.forEach((b) => { b.hidden = !antes; });
+        icofi.forEach((b) => { b.hidden = antes; });
+      };
+      const falta = LIMITE - Date.now();
+      mostrar(falta > 0);
+      if (falta > 0 && falta < 2147483000) setTimeout(() => mostrar(false), falta);
     })();
   </script>
 </body>
