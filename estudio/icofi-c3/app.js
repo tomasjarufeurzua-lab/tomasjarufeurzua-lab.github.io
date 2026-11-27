@@ -143,6 +143,45 @@
       '<path d="M16 5.2L25.4 10.2V19.8L16 26.7L6.6 19.8V10.2Z" fill="rgba(0,0,0,0.3)"/><g fill="#fff" fill-opacity="0.95">' + marca + '</g></svg>';
   }
   const hNombreRango = (i) => '<b class="rango-n" style="color:' + RANGO_COLOR[i] + '">' + RANGOS[i] + '</b>';
+
+  // Rango secreto: 10 toques seguidos en la insignia (o en el rango de la barra) lo activan; otros 10 lo quitan.
+  const GLOBAL = { nombre: 'Global de Icofi', color: '#ff4d4d', oscuro: '#8f1020', toques: 10 };
+  const esGlobal = () => !!S.global;
+  // Escudo rojo con un mundo que gira (los meridianos se abren y se cierran)
+  function hInsigniaGlobal(px) {
+    const quieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const gira = (desde) => (quieto ? '' : '<animate attributeName="rx" values="' + desde + '" dur="2.6s" repeatCount="indefinite"/>');
+    return '<svg class="insignia global" viewBox="0 0 32 32" width="' + px + '" height="' + px + '" aria-hidden="true"><defs><linearGradient id="insG" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="' + GLOBAL.color + '"/><stop offset="1" stop-color="' + GLOBAL.oscuro + '"/></linearGradient></defs>' +
+      '<path d="M16 1.8L28.5 8.3V21.2L16 30.4L3.5 21.2V8.3Z" fill="url(#insG)" stroke="rgba(255,255,255,0.7)" stroke-width="1.1"/>' +
+      '<path d="M16 5.2L25.4 10.2V19.8L16 26.7L6.6 19.8V10.2Z" fill="rgba(0,0,0,0.3)"/>' +
+      '<g fill="none" stroke="#fff" stroke-width="1.15" stroke-linecap="round">' +
+      '<circle cx="16" cy="16" r="7.4"/><path d="M8.6 16H23.4M10 12.2H22M10 19.8H22"/>' +
+      '<ellipse cx="16" cy="16" rx="3.4" ry="7.4">' + gira('7.4;0.3;7.4') + '</ellipse>' +
+      '<ellipse cx="16" cy="16" rx="0.3" ry="7.4">' + gira('0.3;7.4;0.3') + '</ellipse></g></svg>';
+  }
+  const hInsigniaActual = (px) => (esGlobal() ? hInsigniaGlobal(px) : hInsignia(rangoDe(S.pts), px));
+  const hNombreActual = () => (esGlobal() ? '<b class="rango-n" style="color:' + GLOBAL.color + '">' + GLOBAL.nombre + '</b>' : hNombreRango(rangoDe(S.pts)));
+  let toques = 0, tToques = 0;
+  function tocarInsignia() {
+    clearTimeout(tToques);
+    tToques = setTimeout(() => { toques = 0; }, 2500);
+    if (++toques < GLOBAL.toques) return;
+    toques = 0;
+    S.global = S.global ? 0 : 1;
+    guardar();
+    const el = document.getElementById('aviso-pts');
+    if (el) {
+      el.innerHTML = S.global
+        ? '<span class="con-ins">' + hInsigniaGlobal(30) + '<span>Rango secreto desbloqueado: <b style="color:' + GLOBAL.color + '">' + GLOBAL.nombre + '</b></span></span><b>Tienes puntos infinitos</b>'
+        : '<span>Volviste a tu rango normal.</span>';
+      el.className = 'aviso-pts cambio' + (S.global ? ' es-global' : '');
+      el.hidden = false;
+      clearTimeout(tOcultar);
+      tOcultar = setTimeout(() => { el.hidden = true; }, 4200);
+    }
+    if (VISTA.bloque && VISTA.bloque.tipo === 'portada') pintar(); else { pintarProgreso(); pintarIndice(); }
+  }
   const CORTES = [0, 0.06, 0.16, 0.30, 0.46, 0.64, 0.82]; // fracción del puntaje del camino principal
   const PENAL = 5;
   const valorItem = (it) => (it.k === 'tabla' ? 25 : it.k === 'preg' ? 15 : 10);
@@ -178,7 +217,7 @@
   function avisarPuntos() {
     const el = document.getElementById('aviso-pts');
     const ahora = rangoDe(S.pts);
-    const cambio = rangoAntes !== null && ahora !== rangoAntes;
+    const cambio = !esGlobal() && rangoAntes !== null && ahora !== rangoAntes;
     let h = '<b>' + (ptsPend > 0 ? '+' : ptsPend < 0 ? '−' : '') + Math.abs(ptsPend) + ' puntos</b>';
     if (cambio && ahora > rangoAntes) h += '<span class="con-ins">' + hInsignia(ahora, 26) + '<span>Subiste de rango: <b style="color:' + RANGO_COLOR[ahora] + '">' + RANGOS[ahora] + '</b></span></span>';
     else if (cambio) h += '<span>Bajaste a <b style="color:' + RANGO_COLOR[ahora] + '">' + RANGOS[ahora] + '</b>. Con las próximas correctas lo recuperas.</span>';
@@ -195,6 +234,7 @@
     pintarIndice();
   }
   function hRango() {
+    if (esGlobal()) return { i: -1, nombre: GLOBAL.nombre, pct: 100, falta: 0, sig: null, global: true };
     const i = rangoDe(S.pts);
     const sig = i + 1 < RANGOS.length ? UMBRAL[i + 1] : null;
     const pct = sig === null ? 100 : Math.round(100 * (S.pts - UMBRAL[i]) / (sig - UMBRAL[i]));
@@ -999,11 +1039,12 @@
       '<h2>Qué entra</h2><ul>' + b.contenidos.map((x) => '<li>' + tx(x) + '</li>').join('') + '</ul>' +
       '<h2>Los ejercicios que más se repiten</h2><ol>' + b.repiten.map((x) => '<li>' + tx(x) + '</li>').join('') + '</ol>' +
       '<h2>El mapa del curso</h2><ol class="pasos">' + b.mapa.map((x) => '<li><b class="t">' + tx(x.t) + '</b>' + tx(x.h) + '</li>').join('') + '</ol>' +
-      '<h2>Tu rango</h2><p>Vas en ' + hNombreRango(rangoDe(S.pts)) + ' con <b>' + M.num(S.pts, 0) + ' puntos</b>. Se sube acertando y se baja fallando:</p>' +
+      '<h2>Tu rango</h2><p>Vas en ' + hNombreActual() + ' con <b>' + (esGlobal() ? 'puntos infinitos' : M.num(S.pts, 0) + ' puntos') + '</b>. Se sube acertando y se baja fallando:</p>' +
       '<ul><li><b>Aciertas al primer intento:</b> +10 en verdadero o falso y alternativas, +15 en una pregunta de ejercicio y +25 en una tabla completa.</li>' +
       '<li><b>Fallas, o miras la solución sin intentar:</b> −5. Intentar siempre conviene: un acierto vale más que lo que cuesta un error.</li>' +
       '<li>Cada pregunta suma una sola vez por día, así que repetir la misma no sube el puntaje; repasarla otro día, sí.</li></ul>' +
-      '<ol class="escalera">' + RANGOS.map((r, i) => '<li class="' + (i === rangoDe(S.pts) ? 'actual' : i < rangoDe(S.pts) ? 'pasado' : '') + '" style="border-left: 4px solid ' + RANGO_COLOR[i] + '">' + hInsignia(i, 34) + '<b style="color:' + RANGO_COLOR[i] + '">' + r + '</b><span>' + M.num(UMBRAL[i], 0) + ' pts</span></li>').join('') + '</ol>' +
+      '<ol class="escalera">' + RANGOS.map((r, i) => '<li class="' + (esGlobal() ? 'pasado' : i === rangoDe(S.pts) ? 'actual' : i < rangoDe(S.pts) ? 'pasado' : '') + '" style="border-left: 4px solid ' + RANGO_COLOR[i] + '">' + hInsignia(i, 34) + '<b style="color:' + RANGO_COLOR[i] + '">' + r + '</b><span>' + M.num(UMBRAL[i], 0) + ' pts</span></li>').join('') +
+      (esGlobal() ? '<li class="actual es-global" style="border-left: 4px solid ' + GLOBAL.color + '">' + hInsigniaGlobal(34) + '<b style="color:' + GLOBAL.color + '">' + GLOBAL.nombre + '</b><span>∞ pts</span></li>' : '') + '</ol>' +
       '<h2>Cómo usar esta guía</h2><ul>' +
       '<li>Sigue el orden del índice, o salta al tema que quieras: no hay bloqueos.</li>' +
       '<li>Responde antes de mirar la solución. Equivocarse intentando enseña más que leer la respuesta.</li>' +
@@ -1472,9 +1513,9 @@
     const e = nErrores();
     const rg = hRango();
     let h = '<div class="idx-cab"><b>Índice</b><button type="button" class="barra-btn" data-a="cerrar-idx" aria-label="Cerrar el índice">✕</button></div>' +
-      '<a class="idx-rango" href="#/inicio/portada"><span class="rot">Tu rango</span><span class="con-ins">' + hInsignia(rg.i, 30) + hNombreRango(rg.i) + '</span><span class="pts">' + M.num(S.pts, 0) + ' pts</span>' +
+      '<a class="idx-rango' + (rg.global ? ' es-global' : '') + '" href="#/inicio/portada"><span class="rot">Tu rango</span><span class="con-ins">' + hInsigniaActual(30) + hNombreActual() + '</span><span class="pts">' + (rg.global ? '∞ pts' : M.num(S.pts, 0) + ' pts') + '</span>' +
       '<span class="idx-mini"><i style="width:' + rg.pct + '%"></i></span>' +
-      '<small>' + (rg.sig ? 'Te faltan ' + M.num(rg.falta, 0) + ' pts para ' + rg.sig : 'Llegaste al rango más alto') + '</small></a>' +
+      '<small>' + (rg.global ? 'Tienes puntos infinitos' : rg.sig ? 'Te faltan ' + M.num(rg.falta, 0) + ' pts para ' + rg.sig : 'Llegaste al rango más alto') + '</small></a>' +
       '<a class="idx-esp" href="#/repaso/errores"' + (VISTA.esp === 'errores' ? ' aria-current="page"' : '') + '><span>Mis errores para repasar<small>Salen al acertarlos 2 veces en días distintos</small></span><span class="cuenta' + (e ? '' : ' cero') + '">' + e + '</span></a>' +
       '<a class="idx-esp" href="#/repaso/mixto"' + (VISTA.esp === 'mixto' ? ' aria-current="page"' : '') + '><span>Repaso mixto<small>10 preguntas al azar de lo ya visto</small></span></a>' +
       '<p class="idx-sep">Módulos</p>';
@@ -1514,7 +1555,8 @@
     document.getElementById('prog-barra').style.width = pct + '%';
     document.getElementById('prog-txt').textContent = listos + ' de ' + total + ' · ' + pct + ' %';
     const rg = document.getElementById('rango-txt');
-    if (rg) rg.innerHTML = hInsignia(rangoDe(S.pts), 20) + hNombreRango(rangoDe(S.pts)) + ' · ' + M.num(S.pts, 0) + ' pts';
+    if (rg) rg.innerHTML = hInsigniaActual(20) + hNombreActual() + ' · ' + (esGlobal() ? 'puntos infinitos' : M.num(S.pts, 0) + ' pts');
+    document.body.classList.toggle('es-global', esGlobal());
   }
 
   // =====================================================================
@@ -1627,6 +1669,12 @@
         if (location.hash && location.hash !== '#/') location.hash = '#/'; else irA();
       }
     }
+  });
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest && e.target.closest('.insignia, #rango-txt');
+    if (!t) return;
+    if (t.closest('a')) e.preventDefault(); // en la tarjeta del índice, tocar la insignia no navega
+    tocarInsignia();
   });
   // Al tocar una abreviatura en celular se muestra su significado; tocar fuera lo cierra
   document.addEventListener('click', (e) => {

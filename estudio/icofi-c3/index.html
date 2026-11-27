@@ -107,6 +107,22 @@
     .con-ins { display: inline-flex; align-items: center; gap: 8px; }
     ol.escalera li { position: relative; }
     ol.escalera li .insignia { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
+    /* Rango secreto: barra roja y puntos infinitos */
+    body.es-global #prog-barra { width: 100% !important; background: linear-gradient(90deg, #8f1020, #ff4d4d, #ff9a9a, #ff4d4d, #8f1020); background-size: 200% 100%; animation: global-barra 2.4s linear infinite; }
+    body.es-global .barra-prog .prog { background: rgba(255, 77, 77, 0.25); box-shadow: 0 0 10px rgba(255, 77, 77, 0.55); }
+    body.es-global .barra { border-bottom-color: rgba(255, 77, 77, 0.7); }
+    body.es-global .barra-prog { flex: 0 1 300px; }
+    body.es-global #prog-txt { display: none; }
+    body.es-global #rango-txt { overflow: visible; }
+    .idx-rango.es-global { border-color: rgba(255, 77, 77, 0.7); background: rgba(255, 77, 77, 0.1); }
+    .idx-rango.es-global .rot, .idx-rango.es-global .pts { color: #ff7a7a; }
+    .idx-rango.es-global .idx-mini i { background: #ff4d4d; }
+    ol.escalera li.es-global { border-color: rgba(255, 77, 77, 0.8); background: rgba(255, 77, 77, 0.12); }
+    .aviso-pts.es-global { border-color: #ff4d4d; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(255, 77, 77, 0.6); }
+    .aviso-pts.es-global > b { color: #ff7a7a; }
+    .insignia.global { filter: drop-shadow(0 0 4px rgba(255, 77, 77, 0.8)); }
+    @keyframes global-barra { to { background-position: -200% 0; } }
+    @media (prefers-reduced-motion: reduce) { body.es-global #prog-barra { animation: none; } }
     /* Las insignias se muestran solo en pantallas anchas; en celular quedan ocultas */
     @media (max-width: 959px) { .insignia { display: none; } }
     .idx-rango {
@@ -557,6 +573,8 @@
       .t-comparar.dos td::before, .t-comparar td[data-l=""]::before { display: none; }
       .barra-tit span { display: none; }
       .barra-prog { flex: 0 1 168px; min-width: 0; }
+      body.es-global .barra-prog { flex: 0 0 auto; }
+      body.es-global .barra-prog small { font-size: 0.68rem; }
       .barra-prog #prog-txt { display: none; }
       .barra-prog small { justify-content: flex-end; }
       .barra-tit { flex: 1 1 0; }
@@ -636,6 +654,6 @@
   <script defer src="datos/m7-simulacro.js?v=1"></script>
   <script defer src="datos/m8-formulas.js?v=1"></script>
   <script defer src="diagramas.js?v=1"></script>
-  <script defer src="app.js?v=8"></script>
+  <script defer src="app.js?v=9"></script>
 </body>
 </html>
