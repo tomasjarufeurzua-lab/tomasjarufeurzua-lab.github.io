@@ -1240,30 +1240,55 @@
     const a = cfg.areas.find((x) => x.modulos.indexOf(b.mod.id) >= 0);
     return a ? a.id : null;
   }
+  // Preguntas de certamen disponibles para el simulacro
+  function bancoSim(cfg) {
+    const vf = [], mc = [];
+    ITEMS.forEach((it) => {
+      if (it.k === 'vf' && it.ref.fuente && it.ref.fuente.k === 'certamen') vf.push(it.id);
+      if (it.k === 'mc' && it.ref.fuente && it.ref.fuente.k === 'certamen') mc.push(it.id);
+    });
+    const ej = {};
+    cfg.areas.forEach((a) => { ej[a.id] = []; });
+    BLOQUES.forEach((b) => {
+      const n = b.tipo === 'ejercicio' ? preguntasDe(b).length : 0;
+      const area = areaDe(b, cfg);
+      if (n >= 4 && n <= 5 && b.fuente && b.fuente.k === 'certamen' && ej[area]) ej[area].push(b.key);
+    });
+    return { vf: vf, mc: mc, ej: ej };
+  }
+  // Elige n ids que no hayan salido en simulacros anteriores; si no alcanzan, completa con los más antiguos
+  // y empieza una vuelta nueva. "primero" ordena las preferencias dentro de los que no han salido.
+  function elegirSim(pool, n, usados, primero) {
+    const frescos = mezclar(pool.filter((id) => usados.indexOf(id) < 0));
+    if (primero) frescos.sort((x, y) => primero(y) - primero(x));
+    let elegidos = frescos.slice(0, n);
+    if (elegidos.length < n) {
+      const resto = usados.filter((id) => pool.indexOf(id) >= 0 && elegidos.indexOf(id) < 0);
+      elegidos = elegidos.concat(resto.slice(0, n - elegidos.length));
+      usados.length = 0; // vuelta nueva
+    }
+    elegidos.forEach((id) => { if (usados.indexOf(id) < 0) usados.push(id); });
+    return elegidos;
+  }
   function armarSimulacro(cfg) {
-    // V/F: primero los que nunca se han respondido
-    const vfs = [];
-    ITEMS.forEach((it) => { if (it.k === 'vf') vfs.push(it); });
-    const vf = mezclar(vfs.filter((it) => !S.it[it.id])).concat(mezclar(vfs.filter((it) => S.it[it.id]))).slice(0, cfg.vf.n).map((it) => it.id);
-    // Un ejercicio de certamen por área: primero los reservados (simulacro: true) que no se han usado
-    const previos = S.simPrev || [];
+    const banco = bancoSim(cfg);
+    const H = S.simHist || (S.simHist = { vf: [], mc: [], ej: [] });
+    const sinResponder = (id) => (S.it[id] ? 0 : 1);
+    // V/F y alternativas: primero los que no han salido en otro simulacro y, entre esos, los que nunca respondiste
+    const vf = elegirSim(banco.vf, cfg.vf.n, H.vf, sinResponder);
+    const mc = elegirSim(banco.mc, cfg.mc.n, H.mc, sinResponder);
+    // Un ejercicio de certamen por área, distinto al de los simulacros anteriores.
+    // Entre los que no han salido, primero los reservados (simulacro: true) que no hiciste en las lecciones.
     const ej = [];
     cfg.areas.forEach((a) => {
-      const banco = [];
-      BLOQUES.forEach((b) => {
-        const n = b.tipo === 'ejercicio' ? preguntasDe(b).length : 0;
-        if (n >= 4 && n <= 5 && b.fuente && b.fuente.k === 'certamen' && areaDe(b, cfg) === a.id) banco.push(b);
-      });
-      const sinUsar = banco.filter((b) => b.simulacro && !preguntasDe(b).some((it) => S.it[it.id]));
-      let pool = sinUsar.length ? sinUsar : banco;
-      const distintos = pool.filter((b) => previos.indexOf(b.key) < 0);
-      if (distintos.length) pool = distintos;
-      if (pool.length) ej.push(mezclar(pool)[0].key);
+      const pref = (key) => { const b = BLOQUES.get(key); return (b.simulacro ? 2 : 0) + (preguntasDe(b).some((it) => S.it[it.id]) ? 0 : 1); };
+      const e = elegirSim(banco.ej[a.id], 1, H.ej, pref);
+      if (e.length) ej.push(e[0]);
     });
-    return { vf: vf, ej: ej, r: {}, acum: 0, t0: Date.now(), pausa: false };
+    return { vf: mezclar(vf), mc: mezclar(mc), ej: ej, r: {}, acum: 0, t0: Date.now(), pausa: false };
   }
   function simItems(sim) {
-    const out = sim.vf.map((id) => ITEMS.get(id));
+    const out = sim.vf.concat(sim.mc || []).map((id) => ITEMS.get(id));
     sim.ej.forEach((k) => preguntasDe(BLOQUES.get(k)).forEach((it) => out.push(it)));
     return out.filter(Boolean);
   }
@@ -1271,7 +1296,7 @@
     const r = sim.r[it.id];
     if (!r) return false;
     if (it.k === 'vf') return r.v === 0 || r.v === 1;
-    if (it.ref.tipo === 'opcion') return typeof r.c === 'number';
+    if (it.k === 'mc' || it.ref.tipo === 'opcion') return typeof r.c === 'number';
     return !!(r.t && r.t.trim());
   }
   const simUsado = (sim) => Math.floor(sim.acum + (sim.t0 ? (Date.now() - sim.t0) / 1000 : 0));
@@ -1290,24 +1315,34 @@
       if (ok) pts += cfg.vf.puntos;
       det.push({ it: it, resp: resp, ok: ok, pts: ok ? cfg.vf.puntos : 0, max: cfg.vf.puntos });
     });
-    const nPreg = sim.ej.reduce((s, k) => s + preguntasDe(BLOQUES.get(k)).length, 0);
-    const valor = nPreg ? cfg.puntosEjercicios / nPreg : 0;
-    sim.ej.forEach((k) => preguntasDe(BLOQUES.get(k)).forEach((it) => {
-      const q = it.ref;
-      const r = sim.r[it.id] || {};
+    (sim.mc || []).forEach((id) => {
+      const it = ITEMS.get(id);
+      if (!it) return;
       const resp = simRespondida(sim, it);
-      let ok = false, res = null;
-      if (q.tipo === 'opcion') ok = resp && r.c === q.correcta;
-      else if (resp) {
-        res = M.corregir(q, textoConSigno(q, r.t, r));
-        ok = M.esAcierto(res.estado) && (!q.clasif || r.c === q.clasif.correcta);
-      }
-      if (resp && conRegistro) registrar(it.id, ok, { limpio: true });
-      if (ok) pts += valor;
-      det.push({ it: it, resp: resp, ok: ok, res: res, pts: ok ? valor : 0, max: valor });
-    }));
-    const puntaje = M.entero(pts);
-    return { det: det, puntaje: puntaje, valor: valor };
+      const ok = resp && sim.r[id].c === it.ref.correcta;
+      if (resp && conRegistro) registrar(id, ok, { limpio: true });
+      if (ok) pts += cfg.mc.puntos;
+      det.push({ it: it, resp: resp, ok: ok, pts: ok ? cfg.mc.puntos : 0, max: cfg.mc.puntos });
+    });
+    sim.ej.forEach((k) => {
+      const ps = preguntasDe(BLOQUES.get(k));
+      const valor = cfg.ejercicio.puntos / ps.length; // 20 puntos por ejercicio: 5 por respuesta si son 4, 4 si son 5
+      ps.forEach((it) => {
+        const q = it.ref;
+        const r = sim.r[it.id] || {};
+        const resp = simRespondida(sim, it);
+        let ok = false, res = null;
+        if (q.tipo === 'opcion') ok = resp && r.c === q.correcta;
+        else if (resp) {
+          res = M.corregir(q, textoConSigno(q, r.t, r));
+          ok = M.esAcierto(res.estado) && (!q.clasif || r.c === q.clasif.correcta);
+        }
+        if (resp && conRegistro) registrar(it.id, ok, { limpio: true });
+        if (ok) pts += valor;
+        det.push({ it: it, resp: resp, ok: ok, res: res, pts: ok ? valor : 0, max: valor });
+      });
+    });
+    return { det: det, puntaje: M.entero(pts) };
   }
   function entregarSimulacro(b, forzado) {
     const sim = S.sim;
@@ -1317,8 +1352,7 @@
     clearInterval(simReloj);
     const seg = Math.min(simUsado(sim), b.minutos * 60);
     const c = corregirSimulacro(b, sim, true);
-    S.simRes = { vf: sim.vf, ej: sim.ej, r: sim.r, seg: seg, fecha: hoy(), puntaje: c.puntaje, buenas: c.det.filter((d) => d.ok).length, total: c.det.length, agotado: !!forzado };
-    S.simPrev = sim.ej;
+    S.simRes = { vf: sim.vf, mc: sim.mc || [], ej: sim.ej, r: sim.r, seg: seg, fecha: hoy(), puntaje: c.puntaje, buenas: c.det.filter((d) => d.ok).length, total: c.det.length, agotado: !!forzado };
     S.sim = null;
     guardar();
     pintar();
@@ -1344,8 +1378,7 @@
     const sim = S.sim;
     const its = simItems(sim);
     const resp = its.filter((it) => simRespondida(sim, it)).length;
-    const nPreg = sim.ej.reduce((s, k) => s + preguntasDe(BLOQUES.get(k)).length, 0);
-    const valor = nPreg ? b.puntosEjercicios / nPreg : 0;
+    const mc = sim.mc || [];
     let h = '<article class="bloque ancho sim"><p class="migas">Módulo 7 · Simulacro</p><h1 tabindex="-1">Simulacro final</h1>' +
       '<div class="sim-barra"><span class="reloj" id="sim-reloj" aria-label="Tiempo restante">' + mmss(b.minutos * 60 - simUsado(sim)) + '</span>' +
       '<span class="sim-cta" id="sim-cta">' + resp + ' de ' + its.length + ' respondidas</span>' +
@@ -1355,7 +1388,8 @@
       return h + '<div class="res-mod"><p><b>Simulacro en pausa.</b> El tiempo está detenido y las preguntas quedan ocultas hasta que reanudes.</p>' +
         '<p><button type="button" class="btn principal" data-a="sim-pausa">Reanudar</button></p></div></article>';
     }
-    h += '<section class="sim-sec"><h2>Pregunta 1 · Verdadero o falso <small>' + (b.vf.puntos * sim.vf.length) + ' puntos (' + b.vf.puntos + ' cada una)</small></h2><ol class="sim-vf">';
+    let np = 1;
+    h += '<section class="sim-sec"><h2>Pregunta ' + np + ' · Verdadero o falso <small>' + (b.vf.puntos * sim.vf.length) + ' puntos (' + b.vf.puntos + ' cada una)</small></h2><ol class="sim-vf">';
     sim.vf.forEach((id) => {
       const it = ITEMS.get(id);
       const v = sim.r[id] ? sim.r[id].v : null;
@@ -1364,11 +1398,24 @@
         '<button type="button" class="chip" data-a="sim-v" data-v="0" aria-pressed="' + (v === 0) + '">Falso</button></div></li>';
     });
     h += '</ol></section>';
-    sim.ej.forEach((k, i) => {
+    if (mc.length) {
+      np++;
+      h += '<section class="sim-sec"><h2>Pregunta ' + np + ' · Alternativas <small>' + (b.mc.puntos * mc.length) + ' puntos (' + b.mc.puntos + ' cada una)</small></h2><ol class="sim-vf sim-mc">';
+      mc.forEach((id) => {
+        const it = ITEMS.get(id);
+        const c = sim.r[id] ? sim.r[id].c : null;
+        h += '<li data-s="' + id + '"><p>' + tx(it.ref.enunciado) + '</p><div class="mc-ops">' +
+          it.ref.opciones.map((op, i) => '<button type="button" class="mc-op" data-a="sim-c" data-v="' + i + '" aria-pressed="' + (c === i) + '"><span class="letra">' + 'abcdef'.charAt(i) + '</span><span>' + tx(op) + '</span></button>').join('') + '</div></li>';
+      });
+      h += '</ol></section>';
+    }
+    sim.ej.forEach((k) => {
       const e = BLOQUES.get(k);
       const ps = preguntasDe(e);
+      const valor = b.ejercicio.puntos / ps.length;
       const area = b.areas.find((a) => a.id === areaDe(e, b));
-      h += '<section class="sim-sec"><h2>Pregunta ' + (i + 2) + ' · ' + tx(area ? area.titulo : e.titulo) + ' <small>' + M.num(valor * ps.length, M.decimales(valor * ps.length, 1)) + ' puntos (' + M.num(valor, M.decimales(valor, 1)) + ' cada respuesta)</small></h2>' +
+      np++;
+      h += '<section class="sim-sec"><h2>Pregunta ' + np + ' · ' + tx(area ? area.titulo : e.titulo) + ' <small>' + b.ejercicio.puntos + ' puntos (' + M.num(valor, M.decimales(valor, 1)) + ' cada respuesta)</small></h2>' +
         hEnunciado(e) + ps.map((it, j) => hSimPregunta(it, j + 1, sim)).join('') + '</section>';
     });
     return h + '<div class="nav"><button type="button" class="btn principal sig" data-a="sim-entregar">Entregar simulacro</button></div></article>';
@@ -1389,9 +1436,23 @@
         '<p>Tu respuesta: <b>' + (d.resp ? (v === 1 ? 'Verdadero' : 'Falso') : 'sin responder') + '</b> · Correcta: <b>' + (x.r ? 'Verdadero' : 'Falso') + '</b></p><p class="suave">' + tx(x.porque) + '</p></div>';
     });
     h += '</section>';
+    const mcRev = sr.mc || [];
+    if (mcRev.length) {
+      h += '<section class="sim-sec"><h3>Pregunta 2 · Alternativas</h3>';
+      mcRev.forEach((id) => {
+        const d = porId[id];
+        if (!d) return;
+        const x = d.it.ref;
+        const c = sr.r[id] ? sr.r[id].c : null;
+        const letra = (i) => 'abcdef'.charAt(i) + ') ' + sinHtml(x.opciones[i]);
+        h += '<div class="rev ' + (d.ok ? 'ok' : 'mal') + '">' + hFuente(x.fuente, true) + '<p class="rev-t">' + marca(d) + '<span>' + tx(x.enunciado) + '</span>' + pts(d) + '</p>' +
+          '<p>Tu respuesta: <b>' + (d.resp ? esc(letra(c)) : 'sin responder') + '</b></p><p>Correcta: <b>' + esc(letra(x.correcta)) + '</b></p><p class="suave">' + tx(x.porque) + '</p></div>';
+      });
+      h += '</section>';
+    }
     sr.ej.forEach((k, i) => {
       const e = BLOQUES.get(k);
-      h += '<section class="sim-sec"><h3>Pregunta ' + (i + 2) + ' · ' + tx(e.titulo) + '</h3>' + hFuente(e.fuente) +
+      h += '<section class="sim-sec"><h3>Pregunta ' + (i + 2 + (mcRev.length ? 1 : 0)) + ' · ' + tx(e.titulo) + '</h3>' + hFuente(e.fuente) +
         '<details class="rev-en"><summary>Ver el enunciado</summary>' + hEnunciado(e) + '</details>';
       preguntasDe(e).forEach((it, j) => {
         const d = porId[it.id], q = it.ref, r = sr.r[it.id] || {};
@@ -1415,7 +1476,8 @@
   function hSimulacro(b) {
     if (S.sim) return hSimEnCurso(b);
     const sr = S.simRes;
-    const nVf = Array.from(ITEMS.values()).filter((it) => it.k === 'vf').length;
+    const banco = bancoSim(b);
+    const alcanza = banco.vf.length >= b.vf.n && banco.mc.length >= b.mc.n && b.areas.every((a) => banco.ej[a.id].length > 0);
     let h = '<article class="bloque ancho sim"><p class="migas">Módulo 7 · Simulacro</p>';
     if (sr) {
       if (typeof sr.buenas !== 'number') { const c0 = corregirSimulacro(b, sr, false); sr.buenas = c0.det.filter((d) => d.ok).length; sr.total = c0.det.length; }
@@ -1423,22 +1485,25 @@
       const e = nErrores();
       h += '<h1 tabindex="-1">Resultado del simulacro</h1>' +
         '<div class="datos-cert"><div><span class="rot">Puntaje</span><b class="grande">' + sr.puntaje + ' / 100</b></div>' +
-        '<div><span class="rot">Respuestas correctas</span><b class="grande">' + sr.buenas + ' de ' + sr.total + '</b><span class="suave">Verdadero o falso y ejercicios</span></div>' +
+        '<div><span class="rot">Respuestas correctas</span><b class="grande">' + sr.buenas + ' de ' + sr.total + '</b><span class="suave">Verdadero o falso, alternativas y ejercicios</span></div>' +
         '<div><span class="rot">Tiempo usado</span><b class="grande">' + min + ' min</b><span class="suave">de ' + b.minutos + (sr.agotado ? ' · se acabó el tiempo' : '') + '</span></div></div>' +
         '<div class="res-mod"><p>' + (sr.puntaje >= 85 ? '<b>Muy bien.</b> Estás al nivel del certamen; repasa solo lo que falló.' : sr.puntaje >= 55 ? '<b>Vas bien encaminado.</b> Lo que falló es justo lo que conviene repasar antes del certamen.' : '<b>Ya sabes dónde poner el esfuerzo.</b> Cada pregunta fallada trae abajo su desarrollo: revísalo y vuelve a intentarlo otro día.') + '</p>' +
         '<p>' + (e ? 'Lo que fallaste quedó en <a href="#/repaso/errores">Mis errores para repasar</a> (' + e + ' en total).' : 'No tienes errores pendientes.') + '</p></div>' +
-        '<div class="acciones"><button type="button" class="btn principal" data-a="sim-iniciar">Hacer otro simulacro</button>' + (e ? '<a class="btn" href="#/repaso/errores">Repasar mis errores</a>' : '') + '</div>' +
+        '<div class="res-mod otro-sim"><p><b>¿Otro simulacro?</b> Tiene el mismo formato, pero con otros ejercicios de certamen y otras preguntas de verdadero o falso y de alternativas.</p>' +
+        '<div class="acciones"><button type="button" class="btn principal" data-a="sim-iniciar">Hacer otro simulacro distinto →</button>' + (e ? '<a class="btn" href="#/repaso/errores">Repasar mis errores</a>' : '') + '</div></div>' +
         hSimRevision(b, sr);
     } else {
       h += '<h1 tabindex="-1">Simulacro final</h1>' +
-        '<p>El formato probable del certamen (el de los certámenes anteriores), con tiempo y sin ayuda. Las preguntas salen mezcladas de todos los módulos, porque en el certamen hay que reconocer de qué tipo es cada problema.</p>' +
-        '<div class="datos-cert"><div><span class="rot">Parte 1</span><b>' + b.vf.n + ' verdadero o falso</b><span class="suave">' + (b.vf.n * b.vf.puntos) + ' puntos, ' + b.vf.puntos + ' cada uno</span></div>' +
-        '<div><span class="rot">Parte 2</span><b>' + b.areas.length + ' ejercicios</b><span class="suave">Presupuestos, costos y CVU · 4–5 preguntas, 20–25 puntos cada uno</span></div>' +
+        '<p>El formato probable del certamen: verdadero o falso, alternativas y tres problemas de desarrollo, con tiempo y sin ayuda. Todo sale de certámenes reales, y cada simulacro nuevo trae ejercicios y preguntas distintos.</p>' +
+        '<div class="datos-cert"><div><span class="rot">Pregunta 1</span><b>' + b.vf.n + ' verdadero o falso</b><span class="suave">' + (b.vf.n * b.vf.puntos) + ' puntos, ' + b.vf.puntos + ' cada uno</span></div>' +
+        '<div><span class="rot">Pregunta 2</span><b>' + b.mc.n + ' alternativas</b><span class="suave">' + (b.mc.n * b.mc.puntos) + ' puntos, ' + b.mc.puntos + ' cada una</span></div>' +
+        '<div><span class="rot">Preguntas 3 a 5</span><b>' + b.areas.length + ' ejercicios</b><span class="suave">Presupuestos, costos y CVU · ' + b.ejercicio.puntos + ' puntos cada uno, con 4 o 5 respuestas</span></div>' +
         '<div><span class="rot">Tiempo</span><b>' + b.minutos + ' minutos</b><span class="suave">Se puede pausar</span></div></div>' +
-        '<ul><li>Durante el simulacro no hay pistas ni corrección: respondes todo y entregas, como en la prueba.</li>' +
+        '<ul><li>Los puntajes siguen a los certámenes de 2022 a 2024, que traían estas mismas tres partes: 20 puntos cada pregunta, 100 en total.</li>' +
+        '<li>Durante el simulacro no hay pistas ni corrección: respondes todo y entregas, como en la prueba.</li>' +
         '<li>Al entregar ves tu puntaje de 0 a 100 y la revisión de cada pregunta con su desarrollo.</li>' +
         '<li>Ten a mano una calculadora simple y papel.</li></ul>';
-      if (nVf < b.vf.n) h += '<div class="res-mod"><p>Todavía no hay suficientes preguntas cargadas para armar el simulacro.</p></div>';
+      if (!alcanza) h += '<div class="res-mod"><p>Todavía no hay suficientes preguntas cargadas para armar el simulacro.</p></div>';
       else h += '<div class="acciones"><button type="button" class="btn principal" data-a="sim-iniciar">Empezar simulacro →</button></div>';
     }
     return h + '<div id="zona-nav"></div></article>';
@@ -1461,7 +1526,7 @@
   function clicSimulacro(a, el) {
     const b = VISTA.bloque;
     if (a === 'sim-iniciar') {
-      if (S.simRes && !window.confirm('Se armará un simulacro nuevo y se cerrará la revisión del anterior. ¿Seguir?')) return true;
+      if (S.simRes && !window.confirm('Se armará un simulacro nuevo, con otros ejercicios, y se cerrará la revisión del anterior. ¿Seguir?')) return true;
       S.simRes = null;
       S.sim = armarSimulacro(b);
       guardar(); pintar(); window.scrollTo(0, 0);
@@ -1533,7 +1598,7 @@
         h += '<ul>';
         mod.bloques.forEach((b) => {
           h += '<li' + (b.rol === 'extra' ? ' class="extra"' : '') + '><a href="' + href(b) + '"' + (b === act ? ' aria-current="page"' : '') + '>' + hEst(b) +
-            '<span>' + tx(b.titulo) + '<small>' + (b.teorica ? 'Lección · teórica, se puede saltar' : b.tipo === 'simulacro' ? (S.sim ? 'En curso' : (S.simRes ? 'Último: ' + S.simRes.puntaje + ' de 100 puntos' : 'Formato probable del certamen · 70 min')) : b.rol === 'extra' ? 'Ejercicio extra' : TIPO_TXT[b.tipo]) + (b.fuente && b.fuente.k === 'certamen' ? ' · C3 ' + b.fuente.sem + 'S-' + b.fuente.anio : '') + '</small></span></a></li>';
+            '<span>' + tx(b.titulo) + '<small>' + (b.teorica ? 'Lección · teórica, se puede saltar' : b.tipo === 'simulacro' ? (S.sim ? 'En curso' : (S.simRes ? 'Último: ' + S.simRes.puntaje + ' de 100 puntos' : 'V/F, alternativas y 3 ejercicios · 70 min')) : b.rol === 'extra' ? 'Ejercicio extra' : TIPO_TXT[b.tipo]) + (b.fuente && b.fuente.k === 'certamen' ? ' · C3 ' + b.fuente.sem + 'S-' + b.fuente.anio : '') + '</small></span></a></li>';
         });
         h += '</ul>';
       }

@@ -15,7 +15,7 @@
         bajada: 'Una guía para aprender desde cero presupuestos, contabilidad de costos y la relación costo–volumen–utilidad. Siempre igual: un poco de materia, un ejercicio, y la página te corrige y te explica.',
         ficha: [
           { rot: 'Fecha', valor: 'Sábado 28 de noviembre de 2026', extra: 'Presencial (teoría y ejercicios)' },
-          { rot: 'Formato probable', valor: 'Probablemente 10 V/F + 3 ejercicios', extra: 'Como en los certámenes anteriores: V/F por 30 puntos y ejercicios de 4–5 preguntas, 20–25 puntos cada uno' },
+          { rot: 'Formato probable', valor: 'Probablemente verdadero y falso y alternativas + 3 ejercicios', extra: 'Tres problemas de desarrollo más o menos cortos, uno de alternativas y uno de verdadero o falso' },
           { rot: 'Tiempo', valor: 'Probablemente 70 minutos', extra: 'Con calculadora simple' }
         ],
         contenidos: [

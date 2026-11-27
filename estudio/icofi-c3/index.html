@@ -491,6 +491,11 @@
     ol.sim-vf li p { margin: 0 0 10px; color: var(--heading); }
     ol.sim-vf li p::before { content: counter(af) ". "; color: var(--accent); font-weight: 700; }
     .sim-vfb { display: flex; gap: 8px; }
+    .sim-mc .mc-op[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-bg); color: var(--heading); }
+    .sim-mc .mc-op[aria-pressed="true"] .letra { background: var(--accent); border-color: var(--accent); color: #0f2f2b; }
+    .sim-mc .mc-op { grid-template-columns: 28px minmax(0, 1fr); }
+    .otro-sim { border-color: rgba(233, 213, 143, 0.45); background: var(--oro-bg); }
+    .otro-sim .acciones { margin: 10px 0 0; }
     .sim-vfb .chip { min-width: 108px; text-align: center; min-height: 44px; }
     .grande { font-size: 1.7rem !important; line-height: 1.2; }
     .rev { margin: 0 0 10px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--borde); background: var(--card); font-size: 0.94rem; }
@@ -650,16 +655,16 @@
 
   <script defer src="motor.js?v=2"></script>
   <script defer src="datos/base.js?v=1"></script>
-  <script defer src="datos/m0-portada.js?v=2"></script>
+  <script defer src="datos/m0-portada.js?v=3"></script>
   <script defer src="datos/m1-presupuestos.js?v=3"></script>
   <script defer src="datos/m2-costos.js?v=3"></script>
   <script defer src="datos/m3-ordenes.js?v=4"></script>
   <script defer src="datos/m4-procesos.js?v=3"></script>
   <script defer src="datos/m5-total-directo.js?v=3"></script>
   <script defer src="datos/m6-cvu.js?v=3"></script>
-  <script defer src="datos/m7-simulacro.js?v=1"></script>
+  <script defer src="datos/m7-simulacro.js?v=2"></script>
   <script defer src="datos/m8-formulas.js?v=1"></script>
   <script defer src="diagramas.js?v=1"></script>
-  <script defer src="app.js?v=12"></script>
+  <script defer src="app.js?v=13"></script>
 </body>
 </html>

@@ -319,6 +319,38 @@ C.modulos.slice().sort((a, b) => a.n - b.n).forEach((mod) => {
 actual = null;
 Object.keys(CALC).forEach((k) => chk(ids.has(k), 'hay un recálculo para «' + k + '» pero ese ejercicio no existe'));
 
+// ---------------------------------------------------------------- SIMULACRO
+// Formato: V/F + alternativas + 3 ejercicios, todo de certámenes reales, y puntajes que suman 100.
+const simInfo = {};
+{
+  const cfg = C.modulos.find((m) => m.id === 'simulacro').bloques[0];
+  const vf = [], mc = [], ej = {};
+  cfg.areas.forEach((a) => { ej[a.id] = []; });
+  C.modulos.forEach((m) => m.bloques.forEach((b) => {
+    if (b.tipo === 'vf') b.items.forEach((x) => { if (x.fuente && x.fuente.k === 'certamen') vf.push(m.id + '/' + b.id + '#' + x.id); });
+    if (b.tipo === 'mc') b.items.forEach((x) => { if (x.fuente && x.fuente.k === 'certamen') mc.push(m.id + '/' + b.id + '#' + x.id); });
+    if (b.tipo === 'ejercicio' && b.fuente && b.fuente.k === 'certamen') {
+      const n = b.partes.reduce((t, pa) => t + (pa.preguntas || []).length, 0);
+      const area = b.area || (cfg.areas.find((a) => a.modulos.includes(m.id)) || {}).id;
+      if (n >= 4 && n <= 5 && ej[area]) {
+        ej[area].push({ key: m.id + '/' + b.id, n: n });
+        chk(Number.isInteger(cfg.ejercicio.puntos / n), 'simulacro: ' + b.key + ' tiene ' + n + ' respuestas y ' + cfg.ejercicio.puntos + ' puntos no se reparten en enteros');
+        chk(!!CALC[m.id + '/' + b.id] && !!CALC[m.id + '/' + b.id].pauta, 'simulacro: ' + b.key + ' no está cotejado con una pauta de certamen');
+      }
+    }
+  }));
+  const total = cfg.vf.n * cfg.vf.puntos + cfg.mc.n * cfg.mc.puntos + cfg.areas.length * cfg.ejercicio.puntos;
+  chk(total === 100, 'simulacro: los puntajes suman ' + total + ', no 100');
+  chk(cfg.areas.length === 3, 'simulacro: deben ser 3 ejercicios');
+  chk(vf.length >= cfg.vf.n, 'simulacro: faltan V/F de certamen (' + vf.length + ')');
+  chk(mc.length >= cfg.mc.n, 'simulacro: faltan alternativas de certamen (' + mc.length + ')');
+  cfg.areas.forEach((a) => chk(ej[a.id].length >= 2, 'simulacro: el área ' + a.id + ' necesita al menos 2 ejercicios de certamen para poder cambiar (' + ej[a.id].length + ')'));
+  chk(cfg.minutos === 70, 'simulacro: el tiempo debe ser 70 minutos');
+  Object.assign(simInfo, { total: total, vf: vf.length, mc: mc.length, ej: cfg.areas.map((a) => a.id + ' ' + ej[a.id].length).join(' · '),
+    distintos: Math.min(Math.floor(vf.length / cfg.vf.n), Math.floor(mc.length / cfg.mc.n), ...cfg.areas.map((a) => ej[a.id].length)),
+    distintosEj: Math.min(...cfg.areas.map((a) => ej[a.id].length)) });
+}
+
 // Pruebas del corrector: formato chileno y tolerancia 0
 [
   [{ tipo: 'pesos', respuesta: 36000000 }, ['36.000.000', '36000000', '$ 36.000.000', '$36.000.000'], 'correcta'],
@@ -351,6 +383,8 @@ console.log('-'.repeat(92));
 const tot = porEjercicio.reduce((a, e) => ({ n: a.n + e.n, alts: a.alts + e.alts, casis: a.casis + e.casis, tr: a.tr + e.trampas }), { n: 0, alts: 0, casis: 0, tr: 0 });
 console.log(col('Total: ' + porEjercicio.length + ' bloques', 38) + col(tot.n, 7) + col(tot.alts, 8) + col(tot.casis, 6) + col(tot.tr, 9));
 console.log('Regla: tolerancia 0. "Pauta 2" = segundo valor que la misma pauta acepta · "Casi" = valores cercanos que se rechazan con explicación.');
+console.log('Simulacro: puntajes suman ' + simInfo.total + ' · banco de certamen: ' + simInfo.vf + ' V/F, ' + simInfo.mc + ' alternativas, ejercicios por área: ' + simInfo.ej + '.');
+console.log('           Simulacros con los 3 ejercicios distintos: ' + simInfo.distintosEj + ' · con todo distinto (también V/F y alternativas): ' + simInfo.distintos + '.');
 console.log('\nComprobaciones correctas: ' + res.ok + ' · Fallas: ' + res.fallas.length);
 if (res.fallas.length) { console.log('\nFALLAS:'); res.fallas.forEach((f) => console.log('  ✗ ' + f)); process.exit(1); }
 console.log('✓ Todo coincide.\n');
