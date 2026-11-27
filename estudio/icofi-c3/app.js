@@ -440,13 +440,13 @@
     if (!s) return '';
     return '<ol class="sol"><li><b>Dato:</b> ' + tx(s.d) + '</li><li><b>Fórmula:</b> ' + tx(s.f) + '</li><li><b>Cálculo:</b> ' + tx(s.c) + '</li><li><b>Resultado:</b> ' + M.formatear(q.respuesta, q) + '</li></ol>';
   }
-  // Una alternativa puede ser un redondeo distinto o un valor que la pauta también acepta (pauta / equivalente)
-  const altDePauta = (res) => !!(res.alt && (res.alt.pauta || res.alt.equivalente));
+  // Tolerancia 0: solo vale la respuesta exacta. Una "alternativa" es el otro valor que la misma pauta acepta.
   function notaRedondeo(q, res) {
-    if (altDePauta(res)) return '<p class="nota-red">Tu respuesta también es válida. Valor principal: <b>' + M.formatear(q.respuesta, q) + '</b>. ' + tx(res.alt.nota) + '</p>';
-    return '<p class="nota-red">Tu resultado difiere solo por redondeo: está bien. Valor principal: <b>' + M.formatear(q.respuesta, q) + '</b>.' +
-      (res.alt && res.alt.nota ? ' ' + tx(res.alt.nota) : ' La diferencia viene de redondear pasos intermedios.') + '</p>';
+    return '<p class="nota-red">Tu respuesta también es válida. Valor principal: <b>' + M.formatear(q.respuesta, q) + '</b>. ' + tx(res.alt.nota) + '</p>';
   }
+  // Texto para una respuesta que quedó cerca: no se acepta, y se explica por qué
+  const CASI_GENERAL = 'Tu valor está cerca, pero la respuesta tiene que ser exacta, como en la pauta. Revisa el redondeo: no redondees los pasos intermedios.';
+  const textoCasi = (res) => (res.casi && res.casi.nota ? res.casi.nota : CASI_GENERAL);
   // Pinta el resultado de una pregunta ya corregida. okC: null si no hay clasificación.
   function pintarOpcion(u, sel) {
     const q = u.item.ref;
@@ -504,7 +504,8 @@
       fb.className = 'fb mal';
     } else {
       const soloSigno = q.signo && res.estado === 'incorrecta' && Math.abs(Math.abs(res.valor) - Math.abs(q.respuesta)) <= M.tolerancia(q);
-      h = '<p class="fb-h"><span class="ic">✗</span><span>' + (res.estado === 'trampa' ? 'Casi: ' + tx(minus(res.trampa.msg)) : (soloSigno ? 'Casi: el monto está bien, pero es ' + tx((q.respuesta < 0 ? q.signo.neg : q.signo.pos).toLowerCase()) + '.' : 'Todavía no.')) + '</span></p>' +
+      h = '<p class="fb-h"><span class="ic">✗</span><span>' + (res.estado === 'trampa' ? 'Casi: ' + tx(minus(res.trampa.msg)) : res.estado === 'casi' ? 'Casi, pero está mal.' : (soloSigno ? 'Casi: el monto está bien, pero es ' + tx((q.respuesta < 0 ? q.signo.neg : q.signo.pos).toLowerCase()) + '.' : 'Todavía no.')) + '</span></p>' +
+        (res.estado === 'casi' ? '<p class="nota-red">' + tx(textoCasi(res)) + '</p>' : '') +
         '<p>La respuesta correcta es ' + correcta + (q.clasif ? ' · ' + tx(q.clasif.opciones[q.clasif.correcta]) : '') + '.</p>' + hSol(q) +
         (q.clasif && okC === false ? '<p>' + tx(q.clasif.porque) + '</p>' : '') +
         '<p class="animo">' + animo() + ' Puedes corregir tu respuesta y revisar de nuevo.</p>';
@@ -587,14 +588,14 @@
       fb.className = 'fb';
       if (q.tipo === 'opcion') fb.innerHTML = '<p><b>Solución:</b> ' + tx(q.opciones[q.correcta]) + '</p><p>' + tx(q.porque) + '</p>' + (q.sol ? hSolOpcion(q) : '');
       else fb.innerHTML = '<p><b>Solución:</b> ' + M.formatear(q.respuesta, q) + (q.clasif ? ' · ' + tx(q.clasif.opciones[q.clasif.correcta]) : '') + '</p>' + hSol(q) +
-        (q.tambien && q.tambien.length ? '<p class="suave">También se acepta: ' + q.tambien.map((a) => M.formatear(a.valor, q)).join(' · ') + ' (diferencias de redondeo).</p>' : '');
+        (q.tambien && q.tambien.length ? '<p class="suave">La pauta también acepta: ' + q.tambien.map((a) => M.formatear(a.valor, q)).join(' · ') + '.</p>' : '');
     }
     abreviar(fb);
     despuesDeResponder(u, false, {}, false, true);
   }
 
   // ---------- Tabla editable ----------
-  const celdaQ = (c) => ({ tipo: c.tipo || 'pesos', respuesta: c.r, tambien: c.tambien, trampas: c.trampas, guion: c.guion, unidad: c.unidad });
+  const celdaQ = (c) => ({ tipo: c.tipo || 'pesos', respuesta: c.r, tambien: c.tambien, casi: c.casi, trampas: c.trampas, guion: c.guion, unidad: c.unidad });
   function fijo(v, tipo) {
     if (tipo === 'pesos' || tipo === 'unitario') return '$ ' + M.soloNumero(v, { tipo: tipo });
     return M.soloNumero(v, { tipo: tipo || 'unidades' });
@@ -652,10 +653,10 @@
         if (!res) return;
         if (M.esAcierto(res.estado)) {
           out.push('<li class="ok">' + rotCelda(t, f, ci) + ': ' + (c.s ? tx(c.s) : valor) +
-            (res.estado !== 'correcta' ? ' <span class="nota-red">' + (altDePauta(res) ? 'Tu respuesta también es válida.' : 'Tu valor difiere solo por redondeo: está bien.') + ' Valor principal: ' + valor + '.' + (res.alt && res.alt.nota ? ' ' + tx(res.alt.nota) : '') + '</span>' : '') + '</li>');
+            (res.estado !== 'correcta' ? ' <span class="nota-red">Tu respuesta también es válida. Valor principal: ' + valor + '.' + (res.alt && res.alt.nota ? ' ' + tx(res.alt.nota) : '') + '</span>' : '') + '</li>');
         } else {
-          out.push('<li class="mal">' + rotCelda(t, f, ci) + ': la respuesta es <b>' + valor + '</b>.' +
-            (res.estado === 'trampa' ? ' ' + tx(mayus(res.trampa.msg)) : '') + (c.s ? ' → ' + tx(c.s) : '') + '</li>');
+          out.push('<li class="mal">' + rotCelda(t, f, ci) + ': ' + (res.estado === 'casi' ? 'casi, pero está mal. La respuesta es <b>' : 'la respuesta es <b>') + valor + '</b>.' +
+            (res.estado === 'trampa' ? ' ' + tx(mayus(res.trampa.msg)) : res.estado === 'casi' ? ' <span class="nota-red">' + tx(textoCasi(res)) + '</span>' : '') + (c.s ? ' → ' + tx(c.s) : '') + '</li>');
         }
       });
     });
@@ -668,8 +669,8 @@
     campo.classList.toggle('mal', ok === false);
     nota.className = 'c-fb' + (ok ? ' ok' : '');
     if (ok === null) nota.textContent = '';
-    else if (ok) nota.textContent = res.estado === 'correcta' ? '' : (altDePauta(res) ? 'también vale' : 'vale por redondeo');
-    else nota.textContent = 'es ' + (c.guion && c.r === 0 && c.tipo !== 'pesos' ? '–' : fijo(c.r, c.tipo));
+    else if (ok) nota.textContent = res.estado === 'correcta' ? '' : 'también vale';
+    else nota.textContent = (res && res.estado === 'casi' ? 'casi: es ' : 'es ') + (c.guion && c.r === 0 && c.tipo !== 'pesos' ? '–' : fijo(c.r, c.tipo));
   }
   function revisarTabla(u, filaId) {
     const t = u.item.ref;
@@ -747,7 +748,7 @@
     if (!listo) { el.className = 'cuadre'; el.innerHTML = tx(t.cuadre.texto) + ' debe sumar <b>$ ' + M.num(obj, 0) + '</b>.'; return; }
     const dif = Math.abs(suma - obj);
     if (dif <= 1) { el.className = 'cuadre ok'; el.innerHTML = '✓ Cuadra: ' + tx(t.cuadre.texto) + ' = $ ' + M.num(suma, 0) + '.'; }
-    else if (dif <= Math.max(2, obj * 0.0005)) { el.className = 'cuadre aviso'; el.innerHTML = 'Suma $ ' + M.num(suma, 0) + ' y el total es $ ' + M.num(obj, 0) + ': la diferencia de $ ' + M.num(dif, 0) + ' viene de redondear los costos unitarios.'; }
+    else if (dif <= Math.max(2, obj * 0.0005)) { el.className = 'cuadre aviso'; el.innerHTML = 'Casi: suma $ ' + M.num(suma, 0) + ' y debe dar $ ' + M.num(obj, 0) + '. Revisa con qué decimales multiplicaste.'; }
     else { el.className = 'cuadre'; el.innerHTML = tx(t.cuadre.texto) + ' suma $ ' + M.num(suma, 0) + '; debe dar <b>$ ' + M.num(obj, 0) + '</b>. Todavía no cuadra.'; }
   }
   function reiniciarTabla(u) {
@@ -1048,7 +1049,8 @@
       '<li>Sigue el orden del índice, o salta al tema que quieras: no hay bloqueos.</li>' +
       '<li>Responde antes de mirar la solución. Equivocarse intentando enseña más que leer la respuesta.</li>' +
       '<li>Lo que falles queda en «Mis errores para repasar». Sale de ahí cuando lo aciertas dos veces en días distintos.</li>' +
-      '<li>Los números se escriben como en Chile: <b>36.000.000</b>, <b>36,5</b>, <b>70 %</b>.</li></ul>';
+      '<li>Los números se escriben como en Chile: <b>36.000.000</b>, <b>36,5</b>, <b>70 %</b>.</li>' +
+      '<li>La respuesta tiene que ser <b>exacta</b>, igual a la pauta del certamen (o a la resolución del profesor en los talleres). Si quedas cerca, la página te avisa que casi, pero cuenta como incorrecta.</li></ul>';
     return h + '<div id="zona-nav"></div></article>';
   }
 
@@ -1401,7 +1403,8 @@
         }
         h += '<div class="rev ' + (d.ok ? 'ok' : 'mal') + '"><p class="rev-t">' + marca(d) + '<span><b>' + (j + 1) + '.</b> ' + tx(q.texto) + '</span>' + pts(d) + '</p>' +
           '<p>Tu respuesta: <b>' + tuya + '</b> · Correcta: <b>' + correcta + '</b></p>' +
-          (d.ok && d.res && d.res.estado !== 'correcta' ? '<p class="nota-red">' + (altDePauta(d.res) ? 'Tu respuesta también es válida.' : 'Tu resultado difiere solo por redondeo: está bien.') + (d.res.alt && d.res.alt.nota ? ' ' + tx(d.res.alt.nota) : '') + '</p>' : '') +
+          (d.ok && d.res && d.res.estado !== 'correcta' ? '<p class="nota-red">Tu respuesta también es válida.' + (d.res.alt && d.res.alt.nota ? ' ' + tx(d.res.alt.nota) : '') + '</p>' : '') +
+          (!d.ok && d.res && d.res.estado === 'casi' ? '<p class="nota-red"><b>Casi, pero está mal.</b> ' + tx(textoCasi(d.res)) + '</p>' : '') +
           (!d.ok && d.res && d.res.estado === 'trampa' ? '<p><b>Qué pasó:</b> ' + tx(d.res.trampa.msg) + '</p>' : '') +
           (q.tipo === 'opcion' ? '<p class="suave">' + tx(q.porque) + '</p>' : hSol(q)) + '</div>';
       });

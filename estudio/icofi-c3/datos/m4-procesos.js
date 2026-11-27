@@ -4,7 +4,12 @@
 (function (g) {
   'use strict';
 
-  var NOTA_CLASE = 'Es el valor de la resolución de clase, que redondeó los costos unitarios a un decimal. En el certamen conviene dejar todos los decimales en la calculadora.';
+  // Tolerancia 0: en el ejercicio ETC solo vale la resolución del profesor (costos unitarios con un decimal).
+  var UN_DECIMAL = 'Ese valor tiene dos decimales. En la resolución del profesor los costos unitarios se anotan con un decimal.';
+  var TODOS_DEC = 'Ese valor sale de multiplicar con todos los decimales. En la resolución del profesor se multiplica con los costos unitarios de un decimal.';
+  var POR_DIFERENCIA = 'Ese valor es 100 × 508,1. En la resolución del profesor la merma anormal se obtiene por diferencia, para que el departamento cuadre: 351.020 − 254.050 − 46.202 = $ 50.768.';
+  var MERMA_NORMAL = 'La merma normal no se cuenta en las UE: su costo lo absorben las unidades buenas.';
+  var MERMA_ANORMAL = 'La merma anormal sí se cuenta en las UE (a diferencia de la normal). Está terminada: 100.';
 
   g.ICOFI_C3.modulos.push({
     id: 'procesos',
@@ -339,37 +344,37 @@
               filas: [
                 { id: 'tt', modelo: 'La primera fila (en verde) va hecha como modelo: lo terminado cuenta completo en todos los elementos.', celdas: [{ t: 'Terminadas y transferidas' }, { f: 700, tipo: 'unidades' }, { m: 700, tipo: 'unidades' }, { m: 700, tipo: 'unidades' }] },
                 { id: 'enp', celdas: [{ t: 'En proceso' }, { f: 200, tipo: 'unidades' }, { r: 200, tipo: 'unidades', s: '200 × 100 % = 200' }, { r: 140, tipo: 'unidades', s: '200 × 70 % = 140', trampas: [{ valor: 200, propia: true, msg: 'El costo de conversión lleva 70 % de avance: 200 × 70 %.' }] }] },
-                { id: 'mn', celdas: [{ t: 'Merma normal' }, { f: 100, tipo: 'unidades' }, { r: 0, guion: true, tipo: 'unidades', s: 'La merma normal no se cuenta en las UE: –', trampas: [{ valor: 100, propia: true, msg: 'La merma normal no se cuenta en las UE: su costo lo absorben las unidades buenas.' }] }, { r: 0, guion: true, tipo: 'unidades', s: 'La merma normal no se cuenta en las UE: –', trampas: [{ valor: 100, propia: true, msg: 'La merma normal no se cuenta en las UE: su costo lo absorben las unidades buenas.' }] }] },
+                { id: 'mn', celdas: [{ t: 'Merma normal' }, { f: 100, tipo: 'unidades' }, { r: 0, guion: true, tipo: 'unidades', s: 'La merma normal no se cuenta en las UE: –', trampas: [{ valor: 100, propia: true, msg: MERMA_NORMAL }] }, { r: 0, guion: true, tipo: 'unidades', s: 'La merma normal no se cuenta en las UE: –', trampas: [{ valor: 100, propia: true, msg: MERMA_NORMAL }] }] },
                 { id: 'tot', total: true, celdas: [{ t: 'Total producción equivalente' }, { f: 1000, tipo: 'unidades' }, { r: 900, tipo: 'unidades', s: '700 + 200 = 900', trampas: [{ valor: 1000, propia: true, msg: 'Contaste la merma normal: no entra a las UE, la absorben las unidades buenas.' }] }, { r: 840, tipo: 'unidades', s: '700 + 140 = 840', trampas: [{ valor: 940, propia: true, msg: 'Contaste la merma normal: no entra a las UE, la absorben las unidades buenas.' }] }] }
               ]
             }
           },
           {
             titulo: 'Depto. 1 · Paso 2: costos unitarios',
-            intro: 'Divide el costo de cada elemento por sus UE. Escribe los unitarios con dos decimales, pero deja todos los decimales en la calculadora para el paso siguiente.',
+            intro: 'Divide el costo de cada elemento por sus UE. Anota cada costo unitario con <b>un decimal</b>, como en la resolución del profesor.',
             tabla: {
               id: 'd1-unit',
               cols: ['Elemento', 'Costo', 'Costo unitario'],
               filas: [
-                { id: 'mp', celdas: [{ t: 'MP (materiales)' }, { f: 150000, tipo: 'pesos' }, { r: 166.67, tipo: 'unitario', s: '150.000 ÷ 900 = 166,67', trampas: [{ valor: 150, propia: true, msg: 'Dividiste por las 1.000 unidades puestas en proceso. La merma normal no entra a las UE: son 900.' }], tambien: [{ valor: 166.7, nota: NOTA_CLASE }] }] },
-                { id: 'cc', celdas: [{ t: 'CC (conversión)' }, { f: 94000, tipo: 'pesos' }, { r: 111.9, tipo: 'unitario', s: '94.000 ÷ 840 = 111,90' }] },
-                { id: 'tot', total: true, celdas: [{ t: 'Total' }, { f: 244000, tipo: 'pesos' }, { r: 278.57, tipo: 'unitario', s: '166,67 + 111,90 = 278,57', tambien: [{ valor: 278.6, nota: NOTA_CLASE }] }] }
+                { id: 'mp', celdas: [{ t: 'MP (materiales)' }, { f: 150000, tipo: 'pesos' }, { r: 166.7, tipo: 'unitario', s: '150.000 ÷ 900 = 166,7', casi: [{ valor: 166.67, nota: UN_DECIMAL }], trampas: [{ valor: 150, propia: true, msg: 'Dividiste por las 1.000 unidades puestas en proceso. La merma normal no entra a las UE: son 900.' }] }] },
+                { id: 'cc', celdas: [{ t: 'CC (conversión)' }, { f: 94000, tipo: 'pesos' }, { r: 111.9, tipo: 'unitario', s: '94.000 ÷ 840 = 111,9' }] },
+                { id: 'tot', total: true, celdas: [{ t: 'Total' }, { f: 244000, tipo: 'pesos' }, { r: 278.6, tipo: 'unitario', s: '166,7 + 111,9 = 278,6', casi: [{ valor: 278.57, nota: UN_DECIMAL }] }] }
               ]
             },
-            despues: '<p><b>Así absorben la merma las unidades buenas:</b> sin merma, los $ 150.000 de materiales se repartirían en 1.000 unidades ($ 150 cada una). Como se perdieron 100, las buenas pagan $ 166,67.</p>'
+            despues: '<p><b>Así absorben la merma las unidades buenas:</b> sin merma, los $ 150.000 de materiales se repartirían en 1.000 unidades ($ 150 cada una). Como se perdieron 100, las buenas pagan $ 166,7.</p>'
           },
           {
             titulo: 'Depto. 1 · Paso 3: distribución del costo',
-            intro: 'Reparte los $ 244.000 del departamento. Los montos van en pesos enteros.',
+            intro: 'Reparte los $ 244.000 del departamento multiplicando con los costos unitarios de un decimal. En la resolución del profesor, el costo de conversión en proceso se anota por lo que falta para completar los $ 244.000.',
             tabla: {
               id: 'd1-dist',
               cols: ['Destino del costo', 'Monto'],
               filas: [
-                { id: 'tt', celdas: [{ t: 'Terminadas y transferidas al depto. 2' }, { r: 195000, tipo: 'pesos', s: '700 × 278,5714… = $ 195.000', tambien: [{ valor: 195020, nota: NOTA_CLASE }] }] },
-                { id: 'pmp', celdas: [{ t: 'En proceso · MP' }, { r: 33333, tipo: 'pesos', s: '200 × 166,666… = $ 33.333', tambien: [{ valor: 33340, nota: NOTA_CLASE }] }] },
-                { id: 'pcc', celdas: [{ t: 'En proceso · CC' }, { r: 15667, tipo: 'pesos', s: '140 × 111,904… = $ 15.667', tambien: [{ valor: 15640, nota: 'Es el valor que se anotó en la resolución de clase (con los costos unitarios a un decimal); con él, el departamento cuadra en $ 244.000.' }] }] },
-                { id: 'penp', celdas: [{ t: 'Total en proceso (PenP)' }, { r: 49000, tipo: 'pesos', s: '33.333 + 15.667 = $ 49.000', tambien: [{ valor: 48980, nota: NOTA_CLASE }] }] },
-                { id: 'mn', celdas: [{ t: 'Merma normal' }, { r: 0, guion: true, tipo: 'pesos', s: 'La merma normal no tiene costo propio: $ 0', trampas: [{ valor: 27857, propia: true, msg: 'La merma normal no se costea: su costo ya está dentro del unitario de las unidades buenas.' }] }] },
+                { id: 'tt', celdas: [{ t: 'Terminadas y transferidas al depto. 2' }, { r: 195020, tipo: 'pesos', s: '700 × 278,6 = $ 195.020', casi: [{ valor: 195000, nota: TODOS_DEC }] }] },
+                { id: 'pmp', celdas: [{ t: 'En proceso · MP' }, { r: 33340, tipo: 'pesos', s: '200 × 166,7 = $ 33.340', casi: [{ valor: 33333, nota: TODOS_DEC }] }] },
+                { id: 'pcc', celdas: [{ t: 'En proceso · CC' }, { r: 15640, tipo: 'pesos', s: '244.000 − 195.020 − 33.340 = $ 15.640 (lo que falta para completar el total del departamento)', casi: [{ valor: 15666, nota: 'Ese valor es 140 × 111,9. En la resolución del profesor esta partida se anota en $ 15.640: lo que falta para que el departamento sume $ 244.000.' }, { valor: 15667, nota: TODOS_DEC }] }] },
+                { id: 'penp', celdas: [{ t: 'Total en proceso (PenP)' }, { r: 48980, tipo: 'pesos', s: '33.340 + 15.640 = $ 48.980', casi: [{ valor: 49000, nota: TODOS_DEC }, { valor: 49006, nota: 'Ese valor suma 33.340 + 15.666. En la resolución del profesor el total en proceso es $ 48.980, para que el departamento sume $ 244.000.' }] }] },
+                { id: 'mn', celdas: [{ t: 'Merma normal' }, { r: 0, guion: true, tipo: 'pesos', s: 'La merma normal no tiene costo propio: $ 0', trampas: [{ valor: 27860, propia: true, msg: 'La merma normal no se costea: su costo ya está dentro del unitario de las unidades buenas.' }] }] },
                 { id: 'tot', total: true, celdas: [{ t: 'Total (= 150.000 + 94.000)' }, { f: 244000, tipo: 'pesos' }] }
               ],
               cuadre: { celdas: ['tt', 'penp', 'mn'], col: 1, objetivo: 244000, texto: 'Transferidas + en proceso + merma normal' }
@@ -384,41 +389,41 @@
               filas: [
                 { id: 'tt', celdas: [{ t: 'Terminadas y transferidas' }, { f: 500, tipo: 'unidades' }, { r: 500, tipo: 'unidades', s: 'Terminadas: 500' }, { r: 500, tipo: 'unidades', s: 'Terminadas: 500' }, { r: 500, tipo: 'unidades', s: 'Terminadas: 500' }] },
                 { id: 'enp', celdas: [{ t: 'En proceso' }, { f: 100, tipo: 'unidades' }, { r: 100, tipo: 'unidades', s: 'El costo transferido siempre tiene 100 %: 100' }, { r: 100, tipo: 'unidades', s: '100 × 100 % = 100' }, { r: 60, tipo: 'unidades', s: '100 × 60 % = 60', trampas: [{ valor: 100, propia: true, msg: 'El costo de conversión lleva 60 % de avance: 100 × 60 %.' }] }] },
-                { id: 'ma', celdas: [{ t: 'Merma anormal' }, { f: 100, tipo: 'unidades' }, { r: 100, tipo: 'unidades', s: 'La merma anormal sí se cuenta; está terminada: 100', trampas: [{ valor: 0, propia: true, msg: 'La merma anormal sí se cuenta en las UE (a diferencia de la normal). Está terminada: 100.' }] }, { r: 100, tipo: 'unidades', s: 'La merma anormal sí se cuenta; está terminada: 100', trampas: [{ valor: 0, propia: true, msg: 'La merma anormal sí se cuenta en las UE (a diferencia de la normal). Está terminada: 100.' }] }, { r: 100, tipo: 'unidades', s: 'La merma anormal sí se cuenta; está terminada: 100', trampas: [{ valor: 0, propia: true, msg: 'La merma anormal sí se cuenta en las UE (a diferencia de la normal). Está terminada: 100.' }] }] },
+                { id: 'ma', celdas: [{ t: 'Merma anormal' }, { f: 100, tipo: 'unidades' }, { r: 100, tipo: 'unidades', s: 'La merma anormal sí se cuenta; está terminada: 100', trampas: [{ valor: 0, propia: true, msg: MERMA_ANORMAL }] }, { r: 100, tipo: 'unidades', s: 'La merma anormal sí se cuenta; está terminada: 100', trampas: [{ valor: 0, propia: true, msg: MERMA_ANORMAL }] }, { r: 100, tipo: 'unidades', s: 'La merma anormal sí se cuenta; está terminada: 100', trampas: [{ valor: 0, propia: true, msg: MERMA_ANORMAL }] }] },
                 { id: 'tot', total: true, celdas: [{ t: 'Total producción equivalente' }, { f: 700, tipo: 'unidades' }, { r: 700, tipo: 'unidades', s: '500 + 100 + 100 = 700', trampas: [{ valor: 600, propia: true, msg: 'Te faltó la merma anormal: esa sí se cuenta en las UE.' }] }, { r: 700, tipo: 'unidades', s: '500 + 100 + 100 = 700', trampas: [{ valor: 600, propia: true, msg: 'Te faltó la merma anormal: esa sí se cuenta en las UE.' }] }, { r: 660, tipo: 'unidades', s: '500 + 60 + 100 = 660', trampas: [{ valor: 560, propia: true, msg: 'Te faltó la merma anormal: esa sí se cuenta en las UE.' }] }] }
               ]
             }
           },
           {
             titulo: 'Depto. 2 · Paso 2: costos unitarios',
-            intro: 'El costo de MP₁ es lo que el depto. 1 transfirió.',
+            intro: 'El costo de MP₁ es lo que el depto. 1 transfirió. Los costos unitarios van con un decimal.',
             tabla: {
               id: 'd2-unit',
               cols: ['Elemento', 'Costo', 'Costo unitario'],
               filas: [
-                { id: 'mp1', celdas: [{ t: 'MP₁ (costo transferido)' }, { r: 195000, tipo: 'pesos', s: 'Lo transferido por el depto. 1: $ 195.000', tambien: [{ valor: 195020, nota: NOTA_CLASE }] }, { r: 278.57, tipo: 'unitario', s: '195.000 ÷ 700 = 278,57', tambien: [{ valor: 278.6, nota: NOTA_CLASE }] }] },
-                { id: 'mp', celdas: [{ t: 'MP (materiales del depto. 2)' }, { f: 80000, tipo: 'pesos' }, { r: 114.29, tipo: 'unitario', s: '80.000 ÷ 700 = 114,29', tambien: [{ valor: 114.3, nota: NOTA_CLASE }] }] },
-                { id: 'cc', celdas: [{ t: 'CC (conversión del depto. 2)' }, { f: 76000, tipo: 'pesos' }, { r: 115.15, tipo: 'unitario', s: '76.000 ÷ 660 = 115,15', tambien: [{ valor: 115.2, nota: NOTA_CLASE }] }] },
-                { id: 'tot', total: true, celdas: [{ t: 'Total' }, { r: 351000, tipo: 'pesos', s: '195.000 + 80.000 + 76.000 = $ 351.000', tambien: [{ valor: 351020, nota: NOTA_CLASE }] }, { r: 508.01, tipo: 'unitario', s: '278,57 + 114,29 + 115,15 = 508,01', tambien: [{ valor: 508.1, nota: NOTA_CLASE }] }] }
+                { id: 'mp1', celdas: [{ t: 'MP₁ (costo transferido)' }, { r: 195020, tipo: 'pesos', s: 'Lo transferido por el depto. 1: $ 195.020', casi: [{ valor: 195000, nota: TODOS_DEC }] }, { r: 278.6, tipo: 'unitario', s: '195.020 ÷ 700 = 278,6', casi: [{ valor: 278.57, nota: UN_DECIMAL }] }] },
+                { id: 'mp', celdas: [{ t: 'MP (materiales del depto. 2)' }, { f: 80000, tipo: 'pesos' }, { r: 114.3, tipo: 'unitario', s: '80.000 ÷ 700 = 114,3', casi: [{ valor: 114.29, nota: UN_DECIMAL }] }] },
+                { id: 'cc', celdas: [{ t: 'CC (conversión del depto. 2)' }, { f: 76000, tipo: 'pesos' }, { r: 115.2, tipo: 'unitario', s: '76.000 ÷ 660 = 115,2', casi: [{ valor: 115.15, nota: UN_DECIMAL }] }] },
+                { id: 'tot', total: true, celdas: [{ t: 'Total' }, { r: 351020, tipo: 'pesos', s: '195.020 + 80.000 + 76.000 = $ 351.020', casi: [{ valor: 351000, nota: TODOS_DEC }] }, { r: 508.1, tipo: 'unitario', s: '278,6 + 114,3 + 115,2 = 508,1', casi: [{ valor: 508.01, nota: UN_DECIMAL }] }] }
               ]
             }
           },
           {
             titulo: 'Depto. 2 · Paso 3: distribución del costo',
-            intro: 'Reparte los $ 351.000 del departamento entre productos terminados, productos en proceso y merma anormal.',
+            intro: 'Reparte los $ 351.020 del departamento entre productos terminados, productos en proceso y merma anormal. En la resolución del profesor, la merma anormal se obtiene <b>por diferencia</b>: lo que falta para completar el total del departamento.',
             tabla: {
               id: 'd2-dist',
               cols: ['Destino del costo', 'Monto'],
               filas: [
-                { id: 'pt', celdas: [{ t: 'Productos terminados (PT)' }, { r: 254004, tipo: 'pesos', s: '500 × 508,00866… = $ 254.004', tambien: [{ valor: 254050, nota: NOTA_CLASE }] }] },
-                { id: 'pmp1', celdas: [{ t: 'En proceso · MP₁' }, { r: 27857, tipo: 'pesos', s: '100 × 278,571… = $ 27.857', tambien: [{ valor: 27860, nota: NOTA_CLASE }] }] },
-                { id: 'pmp', celdas: [{ t: 'En proceso · MP' }, { r: 11429, tipo: 'pesos', s: '100 × 114,285… = $ 11.429', tambien: [{ valor: 11430, nota: NOTA_CLASE }] }] },
-                { id: 'pcc', celdas: [{ t: 'En proceso · CC' }, { r: 6909, tipo: 'pesos', s: '60 × 115,151… = $ 6.909', tambien: [{ valor: 6912, nota: NOTA_CLASE }] }] },
-                { id: 'penp', celdas: [{ t: 'Total en proceso (PenP)' }, { r: 46195, tipo: 'pesos', s: '27.857 + 11.429 + 6.909 = $ 46.195', tambien: [{ valor: 46202, nota: NOTA_CLASE }] }] },
-                { id: 'ma', celdas: [{ t: 'Merma anormal' }, { r: 50801, tipo: 'pesos', s: '100 × 508,00866… = $ 50.801', tambien: [{ valor: 50768, nota: 'Es el valor de la resolución de clase, que obtuvo la merma anormal por diferencia para cuadrar el total de $ 351.020 (con unitarios a un decimal).' }, { valor: 50810, nota: 'Es 100 × 508,1, con el costo unitario redondeado a un decimal como en clase.' }] }] },
-                { id: 'tot', total: true, celdas: [{ t: 'Total (= 195.000 + 80.000 + 76.000)' }, { f: 351000, tipo: 'pesos' }] }
+                { id: 'pt', celdas: [{ t: 'Productos terminados (PT)' }, { r: 254050, tipo: 'pesos', s: '500 × 508,1 = $ 254.050', casi: [{ valor: 254004, nota: TODOS_DEC }] }] },
+                { id: 'pmp1', celdas: [{ t: 'En proceso · MP₁' }, { r: 27860, tipo: 'pesos', s: '100 × 278,6 = $ 27.860', casi: [{ valor: 27857, nota: TODOS_DEC }] }] },
+                { id: 'pmp', celdas: [{ t: 'En proceso · MP' }, { r: 11430, tipo: 'pesos', s: '100 × 114,3 = $ 11.430', casi: [{ valor: 11429, nota: TODOS_DEC }] }] },
+                { id: 'pcc', celdas: [{ t: 'En proceso · CC' }, { r: 6912, tipo: 'pesos', s: '60 × 115,2 = $ 6.912', casi: [{ valor: 6909, nota: TODOS_DEC }] }] },
+                { id: 'penp', celdas: [{ t: 'Total en proceso (PenP)' }, { r: 46202, tipo: 'pesos', s: '27.860 + 11.430 + 6.912 = $ 46.202', casi: [{ valor: 46195, nota: TODOS_DEC }] }] },
+                { id: 'ma', celdas: [{ t: 'Merma anormal' }, { r: 50768, tipo: 'pesos', s: '351.020 − 254.050 − 46.202 = $ 50.768 (por diferencia, para que el departamento cuadre)', casi: [{ valor: 50810, nota: POR_DIFERENCIA }, { valor: 50801, nota: TODOS_DEC }] }] },
+                { id: 'tot', total: true, celdas: [{ t: 'Total (= 195.020 + 80.000 + 76.000)' }, { f: 351020, tipo: 'pesos' }] }
               ],
-              cuadre: { celdas: ['pt', 'penp', 'ma'], col: 1, objetivo: 351000, texto: 'Terminados + en proceso + merma anormal' }
+              cuadre: { celdas: ['pt', 'penp', 'ma'], col: 1, objetivo: 351020, texto: 'Terminados + en proceso + merma anormal' }
             }
           },
           {
@@ -426,58 +431,45 @@
             intro: 'Así se preguntó en clase. Todo sale de las tablas que armaste.',
             preguntas: [
               {
-                id: 'p1', texto: 'Costo unitario del producto terminado (existencia)', tipo: 'unitario', respuesta: 508.01,
-                trampas: [{ valor: 278.57, propia: true, msg: 'ese es el costo unitario del depto. 1. El producto terminado sale del depto. 2, que le suma sus materiales y su conversión.' }],
-                tambien: [{ valor: 508.1, nota: NOTA_CLASE }],
-                sol: { d: 'Unitarios del depto. 2: MP₁ 195.000 ÷ 700 = 278,57; MP 80.000 ÷ 700 = 114,29; CC 76.000 ÷ 660 = 115,15.', f: 'Costo unitario del producto terminado = suma de los unitarios del último departamento', c: '278,57 + 114,29 + 115,15 = $ 508,01' }
+                id: 'p1', texto: 'Costo unitario del producto terminado (existencia)', tipo: 'unitario', respuesta: 508.1,
+                casi: [{ valor: 508.01, nota: UN_DECIMAL }],
+                trampas: [{ valor: 278.6, propia: true, msg: 'ese es el costo unitario del depto. 1. El producto terminado sale del depto. 2, que le suma sus materiales y su conversión.' }],
+                sol: { d: 'Unitarios del depto. 2: MP₁ 195.020 ÷ 700 = 278,6; MP 80.000 ÷ 700 = 114,3; CC 76.000 ÷ 660 = 115,2.', f: 'Costo unitario del producto terminado = suma de los unitarios del último departamento', c: '278,6 + 114,3 + 115,2 = $ 508,1' }
               },
               {
                 id: 'p2', texto: '¿Cuántas unidades hay en proceso al cierre (entre los dos departamentos)?', tipo: 'unidades', respuesta: 300,
                 sol: { d: 'En proceso: 200 unidades en el depto. 1 y 100 en el depto. 2.', f: 'Se suman las unidades físicas (no las equivalentes)', c: '200 + 100 = 300 u' }
               },
               {
-                id: 'p3', texto: 'Costo de las unidades en proceso (ambos departamentos)', tipo: 'pesos', respuesta: 95195,
-                trampas: [{ valor: 49000, propia: true, msg: 'ese es solo el depto. 1. Piden los dos departamentos: súmale los $ 46.195 del depto. 2.' }, { valor: 46195, propia: true, msg: 'ese es solo el depto. 2. Piden los dos departamentos: súmale los $ 49.000 del depto. 1.' }],
-                tambien: [{ valor: 95182, nota: 'Es el valor de la resolución de clase (48.980 + 46.202), con los costos unitarios redondeados a un decimal.' }],
-                sol: { d: 'PenP del depto. 1: 33.333 + 15.667 = $ 49.000. PenP del depto. 2: 27.857 + 11.429 + 6.909 = $ 46.195.', f: 'Se suman los productos en proceso de los dos departamentos', c: '49.000 + 46.195 = $ 95.195' }
+                id: 'p3', texto: 'Costo de las unidades en proceso (ambos departamentos)', tipo: 'pesos', respuesta: 95182,
+                casi: [{ valor: 95195, nota: TODOS_DEC }],
+                trampas: [{ valor: 48980, propia: true, msg: 'ese es solo el depto. 1. Piden los dos departamentos: súmale lo que queda en proceso en el depto. 2.' }, { valor: 46202, propia: true, msg: 'ese es solo el depto. 2. Piden los dos departamentos: súmale lo que queda en proceso en el depto. 1.' }],
+                sol: { d: 'PenP del depto. 1: 33.340 + 15.640 = $ 48.980. PenP del depto. 2: 27.860 + 11.430 + 6.912 = $ 46.202.', f: 'Se suman los productos en proceso de los dos departamentos', c: '48.980 + 46.202 = $ 95.182' }
               },
               {
                 id: 'p4', texto: 'Costo de las unidades de pérdida normal', tipo: 'pesos', respuesta: 0, guion: true,
-                trampas: [{ valor: 27857, propia: true, msg: 'la merma normal no se costea aparte: su costo lo absorben las unidades buenas. La que sí se costea es la anormal.' }],
-                sol: { d: 'Depto. 1: 100 unidades de merma normal.', f: 'La merma normal no se cuenta en las UE ni tiene costo propio', c: 'Su costo lo absorben las unidades buenas (por eso el material sube de $ 150 a $ 166,67 por unidad): $ 0' }
+                trampas: [{ valor: 27860, propia: true, msg: 'la merma normal no se costea aparte: su costo lo absorben las unidades buenas. La que sí se costea es la anormal.' }],
+                sol: { d: 'Depto. 1: 100 unidades de merma normal.', f: 'La merma normal no se cuenta en las UE ni tiene costo propio', c: 'Su costo lo absorben las unidades buenas (por eso el material sube de $ 150 a $ 166,7 por unidad): $ 0' }
               },
               {
-                id: 'p5', texto: 'Costo de las unidades de pérdida anormal', tipo: 'pesos', respuesta: 50801,
-                tambien: [
-                  { valor: 50768, nota: 'Es el valor de la resolución de clase, que obtuvo la merma anormal por diferencia para cuadrar el total de $ 351.020 (con unitarios a un decimal).' },
-                  { valor: 50810, nota: 'Es 100 × 508,1, con el costo unitario redondeado a un decimal como en clase.' }
-                ],
+                id: 'p5', texto: 'Costo de las unidades de pérdida anormal', tipo: 'pesos', respuesta: 50768,
+                casi: [{ valor: 50810, nota: POR_DIFERENCIA }, { valor: 50801, nota: TODOS_DEC }],
                 clasif: {
                   texto: '¿Adónde va ese costo?',
                   opciones: ['Al inventario de productos terminados', 'Al estado de resultados, como pérdida no operacional', 'Al costo de las unidades buenas', 'Al inventario de productos en proceso'],
                   correcta: 1,
                   porque: 'La merma anormal no se le carga al producto: va al EERR como pérdida no operacional.'
                 },
-                sol: { d: 'Depto. 2: 100 unidades de merma anormal, terminadas (100 % de avance). Costo unitario total: 508,00866…', f: 'Merma anormal = unidades × avance × costo unitario', c: '100 × 508,00866… = $ 50.801, que va al EERR como pérdida no operacional' }
+                sol: { d: 'Total del depto. 2: $ 351.020. Productos terminados: 500 × 508,1 = $ 254.050. En proceso: $ 46.202.', f: 'En la resolución del profesor, la merma anormal se obtiene por diferencia: total del departamento − productos terminados − productos en proceso', c: '351.020 − 254.050 − 46.202 = $ 50.768, que va al EERR como pérdida no operacional' }
               }
             ]
           }
         ],
         cierre: '<h3>Paso 4 · Ciclo contable</h3>' +
-          '<p>Los $ 195.000 pasan de PenP del depto. 1 a PenP del depto. 2. Los $ 254.004 pasan a productos terminados (y a costo de venta cuando se vendan). Los $ 50.801 de la merma anormal salen directo al EERR como <b>pérdida no operacional</b>. En PenP quedan $ 49.000 (depto. 1) y $ 46.195 (depto. 2).</p>' +
-          '<h3>Sobre el redondeo</h3>' +
-          '<p>Con todos los decimales, los totales cuadran exactos ($ 244.000 y $ 351.000): esos son los valores principales. En la resolución de clase los costos unitarios se redondearon a <b>un decimal</b> (166,7; 111,9; 278,6; 114,3; 115,2; 508,1) y se multiplicó con esos valores. Por eso <b>también se aceptan</b> los valores de clase:</p>' +
-          '<div class="tabla-scroll"><table class="t-datos"><thead><tr><th>Concepto</th><th>Con todos los decimales (principal)</th><th>Con unitarios a 1 decimal (clase)</th></tr></thead><tbody>' +
-          '<tr><td>Costo unitario depto. 1</td><td>278,57</td><td>278,6</td></tr>' +
-          '<tr><td>Transferidas al depto. 2</td><td>195.000</td><td>195.020</td></tr>' +
-          '<tr><td>PenP depto. 1</td><td>49.000 (33.333 + 15.667)</td><td>48.980 (33.340 + 15.640)</td></tr>' +
-          '<tr><td>Costo unitario depto. 2 (PT)</td><td>508,01</td><td>508,1</td></tr>' +
-          '<tr><td>PT depto. 2</td><td>254.004</td><td>254.050</td></tr>' +
-          '<tr><td>PenP depto. 2</td><td>46.195 (27.857 + 11.429 + 6.909)</td><td>46.202 (27.860 + 11.430 + 6.912)</td></tr>' +
-          '<tr><td>Merma anormal</td><td>50.801</td><td>50.768 (por diferencia, para cuadrar 351.020) o 50.810 (100 × 508,1)</td></tr>' +
-          '<tr><td>PenP ambos deptos.</td><td>95.195</td><td>95.182</td></tr>' +
-          '</tbody></table></div>' +
-          '<p><b>Recomendación:</b> en el certamen conviene no redondear los costos unitarios (dejar los decimales en la calculadora), para que los totales cuadren con el costo del departamento.</p>'
+          '<p>Los $ 195.020 pasan de PenP del depto. 1 a PenP del depto. 2. Los $ 254.050 pasan a productos terminados (y a costo de venta cuando se vendan). Los $ 50.768 de la merma anormal salen directo al EERR como <b>pérdida no operacional</b>. En PenP quedan $ 48.980 (depto. 1) y $ 46.202 (depto. 2).</p>' +
+          '<h3>Sobre los decimales</h3>' +
+          '<p>Aquí la única respuesta que vale es la de la <b>resolución del profesor</b>: costos unitarios con <b>un decimal</b> (166,7; 111,9; 278,6; 114,3; 115,2; 508,1) y montos calculados con esos valores. Dos partidas se cierran por diferencia, para que cada departamento cuadre: el costo de conversión en proceso del depto. 1 ($ 15.640) y la merma anormal ($ 50.768).</p>' +
+          '<p>Si usas todos los decimales de la calculadora salen cifras parecidas (195.000; 49.000; 508,01; 254.004; 46.195; 50.801). La página te avisa que estás cerca, pero las cuenta como incorrectas.</p>'
       },
 
       // ------------------------------------------------------------------ VF4.A

@@ -85,6 +85,7 @@ CALC['procesos/mermas-dos-casos'] = {
 };
 CALC['procesos/etc-dos-departamentos'] = {
   md: '**E4.4 Producto "ETC"',
+  trans: '### Ejercicio Nº 2 del taller', // la respuesta se coteja con la transcripción de la clase
   f(d) {
     const a = d.d1, b = d.d2;
     // --- Depto. 1 (merma normal: no entra a las UE)
@@ -109,50 +110,56 @@ CALC['procesos/etc-dos-departamentos'] = {
     const ccosto2 = ctt + b.materiales + b.conversion;
     const cmaDif = ccosto2 - cpt - cpenp2;             // merma anormal por diferencia (clase)
     const cmaDir = b.mermaAnormal * c2;                // merma anormal = 100 × 508,1
+    // Tolerancia 0: la respuesta es la de la RESOLUCIÓN DEL PROFESOR (costos unitarios con un decimal).
+    // El depto. 1 se cierra en su costo total (el costo de conversión en proceso sale por diferencia)
+    // y la merma anormal del depto. 2 también se obtiene por diferencia.
     return {
       v: {
         'd1-ue:enp|2': a.enProceso * a.avMat, 'd1-ue:enp|3': a.enProceso * a.avConv, 'd1-ue:mn|2': 0, 'd1-ue:mn|3': 0, 'd1-ue:tot|2': ue1mp, 'd1-ue:tot|3': ue1cc,
-        'd1-unit:mp|2': u1mp, 'd1-unit:cc|2': u1cc, 'd1-unit:tot|2': u1,
-        'd1-dist:tt|1': tt, 'd1-dist:pmp|1': pmp, 'd1-dist:pcc|1': pcc, 'd1-dist:penp|1': pmp + pcc, 'd1-dist:mn|1': 0,
+        'd1-unit:mp|2': c1mp, 'd1-unit:cc|2': c1cc, 'd1-unit:tot|2': c1,
+        'd1-dist:tt|1': ctt, 'd1-dist:pmp|1': cpmp, 'd1-dist:pcc|1': cpcc, 'd1-dist:penp|1': cpenp1, 'd1-dist:mn|1': 0,
         'd2-ue:tt|2': b.terminadas, 'd2-ue:tt|3': b.terminadas, 'd2-ue:tt|4': b.terminadas,
         'd2-ue:enp|2': b.enProceso, 'd2-ue:enp|3': b.enProceso * b.avMat, 'd2-ue:enp|4': b.enProceso * b.avConv,
         'd2-ue:ma|2': b.mermaAnormal, 'd2-ue:ma|3': b.mermaAnormal, 'd2-ue:ma|4': b.mermaAnormal,
         'd2-ue:tot|2': ue2mp1, 'd2-ue:tot|3': ue2mp, 'd2-ue:tot|4': ue2cc,
-        'd2-unit:mp1|1': tt, 'd2-unit:mp1|2': u2mp1, 'd2-unit:mp|2': u2mp, 'd2-unit:cc|2': u2cc, 'd2-unit:tot|1': costo2, 'd2-unit:tot|2': u2,
-        'd2-dist:pt|1': pt, 'd2-dist:pmp1|1': qmp1, 'd2-dist:pmp|1': qmp, 'd2-dist:pcc|1': qcc, 'd2-dist:penp|1': qmp1 + qmp + qcc, 'd2-dist:ma|1': ma,
-        p1: u2, p2: a.enProceso + b.enProceso, p3: pmp + pcc + qmp1 + qmp + qcc, p4: 0, p5: ma
+        'd2-unit:mp1|1': ctt, 'd2-unit:mp1|2': c2mp1, 'd2-unit:mp|2': c2mp, 'd2-unit:cc|2': c2cc, 'd2-unit:tot|1': ccosto2, 'd2-unit:tot|2': c2,
+        'd2-dist:pt|1': cpt, 'd2-dist:pmp1|1': cqmp1, 'd2-dist:pmp|1': cqmp, 'd2-dist:pcc|1': cqcc, 'd2-dist:penp|1': cpenp2, 'd2-dist:ma|1': cmaDif,
+        p1: c2, p2: a.enProceso + b.enProceso, p3: cpenp1 + cpenp2, p4: 0, p5: cmaDif
       },
-      alt: {
-        'd1-unit:mp|2': [c1mp], 'd1-unit:tot|2': [c1],
-        'd1-dist:tt|1': [ctt], 'd1-dist:pmp|1': [cpmp], 'd1-dist:pcc|1': [cpcc], 'd1-dist:penp|1': [cpenp1],
-        'd2-unit:mp1|1': [ctt], 'd2-unit:mp1|2': [c2mp1], 'd2-unit:mp|2': [c2mp], 'd2-unit:cc|2': [c2cc], 'd2-unit:tot|1': [ccosto2], 'd2-unit:tot|2': [c2],
-        'd2-dist:pt|1': [cpt], 'd2-dist:pmp1|1': [cqmp1], 'd2-dist:pmp|1': [cqmp], 'd2-dist:pcc|1': [cqcc], 'd2-dist:penp|1': [cpenp2], 'd2-dist:ma|1': [cmaDif, cmaDir],
-        p1: [c2], p3: [cpenp1 + cpenp2], p5: [cmaDif, cmaDir]
+      // Cerca, pero mal: lo que sale con todos los decimales, o multiplicando donde el profesor cierra por diferencia
+      casi: {
+        'd1-unit:mp|2': [u1mp], 'd1-unit:tot|2': [u1],
+        'd1-dist:tt|1': [tt], 'd1-dist:pmp|1': [pmp], 'd1-dist:pcc|1': [a.enProceso * a.avConv * c1cc, pcc], 'd1-dist:penp|1': [pmp + pcc, cpmp + a.enProceso * a.avConv * c1cc],
+        'd2-unit:mp1|1': [tt], 'd2-unit:mp1|2': [u2mp1], 'd2-unit:mp|2': [u2mp], 'd2-unit:cc|2': [u2cc], 'd2-unit:tot|1': [costo2], 'd2-unit:tot|2': [u2],
+        'd2-dist:pt|1': [pt], 'd2-dist:pmp1|1': [qmp1], 'd2-dist:pmp|1': [qmp], 'd2-dist:pcc|1': [qcc], 'd2-dist:penp|1': [qmp1 + qmp + qcc], 'd2-dist:ma|1': [cmaDir, ma],
+        p1: [u2], p3: [pmp + pcc + qmp1 + qmp + qcc], p5: [cmaDir, ma]
       },
       fijos: {
         'd1-ue:tt|1': a.terminadas, 'd1-ue:enp|1': a.enProceso, 'd1-ue:mn|1': a.mermaNormal, 'd1-ue:tot|1': a.puestas,
         'd1-unit:mp|1': a.materiales, 'd1-unit:cc|1': a.conversion, 'd1-unit:tot|1': costo1, 'd1-dist:tot|1': costo1,
         'd2-ue:tt|1': b.terminadas, 'd2-ue:enp|1': b.enProceso, 'd2-ue:ma|1': b.mermaAnormal, 'd2-ue:tot|1': a.terminadas,
-        'd2-unit:mp|1': b.materiales, 'd2-unit:cc|1': b.conversion, 'd2-dist:tot|1': costo2
+        'd2-unit:mp|1': b.materiales, 'd2-unit:cc|1': b.conversion, 'd2-dist:tot|1': ccosto2
       },
       tr: {
         'd1-ue:enp|3': [a.enProceso],                                             // no aplicar el 70 %
         'd1-ue:mn|2': [a.mermaNormal], 'd1-ue:mn|3': [a.mermaNormal],             // contar la merma normal
         'd1-ue:tot|2': [ue1mp + a.mermaNormal], 'd1-ue:tot|3': [ue1cc + a.mermaNormal],
         'd1-unit:mp|2': [a.materiales / a.puestas],                               // dividir por las unidades puestas en proceso
-        'd1-dist:mn|1': [a.mermaNormal * u1],                                     // costear la merma normal
+        'd1-dist:mn|1': [a.mermaNormal * c1],                                     // costear la merma normal
         'd2-ue:enp|4': [b.enProceso],                                             // no aplicar el 60 %
         'd2-ue:ma|2': [0], 'd2-ue:ma|3': [0], 'd2-ue:ma|4': [0],                  // no contar la merma anormal
         'd2-ue:tot|2': [ue2mp1 - b.mermaAnormal], 'd2-ue:tot|3': [ue2mp - b.mermaAnormal], 'd2-ue:tot|4': [ue2cc - b.mermaAnormal],
-        p1: [u1],                                                                 // unitario del depto. 1
-        p3: [pmp + pcc, qmp1 + qmp + qcc],                                        // un solo departamento
-        p4: [a.mermaNormal * u1]                                                  // costear la merma normal
+        p1: [c1],                                                                 // unitario del depto. 1
+        p3: [cpenp1, cpenp2],                                                     // un solo departamento
+        p4: [a.mermaNormal * c1]                                                  // costear la merma normal
       },
       cl: { p5: 1 }, // la merma anormal va al estado de resultados como pérdida no operacional (opción 1)
       modelo: { 'd1-ue:tt|2': a.terminadas, 'd1-ue:tt|3': a.terminadas },
       suma: [
         [['d1-dist:tt|1', 'd1-dist:penp|1', 'd1-dist:mn|1'], costo1],
-        [['d2-dist:pt|1', 'd2-dist:penp|1', 'd2-dist:ma|1'], costo2]
+        [['d1-dist:pmp|1', 'd1-dist:pcc|1'], cpenp1],
+        [['d2-dist:pt|1', 'd2-dist:penp|1', 'd2-dist:ma|1'], ccosto2],
+        [['d2-dist:pmp1|1', 'd2-dist:pmp|1', 'd2-dist:pcc|1'], cpenp2]
       ],
       partidas: [a.puestas === a.terminadas + a.enProceso + a.mermaNormal + a.mermaAnormal, a.terminadas === b.terminadas + b.enProceso + b.mermaNormal + b.mermaAnormal]
     };

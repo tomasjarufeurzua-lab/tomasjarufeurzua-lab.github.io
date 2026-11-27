@@ -231,7 +231,7 @@
                 sol: { d: 'Tasa predeterminada: 80 % del costo de la MOD. MOD de la orden 702: $ 4.000.000.', f: 'CIF aplicado = tasa × base de la orden', c: '80 % × 4.000.000 = $ 3.200.000' }
               },
               {
-                id: 'p2', texto: 'Costos de conversión aplicados totales del período:', tipo: 'pesos', respuesta: 12240000, tolerancia: 1,
+                id: 'p2', texto: 'Costos de conversión aplicados totales del período:', tipo: 'pesos', respuesta: 12240000,
                 trampas: [
                   { valor: 12300000, propia: true, msg: 'Usaste los CIF reales. Piden la conversión aplicada: va con los CIF aplicados.' },
                   { valor: 5440000, propia: true, msg: 'Ese es solo el CIF aplicado. Al costo de conversión le falta la MOD.' }
@@ -239,7 +239,7 @@
                 sol: { d: 'MOD total: 2.800.000 + 4.000.000 = $ 6.800.000. CIF aplicados: 80 % × 6.800.000 = $ 5.440.000.', f: 'Costo de conversión aplicado = MOD + CIF aplicado', c: '6.800.000 + 5.440.000 = $ 12.240.000' }
               },
               {
-                id: 'p3', texto: 'Costo total real de producción:', tipo: 'pesos', respuesta: 21000000, tolerancia: 1,
+                id: 'p3', texto: 'Costo total real de producción:', tipo: 'pesos', respuesta: 21000000,
                 trampas: [{ valor: 20940000, propia: true, msg: 'Usaste los CIF aplicados. El costo real se arma con los CIF reales.' }],
                 sol: { d: 'MPD total: 3.500.000 + 5.200.000 = $ 8.700.000. MOD total: $ 6.800.000. CIF reales: $ 5.500.000.', f: 'Costo total real = MPD + MOD + CIF real', c: '8.700.000 + 6.800.000 + 5.500.000 = $ 21.000.000' }
               },
@@ -288,12 +288,12 @@
               },
               {
                 id: 'p3', texto: '¿Ingresos por ventas (valor neto)?', tipo: 'pesos', respuesta: 1046441,
-                tambien: [{ valor: 1046440, nota: 'La pauta acepta los dos valores: $ 1.046.441 (redondeando 1.046.440,8) o $ 1.046.440 (sin los decimales).' }],
+                tambien: [{ valor: 1046440, pauta: true, nota: 'La pauta acepta los dos valores: $ 1.046.441 (redondeando 1.046.440,8) o $ 1.046.440 (sin los decimales).' }],
                 sol: { d: 'Costo total aplicado: costos directos 726.695 + CIF aplicados 145.339 = $ 872.034. El precio es el costo total aplicado más 20 %.', f: 'Ingresos netos = costo total aplicado × 1,20', c: '872.034 × 1,20 = 1.046.440,8 → $ 1.046.441' }
               },
               {
                 id: 'p4', texto: '¿Margen bruto del semestre?', tipo: 'pesos', respuesta: 164746,
-                tambien: [{ valor: 164745, nota: 'La pauta acepta los dos valores: $ 164.745 sale de usar ingresos de $ 1.046.440.' }],
+                tambien: [{ valor: 164745, pauta: true, nota: 'La pauta acepta los dos valores: $ 164.745 sale de usar ingresos de $ 1.046.440.' }],
                 trampas: [{ valor: 174407, propia: true, msg: 'Te faltó el ajuste. Hay subaplicación (CIF reales mayores que los aplicados) y se suma al costo de venta.' }],
                 sol: { d: 'Ingresos netos: $ 1.046.441. Costo de venta real (se vendió todo): costos directos 726.695 + CIF reales 155.000 = $ 881.695. Es el costo aplicado ($ 872.034) más la subaplicación ($ 9.661).', f: 'Margen bruto = ingresos netos − costo de venta ajustado (aplicado + subaplicación)', c: '1.046.441 − 881.695 = $ 164.746' }
               },
@@ -347,7 +347,7 @@
                 sol: { d: 'MP de la orden 2 (500 unidades, LIFO sobre lo que queda): 200 a $ 24.000 + 300 a $ 20.000 = $ 10.800.000. CIF aplicados: orden 1 $ 58.750.000; orden 2: 2 × 10.800.000 = $ 21.600.000. CIF reales: 60.000.000 + 20.000.000 = $ 80.000.000.', f: 'Variación del período = total de CIF aplicados − total de CIF reales', c: '58.750.000 + 21.600.000 = 80.350.000; 80.350.000 − 80.000.000 = $ 350.000 de sobreaplicación' }
               },
               {
-                id: 'p3', texto: '¿Cuál es el costo de producción aplicado del período?', tipo: 'pesos', respuesta: 141650000, tolerancia: 1,
+                id: 'p3', texto: '¿Cuál es el costo de producción aplicado del período?', tipo: 'pesos', respuesta: 141650000,
                 trampas: [{ valor: 141300000, propia: true, msg: 'Usaste los CIF reales. Piden el costo aplicado: va con los CIF aplicados.' }],
                 sol: { d: 'MP utilizada: 23.500.000 + 10.800.000 = $ 34.300.000. Mano de obra: 15.000.000 + 12.000.000 = $ 27.000.000. CIF aplicados: $ 80.350.000.', f: 'Costo de producción aplicado = MP + mano de obra + CIF aplicados', c: '34.300.000 + 27.000.000 + 80.350.000 = $ 141.650.000' }
               },
@@ -357,7 +357,7 @@
                 sol: { d: 'Había 500 + 700 + 500 = 1.700 unidades y se usaron 1.000 + 500 = 1.500: quedan 200. Con LIFO queda lo más antiguo, es decir, unidades del saldo inicial a $ 20.000.', f: 'Inventario final de MP = unidades que quedan × su costo', c: '200 × 20.000 = $ 4.000.000' }
               },
               {
-                id: 'p5', texto: 'Si la sub aplicación o la sobre aplicación se ajusta al costo de venta, ¿cuál es el margen bruto del período, si la suma de la venta de ambas órdenes es de $ 250.000.000?', tipo: 'pesos', respuesta: 108700000, tolerancia: 1,
+                id: 'p5', texto: 'Si la sub aplicación o la sobre aplicación se ajusta al costo de venta, ¿cuál es el margen bruto del período, si la suma de la venta de ambas órdenes es de $ 250.000.000?', tipo: 'pesos', respuesta: 108700000,
                 trampas: [
                   { valor: 108350000, propia: true, msg: 'Te faltó el ajuste. La sobreaplicación del período se resta al costo de venta.' },
                   { valor: 108000000, propia: true, msg: 'La sobreaplicación se resta al costo de venta, no se suma: se había aplicado de más.' }

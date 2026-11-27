@@ -129,31 +129,26 @@
     return { ok: true, cands: cands, pct: pct };
   }
 
-  // ---------- Tolerancias ----------
+  // ---------- Regla de corrección: tolerancia 0 ----------
+  // Solo vale la respuesta exacta de la pauta del certamen (o de la resolución del profesor en los talleres).
+  // Si la pauta entrega dos valores ("$ X o $ Y"), también vale el segundo: va en "tambien" con pauta: true
+  // o equivalente: true. Lo que queda cerca NO se acepta: se marca como "casi" y se explica la diferencia.
 
-  // Margen dentro del cual la respuesta se considera "el valor exacto" (misma cifra mostrada).
-  function margenExacto(q, valor) {
-    var tipo = q.tipo || 'pesos';
-    if (tipo === 'pesos') return 0.5;
-    if (tipo === 'unitario') return 0.005;
-    if (tipo === 'porcentaje') return 0.005;
-    if (tipo === 'razon') return decimales(valor, 5) <= 2 ? 0.0005 : 0.000006;
-    return 0;
+  function iguales(a, b) {
+    return Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(b));
   }
 
-  // Tolerancia general (1.4): max(1; 0,5 %) para montos; propia para lo demás.
+  // Zona "casi": qué tan cerca debe estar un valor equivocado para avisar que casi acierta.
   function tolerancia(q) {
-    if (typeof q.tolerancia === 'number') return q.tolerancia;
     var tipo = q.tipo || 'pesos';
     var r = Math.abs(q.respuesta);
-    if (tipo === 'pesos') return Math.max(1, 0.005 * r);
     if (tipo === 'unitario') return Math.max(0.05, 0.005 * r);
     if (tipo === 'porcentaje') return 0.5;
     if (tipo === 'razon') return 0.005;
-    return 0; // unidades y conteos: exacto
+    return Math.max(1, 0.005 * r);
   }
 
-  // Margen para reconocer una trampa o un valor alternativo escrito por el estudiante.
+  // Margen para reconocer una trampa escrita por el estudiante.
   function margenValor(q, valor) {
     var tipo = q.tipo || 'pesos';
     if (tipo === 'pesos') return Math.max(1, 0.0005 * Math.abs(valor));
@@ -187,11 +182,11 @@
     return Math.abs(a - b) <= margen + EPS;
   }
 
-  // Resultado: { estado, valor, alt, trampa }
-  // estado: 'vacia' | 'invalida' | 'correcta' | 'alternativa' | 'redondeo' | 'trampa' | 'incorrecta'
-  //   correcta     -> el valor principal
-  //   alternativa  -> un valor listado en "tambien" (se acepta, con su nota)
-  //   redondeo     -> dentro de la tolerancia (se acepta, con nota de redondeo)
+  // Resultado: { estado, valor, alt, casi, trampa }
+  // estado: 'vacia' | 'invalida' | 'correcta' | 'alternativa' | 'casi' | 'trampa' | 'incorrecta'
+  //   correcta     -> exactamente el valor de la pauta
+  //   alternativa  -> el otro valor que la misma pauta acepta
+  //   casi         -> cerca, pero mal: un valor listado en "casi" (con su explicación) o dentro de la zona "casi"
   function corregir(q, texto) {
     var L = leer(texto);
     if (L.vacio) return { estado: 'vacia' };
@@ -204,17 +199,19 @@
     var cs = candidatos(q, L);
     var i, j;
     for (i = 0; i < cs.length; i++) {
-      if (cerca(cs[i], q.respuesta, margenExacto(q, q.respuesta))) return { estado: 'correcta', valor: cs[i] };
+      if (iguales(cs[i], q.respuesta)) return { estado: 'correcta', valor: cs[i] };
     }
-    var alts = q.tambien || [];
-    for (j = 0; j < alts.length; j++) {
+    var deLaPauta = (q.tambien || []).filter(function (a) { return a.pauta || a.equivalente; });
+    for (j = 0; j < deLaPauta.length; j++) {
       for (i = 0; i < cs.length; i++) {
-        if (cerca(cs[i], alts[j].valor, margenValor(q, alts[j].valor))) return { estado: 'alternativa', valor: cs[i], alt: alts[j] };
+        if (iguales(cs[i], deLaPauta[j].valor)) return { estado: 'alternativa', valor: cs[i], alt: deLaPauta[j] };
       }
     }
-    var tol = tolerancia(q);
-    for (i = 0; i < cs.length; i++) {
-      if (cerca(cs[i], q.respuesta, tol)) return { estado: 'redondeo', valor: cs[i] };
+    var casis = q.casi || [];
+    for (j = 0; j < casis.length; j++) {
+      for (i = 0; i < cs.length; i++) {
+        if (iguales(cs[i], casis[j].valor)) return { estado: 'casi', valor: cs[i], casi: casis[j] };
+      }
     }
     var trs = q.trampas || [];
     for (j = 0; j < trs.length; j++) {
@@ -222,11 +219,15 @@
         if (cerca(cs[i], trs[j].valor, margenValor(q, trs[j].valor))) return { estado: 'trampa', valor: cs[i], trampa: trs[j] };
       }
     }
+    var zona = tolerancia(q);
+    for (i = 0; i < cs.length; i++) {
+      if (cerca(cs[i], q.respuesta, zona)) return { estado: 'casi', valor: cs[i] };
+    }
     return { estado: 'incorrecta', valor: cs[0] };
   }
 
   function esAcierto(estado) {
-    return estado === 'correcta' || estado === 'alternativa' || estado === 'redondeo';
+    return estado === 'correcta' || estado === 'alternativa';
   }
 
   g.ICOFI_MOTOR = {
@@ -238,7 +239,7 @@
     soloNumero: soloNumero,
     leer: leer,
     tolerancia: tolerancia,
-    margenExacto: margenExacto,
+    iguales: iguales,
     margenValor: margenValor,
     corregir: corregir,
     esAcierto: esAcierto

@@ -29,7 +29,8 @@ fs.readdirSync(path.join(DIR, 'datos')).filter((f) => /^m\d.*\.js$/.test(f)).sor
 const M = globalThis.ICOFI_MOTOR;
 const C = globalThis.ICOFI_C3;
 
-let MD = null, PAUTAS = null;
+let MD = null, PAUTAS = null, TRANS = null;
+try { TRANS = fs.readFileSync(path.join(MATERIAL, 'Transcripcion_clases_ICOFI_C3.md'), 'utf8'); } catch (e) { /* sin material */ }
 try { MD = fs.readFileSync(path.join(MATERIAL, 'ICOFI_C3_interactivo_para_Claude_Code.md'), 'utf8'); } catch (e) { /* sin material */ }
 try {
   PAUTAS = execFileSync('pdftotext', ['-layout', path.join(MATERIAL, 'Certamenes3_pasados_2022-2026_con_pautas.pdf'), '-'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] });
@@ -59,7 +60,7 @@ function redondeoTipo(v, tipo) {
 // Cómo aparece un número en el .md o en la pauta
 // (el valor principal de un unitario va con 2 decimales: 111,90; una alternativa, con los que tenga: 166,7)
 function comoTexto(v, tipo, esAlt) {
-  if (tipo === 'unitario') return M.num(v, Number.isInteger(v) ? 0 : (esAlt ? M.decimales(v, 2) : 2));
+  if (tipo === 'unitario') return M.num(v, M.decimales(v, 2));
   if (tipo === 'razon') { const d = M.decimales(v, 5); return M.num(v, d < 2 ? 2 : d); }
   if (tipo === 'porcentaje') return M.num(v, M.decimales(v, 2));
   return M.num(v, M.decimales(v, 2));
@@ -83,6 +84,15 @@ function seccionMd(ref) {
   const resto = MD.slice(i + ref.length);
   const m = resto.search(/\n\*\*(E\d|L\d|VF\d|MC\d|Así lo preguntan|Resumen M)|\n### |\n---/);
   return MD.slice(i, i + ref.length + (m < 0 ? resto.length : m));
+}
+// Sección de la transcripción de clases: desde el ancla hasta la nota de verificación (que no es del profesor)
+function seccionTrans(ancla) {
+  if (!TRANS) return null;
+  const i = TRANS.indexOf(ancla);
+  if (i < 0) return undefined;
+  const resto = TRANS.slice(i);
+  const fin = resto.indexOf('*Nota de verificación');
+  return fin < 0 ? resto : resto.slice(0, fin);
 }
 function seccionPauta(ancla, lineas) {
   if (!PAUTAS) return null;
@@ -133,25 +143,42 @@ function revisarPregunta(key, q, calc, secMd, secPauta, esCertamen, enPauta) {
   const escrito = M.formatear(q.respuesta, q);
   chk(M.corregir(q, escrito).estado === 'correcta', rot + ': el corrector no acepta «' + escrito + '»');
   chk(M.corregir(q, String(q.respuesta).replace('.', ',')).estado === 'correcta', rot + ': el corrector no acepta el número sin formato');
-  // 3. Alternativas de redondeo
-  const altsCalc = ((calc.alt || {})[key] || []).map((v) => redondeoTipo(v, tipo === 'unitario' ? 'unitario' : tipo));
+  // 3. Tolerancia 0: un valor apenas distinto NO se acepta
+  const paso = tipo === 'unitario' ? 0.01 : tipo === 'razon' ? 0.001 : tipo === 'porcentaje' ? 0.1 : 1;
+  [q.respuesta + paso, q.respuesta - paso].forEach((v) => {
+    if ((q.tambien || []).some((a) => igual(a.valor, v))) return; // salvo que sea el otro valor de la pauta
+    chk(!M.esAcierto(M.corregir(q, String(M.redondear(v, 5)).replace('.', ',')).estado), rot + ': acepta ' + v + ', que no es la respuesta exacta');
+  });
+  // 3b. Otro valor que la misma pauta acepta ("$ X o $ Y")
+  const altsCalc = ((calc.alt || {})[key] || []).map((v) => redondeoTipo(v, tipo));
   (q.tambien || []).forEach((a) => {
+    chk(!!(a.pauta || a.equivalente), rot + ': la alternativa ' + a.valor + ' no está marcada como de la pauta (pauta / equivalente)');
     chk(altsCalc.some((v) => igual(v, a.valor)), rot + ': la alternativa ' + a.valor + ' no sale del camino alternativo (' + altsCalc.join(', ') + ')');
-    const e = M.corregir(q, M.soloNumero(a.valor, { tipo: tipo === 'unitario' ? 'unitario' : tipo }).replace(/\./g, tipo === 'unitario' ? '.' : '')).estado;
-    chk(e === 'alternativa' || e === 'correcta', rot + ': el corrector no acepta la alternativa ' + a.valor + ' (' + e + ')');
+    const e = M.corregir(q, String(a.valor).replace('.', ',')).estado;
+    chk(e === 'alternativa', rot + ': el corrector no acepta la alternativa de la pauta ' + a.valor + ' (' + e + ')');
     chk(!!a.nota, rot + ': la alternativa ' + a.valor + ' no tiene nota');
-    // Una alternativa viene del .md o, si lleva pauta: true, de la pauta del certamen ("$ X o $ Y")
     if (a.pauta) { if (secPauta) chk(aparece(secPauta, comoTexto(a.valor, tipo, true)), rot + ': la alternativa ' + comoTexto(a.valor, tipo, true) + ' no aparece en la pauta'); }
     else if (secMd) chk(aparece(secMd, comoTexto(a.valor, tipo, true)), rot + ': la alternativa ' + comoTexto(a.valor, tipo, true) + ' no aparece en el .md');
   });
-  altsCalc.forEach((v) => { if (!igual(v, q.respuesta)) chk((q.tambien || []).some((a) => igual(a.valor, v)) || M.esAcierto(M.corregir(q, String(v).replace('.', ',')).estado), rot + ': el valor alternativo ' + v + ' no se acepta'); });
+  altsCalc.forEach((v) => chk((q.tambien || []).some((a) => igual(a.valor, v)), rot + ': la alternativa recalculada ' + v + ' no está cargada'));
+  // 3c. Valores cercanos conocidos: se reconocen y se rechazan con su explicación
+  const casiCalc = ((calc.casi || {})[key] || []).map((v) => redondeoTipo(v, tipo));
+  (q.casi || []).forEach((c) => {
+    chk(casiCalc.some((v) => igual(v, c.valor)), rot + ': el valor cercano ' + c.valor + ' no sale del camino que describe (' + casiCalc.join(', ') + ')');
+    const r = M.corregir(q, String(c.valor).replace('.', ','));
+    chk(r.estado === 'casi' && r.casi === c, rot + ': el corrector no marca como "casi" el valor ' + c.valor + ' (' + r.estado + ')');
+    chk(!!c.nota, rot + ': el valor cercano ' + c.valor + ' no tiene explicación');
+    chk(!igual(c.valor, q.respuesta), rot + ': el valor cercano ' + c.valor + ' es igual a la respuesta');
+    if (actual) actual.casis++;
+  });
+  casiCalc.forEach((v) => chk((q.casi || []).some((c) => igual(c.valor, v)), rot + ': el valor cercano recalculado ' + v + ' no está cargado'));
   // 4. Trampas
   const trCalc = ((calc.tr || {})[key] || []).map((v) => redondeoTipo(v, tipo));
   (q.trampas || []).forEach((t) => {
     chk(trCalc.some((v) => igual(v, t.valor)), rot + ': la trampa ' + t.valor + ' no sale del error que describe (' + trCalc.join(', ') + ')');
     const r = M.corregir(q, String(t.valor).replace('.', ','));
     chk(r.estado === 'trampa' && r.trampa === t, rot + ': el corrector no muestra el mensaje de la trampa ' + t.valor + ' (' + r.estado + ')');
-    chk(Math.abs(t.valor - q.respuesta) > M.tolerancia(q), rot + ': la trampa ' + t.valor + ' cae dentro de la tolerancia de la respuesta');
+    chk(!igual(t.valor, q.respuesta) && !(q.tambien || []).some((a) => igual(a.valor, t.valor)), rot + ': la trampa ' + t.valor + ' coincide con una respuesta aceptada');
     chk(!!t.msg, rot + ': trampa sin mensaje');
     if (secMd && !t.propia) chk(aparece(secMd, comoTexto(t.valor, tipo)), rot + ': la trampa ' + comoTexto(t.valor, tipo) + ' no aparece en el .md (si es una trampa derivada de la lección, márcala con propia: true)');
     if (actual) { if (t.propia) actual.propias++; }
@@ -166,7 +193,7 @@ function revisarPregunta(key, q, calc, secMd, secPauta, esCertamen, enPauta) {
 }
 
 function revisarEjercicio(b) {
-  actual = { key: b.key, ok: 0, fallas: 0, n: 0, alts: 0, trampas: 0, propias: 0, md: '-', pauta: '-' };
+  actual = { key: b.key, ok: 0, fallas: 0, n: 0, alts: 0, casis: 0, trampas: 0, propias: 0, md: '-', pauta: '-' };
   porEjercicio.push(actual);
   const reg = CALC[b.key];
   if (!reg) { falla('no tiene función de recálculo'); return; }
@@ -177,6 +204,9 @@ function revisarEjercicio(b) {
   const secMd = seccionMd(reg.md);
   if (secMd === undefined) falla('no encuentro la sección «' + reg.md + '» en el .md');
   actual.md = secMd ? 'sí' : (MD ? 'NO' : 'sin material');
+  const secTrans = reg.trans ? seccionTrans(reg.trans) : null;
+  if (reg.trans && secTrans === undefined) falla('no encuentro «' + reg.trans + '» en la transcripción');
+  if (reg.trans) actual.pauta = secTrans ? 'clase' : 'sin material';
   const esCertamen = b.fuente && b.fuente.k === 'certamen';
   let secPauta = null;
   if (esCertamen) {
@@ -205,7 +235,8 @@ function revisarEjercicio(b) {
           actual.n++; actual.alts += (c.tambien || []).length; actual.trampas += (c.trampas || []).length;
           vistos[key] = c.r;
           chk(!!c.s, key + ': celda sin explicación');
-          revisarPregunta(key, { tipo: c.tipo || 'pesos', respuesta: c.r, tambien: c.tambien, trampas: c.trampas, guion: c.guion }, calc, secMd, null, false, false);
+          revisarPregunta(key, { tipo: c.tipo || 'pesos', respuesta: c.r, tambien: c.tambien, casi: c.casi, trampas: c.trampas, guion: c.guion }, calc, secMd, null, false, false);
+          if (secTrans && c.r !== 0) chk(aparece(secTrans, comoTexto(c.r, c.tipo || 'pesos')), key + ': «' + comoTexto(c.r, c.tipo || 'pesos') + '» no aparece en la transcripción de la clase');
         } else if (c.f !== undefined) {
           chk(calc.fijos && key in calc.fijos && igual(calc.fijos[key], c.f), key + ': dato fijo ' + c.f + ' ≠ ' + (calc.fijos || {})[key] + ' (según los datos)');
         } else if (c.m !== undefined) {
@@ -224,6 +255,7 @@ function revisarEjercicio(b) {
       vistos[q.id] = q.tipo === 'opcion' ? q.correcta : q.respuesta;
       if (q.clasif) chk(q.clasif.correcta >= 0 && q.clasif.correcta < q.clasif.opciones.length && !!q.clasif.porque, q.id + ': clasificación mal definida');
       revisarPregunta(q.id, q, calc, secMd, secPauta, esCertamen, true);
+      if (secTrans && q.tipo !== 'opcion' && q.respuesta !== 0) chk(aparece(secTrans, comoTexto(q.respuesta, q.tipo || 'pesos')), q.id + ': «' + comoTexto(q.respuesta, q.tipo || 'pesos') + '» no aparece en la transcripción de la clase');
     });
   });
   // Todo lo recalculado está cargado en la página (nada quedó fuera)
@@ -231,13 +263,13 @@ function revisarEjercicio(b) {
   // Sumas de control con los valores guardados (las tablas y totales cuadran)
   (calc.suma || []).forEach(([claves, total]) => {
     const s = claves.reduce((acc, k) => acc + vistos[k], 0);
-    chk(s === total, 'no cuadra: ' + claves.join(' + ') + ' = ' + s + ' ≠ ' + total);
+    chk(igual(s, Math.round(total)), 'no cuadra: ' + claves.join(' + ') + ' = ' + s + ' ≠ ' + total);
   });
   (calc.partidas || []).forEach((x, i) => chk(x === true, 'las unidades físicas no cuadran (partida ' + (i + 1) + ')'));
 }
 
 function revisarTeoria(b) {
-  actual = { key: b.key, ok: 0, fallas: 0, n: b.items.length, alts: 0, trampas: 0, propias: 0, md: '-', pauta: '-' };
+  actual = { key: b.key, ok: 0, fallas: 0, n: b.items.length, alts: 0, casis: 0, trampas: 0, propias: 0, md: '-', pauta: '-' };
   porEjercicio.push(actual);
   const reg = TEORIA[b.key];
   if (!reg) { falla('no está en la tabla TEORIA del verificador'); return; }
@@ -287,31 +319,38 @@ C.modulos.slice().sort((a, b) => a.n - b.n).forEach((mod) => {
 actual = null;
 Object.keys(CALC).forEach((k) => chk(ids.has(k), 'hay un recálculo para «' + k + '» pero ese ejercicio no existe'));
 
-// Pruebas del corrector (formato chileno, 1.4)
+// Pruebas del corrector: formato chileno y tolerancia 0
 [
   [{ tipo: 'pesos', respuesta: 36000000 }, ['36.000.000', '36000000', '$ 36.000.000', '$36.000.000'], 'correcta'],
-  [{ tipo: 'unitario', respuesta: 36.5 }, ['36,5', '36.5', '$ 36,5'], 'correcta'],
-  [{ tipo: 'unitario', respuesta: 278.57, tambien: [{ valor: 278.6 }] }, ['278,57', '278.57'], 'correcta'],
-  [{ tipo: 'unitario', respuesta: 278.57, tambien: [{ valor: 278.6 }] }, ['278,6', '278.6'], 'alternativa'],
+  [{ tipo: 'pesos', respuesta: 36000000 }, ['36.000.001', '35.999.999', '36.100.000'], 'casi'],
+  [{ tipo: 'pesos', respuesta: 36000000 }, ['40.000.000'], 'incorrecta'],
+  [{ tipo: 'unitario', respuesta: 36.5 }, ['36,5', '36.5', '$ 36,5', '36,50'], 'correcta'],
+  [{ tipo: 'unitario', respuesta: 166.7, casi: [{ valor: 166.67, nota: 'x' }] }, ['166,7', '166.7', '166,70'], 'correcta'],
+  [{ tipo: 'unitario', respuesta: 166.7, casi: [{ valor: 166.67, nota: 'x' }] }, ['166,67', '166,6667', '167', '166'], 'casi'],
   [{ tipo: 'porcentaje', respuesta: 70 }, ['70', '70%', '70 %', '0,7', '0,70'], 'correcta'],
+  [{ tipo: 'porcentaje', respuesta: 70 }, ['69,8'], 'casi'],
   [{ tipo: 'razon', respuesta: 0.7 }, ['0,7', '0,70', '70%', '70 %'], 'correcta'],
-  [{ tipo: 'pesos', respuesta: 20512, tambien: [{ valor: 20513 }] }, ['20.513'], 'alternativa'],
-  [{ tipo: 'unidades', respuesta: 15 }, ['14', '16'], 'incorrecta'],
+  [{ tipo: 'pesos', respuesta: 20512, casi: [{ valor: 20513, nota: 'x' }] }, ['20.513'], 'casi'],
+  [{ tipo: 'pesos', respuesta: 1046441, tambien: [{ valor: 1046440, pauta: true, nota: 'x' }] }, ['1.046.440'], 'alternativa'],
+  [{ tipo: 'unidades', respuesta: 15 }, ['14', '16'], 'casi'],
+  [{ tipo: 'unidades', respuesta: 15 }, ['20'], 'incorrecta'],
   [{ tipo: 'pesos', respuesta: 36000000, trampas: [{ valor: 42840000, msg: 'x' }] }, ['42.840.000'], 'trampa']
 ].forEach(([q, textos, esperado]) => textos.forEach((t) => chk(M.corregir(q, t).estado === esperado, 'corrector: «' + t + '» debería ser ' + esperado + ' y es ' + M.corregir(q, t).estado)));
+chk(!M.esAcierto('casi') && M.esAcierto('correcta') && M.esAcierto('alternativa'), 'solo cuentan como acierto la respuesta exacta y la alternativa de la pauta');
 chk(M.entero(6837.5) === 6838 && M.entero(4437.5) === 4438, 'redondeo: un ,5 debe subir');
 
 // ---------------------------------------------------------------- informe
 const col = (s, n) => String(s).padEnd(n).slice(0, Math.max(n, String(s).length));
 console.log('\nVerificación de la guía ICOFI · Certamen 3');
 console.log('Encargo (.md): ' + (MD ? 'encontrado' : 'NO disponible (falta material_icofi/)') + ' · Pautas (PDF): ' + (PAUTAS ? 'leídas' : 'NO disponibles') + '\n');
-console.log(col('Bloque', 38) + col('Resp.', 7) + col('Altern.', 9) + col('Trampas', 9) + col('.md', 6) + col('Pauta', 7) + 'Resultado');
-console.log(col('', 38) + col('', 7) + col('', 9) + col('(propias)', 9));
+console.log(col('Bloque', 38) + col('Resp.', 7) + col('Pauta 2', 8) + col('Casi', 6) + col('Trampas', 9) + col('.md', 6) + col('Pauta', 7) + 'Resultado');
+console.log(col('', 38) + col('', 7) + col('', 8) + col('', 6) + col('(propias)', 9));
 console.log('-'.repeat(92));
-porEjercicio.forEach((e) => console.log(col(e.key, 38) + col(e.n, 7) + col(e.alts, 9) + col(e.trampas + (e.propias ? ' (' + e.propias + ')' : ''), 9) + col(e.md, 6) + col(e.pauta, 7) + (e.fallas ? 'FALLA (' + e.fallas + ')' : 'OK · ' + e.ok + ' comprobaciones')));
+porEjercicio.forEach((e) => console.log(col(e.key, 38) + col(e.n, 7) + col(e.alts, 8) + col(e.casis, 6) + col(e.trampas + (e.propias ? ' (' + e.propias + ')' : ''), 9) + col(e.md, 6) + col(e.pauta, 7) + (e.fallas ? 'FALLA (' + e.fallas + ')' : 'OK · ' + e.ok + ' comprobaciones')));
 console.log('-'.repeat(92));
-const tot = porEjercicio.reduce((a, e) => ({ n: a.n + e.n, alts: a.alts + e.alts, tr: a.tr + e.trampas }), { n: 0, alts: 0, tr: 0 });
-console.log(col('Total: ' + porEjercicio.length + ' bloques', 38) + col(tot.n, 7) + col(tot.alts, 9) + col(tot.tr, 9));
+const tot = porEjercicio.reduce((a, e) => ({ n: a.n + e.n, alts: a.alts + e.alts, casis: a.casis + e.casis, tr: a.tr + e.trampas }), { n: 0, alts: 0, casis: 0, tr: 0 });
+console.log(col('Total: ' + porEjercicio.length + ' bloques', 38) + col(tot.n, 7) + col(tot.alts, 8) + col(tot.casis, 6) + col(tot.tr, 9));
+console.log('Regla: tolerancia 0. "Pauta 2" = segundo valor que la misma pauta acepta · "Casi" = valores cercanos que se rechazan con explicación.');
 console.log('\nComprobaciones correctas: ' + res.ok + ' · Fallas: ' + res.fallas.length);
 if (res.fallas.length) { console.log('\nFALLAS:'); res.fallas.forEach((f) => console.log('  ✗ ' + f)); process.exit(1); }
 console.log('✓ Todo coincide.\n');

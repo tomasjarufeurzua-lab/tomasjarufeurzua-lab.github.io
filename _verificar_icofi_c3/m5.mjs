@@ -42,8 +42,8 @@ CALC['total-directo/palitos-venta'] = {
         'directo:ro|1': roD, 'directo:imp|1': impD, 'directo:rdi|1': rdiD,
         dif: roT - roD, ctotal: cTotal, cdirecto: cDirecto
       },
-      alt: {
-        // multiplicar directo por (1 − t) y redondear al final
+      casi: {
+        // multiplicar directo por (1 − t) y redondear al final: queda cerca, pero no es la resolución del profesor
         'total:rdi|1': [entero(roT * (1 - d.impuesto))],
         'directo:rdi|1': [entero(roD * (1 - d.impuesto))]
       },

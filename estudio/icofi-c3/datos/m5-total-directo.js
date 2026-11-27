@@ -5,8 +5,8 @@
 (function (g) {
   'use strict';
 
-  var NOTA_075_TOTAL = 'Sale de multiplicar directo por 0,75 (27.350 × 0,75 = 20.512,5 → 20.513). En la resolución de clase se redondea primero el impuesto ($ 6.838) y después se resta: 27.350 − 6.838 = 20.512.';
-  var NOTA_075_DIRECTO = 'Sale de multiplicar directo por 0,75 (17.750 × 0,75 = 13.312,5 → 13.313). En la resolución de clase se redondea primero el impuesto ($ 4.438) y después se resta: 17.750 − 4.438 = 13.312.';
+  var NOTA_075_TOTAL = 'Ese valor sale de multiplicar directo por 0,75 (27.350 × 0,75 = 20.512,5 → 20.513). En la resolución del profesor se redondea primero el impuesto ($ 6.838) y después se resta: 27.350 − 6.838 = 20.512.';
+  var NOTA_075_DIRECTO = 'Ese valor sale de multiplicar directo por 0,75 (17.750 × 0,75 = 13.312,5 → 13.313). En la resolución del profesor se redondea primero el impuesto ($ 4.438) y después se resta: 17.750 − 4.438 = 13.312.';
 
   var UEFA_TABLA = {
     cols: ['Ítems', 'Montos unitarios por balón (USD)'],
@@ -110,7 +110,7 @@
                 { id: 'gv', celdas: [{ t: '− Gastos de venta (15 % de la venta)' }, { r: 11250, tipo: 'pesos', s: '15 % × 75.000 = $ 11.250 ($ 37,5 por unidad)', trampas: [{ valor: 13388, propia: true, msg: 'Calculaste el 15 % sobre el precio con IVA. En el estado de resultados todo va con valores netos: 15 % de $ 75.000.' }] }] },
                 { id: 'ro', total: true, celdas: [{ t: '= Resultado operacional' }, { r: 27350, tipo: 'pesos', s: '48.600 − 10.000 − 11.250 = $ 27.350' }] },
                 { id: 'imp', celdas: [{ t: '− Impuesto a la renta (25 %)' }, { r: 6838, tipo: 'pesos', s: '25 % × 27.350 = 6.837,5 → $ 6.838' }] },
-                { id: 'rdi', total: true, celdas: [{ t: '= Resultado después de impuesto' }, { r: 20512, tipo: 'pesos', s: '27.350 − 6.838 = $ 20.512', tambien: [{ valor: 20513, nota: NOTA_075_TOTAL }] }] }
+                { id: 'rdi', total: true, celdas: [{ t: '= Resultado después de impuesto' }, { r: 20512, tipo: 'pesos', s: '27.350 − 6.838 = $ 20.512', casi: [{ valor: 20513, nota: NOTA_075_TOTAL }] }] }
               ]
             }
           },
@@ -132,7 +132,7 @@
                 { id: 'adm', celdas: [{ t: '− Costos fijos de administración' }, { f: 10000, tipo: 'pesos' }] },
                 { id: 'ro', total: true, celdas: [{ t: '= Resultado operacional' }, { r: 17750, tipo: 'pesos', s: '51.750 − 24.000 − 10.000 = $ 17.750' }] },
                 { id: 'imp', celdas: [{ t: '− Impuesto a la renta (25 %)' }, { r: 4438, tipo: 'pesos', s: '25 % × 17.750 = 4.437,5 → $ 4.438' }] },
-                { id: 'rdi', total: true, celdas: [{ t: '= Resultado después de impuesto' }, { r: 13312, tipo: 'pesos', s: '17.750 − 4.438 = $ 13.312', tambien: [{ valor: 13313, nota: NOTA_075_DIRECTO }] }] }
+                { id: 'rdi', total: true, celdas: [{ t: '= Resultado después de impuesto' }, { r: 13312, tipo: 'pesos', s: '17.750 − 4.438 = $ 13.312', casi: [{ valor: 13313, nota: NOTA_075_DIRECTO }] }] }
               ]
             }
           },
@@ -187,7 +187,7 @@
           '</tbody></table></div>' +
           '<p>La diferencia de $ 9.600 en el resultado operacional son los CIF fijos de las 200 unidades no vendidas (200 × $ 48): en costeo total quedan en el inventario; en costeo directo van al resultado. En costeo directo, los CIF fijos siempre se cargan por las <b>500 unidades producidas</b>, no por las 300 vendidas.</p>' +
           '<h3>Sobre el redondeo del impuesto</h3>' +
-          '<p>Como en la resolución de clase, primero se redondea el impuesto a pesos enteros y después se resta: 27.350 − 6.838 = $ 20.512. Si multiplicas directo por 0,75 obtienes 20.512,5 → $ 20.513: la diferencia es solo de redondeo y también se acepta (lo mismo con $ 13.312 y $ 13.313).</p>'
+          '<p>Como en la resolución de clase, primero se redondea el impuesto a pesos enteros y después se resta: 27.350 − 6.838 = $ 20.512. Si multiplicas directo por 0,75 obtienes 20.512,5 → $ 20.513, que queda cerca pero no es la respuesta: vale la del profesor, $ 20.512 (lo mismo con $ 13.312 y no $ 13.313).</p>'
       },
 
       // ------------------------------------------------------------------ E5.2 (extra)
