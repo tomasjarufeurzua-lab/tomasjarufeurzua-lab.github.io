@@ -123,8 +123,14 @@
     .insignia.global { filter: drop-shadow(0 0 4px rgba(255, 77, 77, 0.8)); }
     @keyframes global-barra { to { background-position: -200% 0; } }
     @media (prefers-reduced-motion: reduce) { body.es-global #prog-barra { animation: none; } }
-    /* Las insignias se muestran solo en pantallas anchas; en celular quedan ocultas */
-    @media (max-width: 959px) { .insignia { display: none; } }
+    /* En celular las insignias van un poco más chicas para que la barra y la escalera no se aprieten */
+    @media (max-width: 600px) {
+      #rango-txt .insignia { width: 18px; height: 18px; }
+      ol.escalera { grid-template-columns: 1fr 1fr; }
+      ol.escalera li { padding-right: 44px; }
+      ol.escalera li .insignia { width: 28px; height: 28px; right: 9px; }
+      .aviso-pts .insignia { width: 22px; height: 22px; }
+    }
     .idx-rango {
       display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: baseline; margin: 0 0 8px; padding: 10px 12px; border-radius: 10px;
       border: 1px solid rgba(233, 213, 143, 0.4); background: var(--oro-bg); text-decoration: none; color: var(--heading);
@@ -654,6 +660,6 @@
   <script defer src="datos/m7-simulacro.js?v=1"></script>
   <script defer src="datos/m8-formulas.js?v=1"></script>
   <script defer src="diagramas.js?v=1"></script>
-  <script defer src="app.js?v=10"></script>
+  <script defer src="app.js?v=11"></script>
 </body>
 </html>

@@ -121,7 +121,6 @@
   const RANGO_COLOR = ['#d08a4e', '#cfd6dd', '#f0c84a', '#8fe3dc', '#7cc4ff', '#c79bff', '#ff7a8a'];
   const RANGO_OSCURO = ['#7a4a22', '#7d8791', '#a8801c', '#3f9b95', '#2f73b8', '#7448c4', '#b3283c'];
   // Insignia de cada rango (dibujo propio): un escudo del color del rango con una marca que crece con el nivel.
-  // Solo se muestra en pantallas anchas (ver CSS); en celular queda oculta para no recargar la barra.
   function hInsignia(i, px) {
     const estrella = (R, r) => { let d = ''; for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, q = k % 2 ? r : R; d += (k ? 'L' : 'M') + (16 + q * Math.cos(a)).toFixed(2) + ' ' + (16.4 + q * Math.sin(a)).toFixed(2); } return d + 'Z'; };
     const galon = (y) => '<path d="M10 ' + y + 'L16 ' + (y - 4.5) + 'L22 ' + y + 'V' + (y + 2.7) + 'L16 ' + (y - 1.8) + 'L10 ' + (y + 2.7) + 'Z"/>';
