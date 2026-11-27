@@ -58,7 +58,7 @@
   // =====================================================================
   // Progreso (localStorage)
   // =====================================================================
-  const VACIO = () => ({ v: 1, vistos: {}, hechos: {}, it: {}, err: {}, r: {}, ult: null, dias: [], ses: { dia: '', n: 0 } });
+  const VACIO = () => ({ v: 1, vistos: {}, hechos: {}, it: {}, err: {}, r: {}, ult: null, dias: [], ses: { dia: '', n: 0 }, pts: 0, ptd: {}, ptsListo: 0 });
   let S = VACIO();
   try {
     const g = JSON.parse(localStorage.getItem(CLAVE));
@@ -111,6 +111,73 @@
     if (hecho(b) && !S.hechos[b.key]) { S.hechos[b.key] = 1; S.ses.n++; }
   }
 
+  // ---------------------------------------------------------------------
+  // Rango: se sube acertando y se baja fallando.
+  //  · Acierto al primer intento (sin haber visto la respuesta): +10 (V/F, alternativa), +15 (pregunta), +25 (tabla).
+  //  · Respuesta incorrecta, o ver la solución sin intentar: −5.
+  //  · Cada pregunta suma una vez al día y resta una vez al día: repetirla no infla el puntaje.
+  // ---------------------------------------------------------------------
+  const RANGOS = ['Bronce', 'Plata', 'Oro', 'Platino', 'Diamante', 'Élite', 'Unreal'];
+  const RANGO_COLOR = ['#d08a4e', '#cfd6dd', '#f0c84a', '#8fe3dc', '#7cc4ff', '#c79bff', '#ff7a8a'];
+  const hNombreRango = (i) => '<b class="rango-n" style="color:' + RANGO_COLOR[i] + '">' + RANGOS[i] + '</b>';
+  const CORTES = [0, 0.06, 0.16, 0.30, 0.46, 0.64, 0.82]; // fracción del puntaje del camino principal
+  const PENAL = 5;
+  const valorItem = (it) => (it.k === 'tabla' ? 25 : it.k === 'preg' ? 15 : 10);
+  let PTS_MAX = 0;
+  FLUJO.forEach((b) => itemsDe(b).forEach((it) => { PTS_MAX += valorItem(it); }));
+  const UMBRAL = CORTES.map((c) => Math.round(c * PTS_MAX / 10) * 10);
+  function rangoDe(pts) {
+    let i = 0;
+    UMBRAL.forEach((u, k) => { if (pts >= u) i = k; });
+    return i;
+  }
+  // Quien ya tenía avance antes de que existiera el rango parte con los puntos de lo que tiene correcto
+  if (!S.ptsListo) {
+    S.pts = 0;
+    Object.keys(S.it).forEach((id) => { const it = ITEMS.get(id); if (it && S.it[id].u === 1) S.pts += valorItem(it); });
+    S.ptd = {};
+    S.ptsListo = 1;
+  }
+  let ptsPend = 0, rangoAntes = null, tAviso = 0, tOcultar = 0;
+  function puntuar(id, gana) {
+    const it = ITEMS.get(id);
+    if (!it) return;
+    const clave = id + (gana ? '+' : '-');
+    if (S.ptd[clave] === hoy()) return;
+    S.ptd[clave] = hoy();
+    if (rangoAntes === null) rangoAntes = rangoDe(S.pts);
+    const d = gana ? valorItem(it) : -Math.min(PENAL, S.pts); // nunca baja de cero
+    S.pts += d;
+    ptsPend += d;
+    clearTimeout(tAviso);
+    tAviso = setTimeout(avisarPuntos, 40); // junta varios cambios seguidos (por ejemplo, al entregar el simulacro)
+  }
+  function avisarPuntos() {
+    const el = document.getElementById('aviso-pts');
+    const ahora = rangoDe(S.pts);
+    const cambio = rangoAntes !== null && ahora !== rangoAntes;
+    let h = '<b>' + (ptsPend > 0 ? '+' : ptsPend < 0 ? '−' : '') + Math.abs(ptsPend) + ' puntos</b>';
+    if (cambio && ahora > rangoAntes) h += '<span>Subiste de rango: <b style="color:' + RANGO_COLOR[ahora] + '">' + RANGOS[ahora] + '</b></span>';
+    else if (cambio) h += '<span>Bajaste a <b style="color:' + RANGO_COLOR[ahora] + '">' + RANGOS[ahora] + '</b>. Con las próximas correctas lo recuperas.</span>';
+    if (el && (ptsPend !== 0 || cambio)) {
+      el.innerHTML = h;
+      el.className = 'aviso-pts ' + (ptsPend >= 0 ? 'sube' : 'baja') + (cambio ? ' cambio' : '');
+      el.hidden = false;
+      clearTimeout(tOcultar);
+      tOcultar = setTimeout(() => { el.hidden = true; }, cambio ? 3800 : 2000);
+    }
+    ptsPend = 0;
+    rangoAntes = null;
+    pintarProgreso();
+    pintarIndice();
+  }
+  function hRango() {
+    const i = rangoDe(S.pts);
+    const sig = i + 1 < RANGOS.length ? UMBRAL[i + 1] : null;
+    const pct = sig === null ? 100 : Math.round(100 * (S.pts - UMBRAL[i]) / (sig - UMBRAL[i]));
+    return { i: i, nombre: RANGOS[i], pct: pct, falta: sig === null ? 0 : sig - S.pts, sig: sig === null ? null : RANGOS[i + 1] };
+  }
+
   // Registra un intento. o.limpio: respondió sin haber visto la respuesta.
   function registrar(id, ok, o) {
     o = o || {};
@@ -129,6 +196,7 @@
       if (e.d.indexOf(hoy()) < 0) e.d.push(hoy());
       if (e.d.length >= 2) { delete S.err[id]; salio = true; } // dos aciertos en días distintos
     }
+    if (o.limpio) puntuar(id, ok);
     const it = ITEMS.get(id);
     if (it) marcarAvance(it.b);
     guardar();
@@ -136,6 +204,7 @@
   }
   function marcarSolucionVista(id) {
     const x = S.it[id] || (S.it[id] = { n: 0, u: null, p: null, s: 0, h: [] });
+    if (!x.n && !x.s) puntuar(id, false); // ver la solución sin intentar resta igual que fallar
     x.s = 1;
     if (x.u !== 1 && !S.err[id]) S.err[id] = { desde: hoy(), d: [] };
     const it = ITEMS.get(id);
@@ -583,7 +652,10 @@
     let r = {}, registrado = false, ok = false;
     if (!d.reg && todas.every((k) => d.f[k] !== undefined)) {
       ok = todas.every((k) => d.f[k] === 1);
-      r = registrar(u.item.id, ok, { limpio: limpio });
+      // Una tabla cuenta como resuelta "en limpio" si cada celda estuvo bien la primera vez que se revisó
+      // (aunque se haya revisado fila por fila) y no se había visto antes su solución.
+      const enLimpio = !u.visto && !(S.it[u.item.id] && S.it[u.item.id].s);
+      r = registrar(u.item.id, ok, { limpio: enLimpio });
       d.reg = ok ? 2 : 1;
       registrado = true;
     } else if (d.reg === 1 && todas.every((k) => d.e[k] === 1)) {
@@ -618,6 +690,7 @@
   }
   function reiniciarTabla(u) {
     const caja = cajaDe(u);
+    u.visto = u.visto || u.revelado; // ya vio respuestas: rehacerla no vuelve a sumar puntos
     if (u.modo === 'flujo') delete S.r[u.item.id]; else u.d = null;
     caja.querySelectorAll('input').forEach((inp) => { inp.value = ''; marcarCelda(inp, null); delete inp.dataset.manual; });
     const fb = caja.querySelector('.fb');
@@ -903,6 +976,11 @@
       '<h2>Qué entra</h2><ul>' + b.contenidos.map((x) => '<li>' + tx(x) + '</li>').join('') + '</ul>' +
       '<h2>Los ejercicios que más se repiten</h2><ol>' + b.repiten.map((x) => '<li>' + tx(x) + '</li>').join('') + '</ol>' +
       '<h2>El mapa del curso</h2><ol class="pasos">' + b.mapa.map((x) => '<li><b class="t">' + tx(x.t) + '</b>' + tx(x.h) + '</li>').join('') + '</ol>' +
+      '<h2>Tu rango</h2><p>Vas en ' + hNombreRango(rangoDe(S.pts)) + ' con <b>' + M.num(S.pts, 0) + ' puntos</b>. Se sube acertando y se baja fallando:</p>' +
+      '<ul><li><b>Aciertas al primer intento:</b> +10 en verdadero o falso y alternativas, +15 en una pregunta de ejercicio y +25 en una tabla completa.</li>' +
+      '<li><b>Fallas, o miras la solución sin intentar:</b> −5. Intentar siempre conviene: un acierto vale más que lo que cuesta un error.</li>' +
+      '<li>Cada pregunta suma una sola vez por día, así que repetir la misma no sube el puntaje; repasarla otro día, sí.</li></ul>' +
+      '<ol class="escalera">' + RANGOS.map((r, i) => '<li class="' + (i === rangoDe(S.pts) ? 'actual' : i < rangoDe(S.pts) ? 'pasado' : '') + '" style="border-left: 4px solid ' + RANGO_COLOR[i] + '"><b style="color:' + RANGO_COLOR[i] + '">' + r + '</b><span>' + M.num(UMBRAL[i], 0) + ' pts</span></li>').join('') + '</ol>' +
       '<h2>Cómo usar esta guía</h2><ul>' +
       '<li>Sigue el orden del índice, o salta al tema que quieras: no hay bloqueos.</li>' +
       '<li>Responde antes de mirar la solución. Equivocarse intentando enseña más que leer la respuesta.</li>' +
@@ -1369,7 +1447,11 @@
   function pintarIndice() {
     const act = VISTA.bloque;
     const e = nErrores();
+    const rg = hRango();
     let h = '<div class="idx-cab"><b>Índice</b><button type="button" class="barra-btn" data-a="cerrar-idx" aria-label="Cerrar el índice">✕</button></div>' +
+      '<a class="idx-rango" href="#/inicio/portada"><span class="rot">Tu rango</span>' + hNombreRango(rg.i) + '<span class="pts">' + M.num(S.pts, 0) + ' pts</span>' +
+      '<span class="idx-mini"><i style="width:' + rg.pct + '%"></i></span>' +
+      '<small>' + (rg.sig ? 'Te faltan ' + M.num(rg.falta, 0) + ' pts para ' + rg.sig : 'Llegaste al rango más alto') + '</small></a>' +
       '<a class="idx-esp" href="#/repaso/errores"' + (VISTA.esp === 'errores' ? ' aria-current="page"' : '') + '><span>Mis errores para repasar<small>Salen al acertarlos 2 veces en días distintos</small></span><span class="cuenta' + (e ? '' : ' cero') + '">' + e + '</span></a>' +
       '<a class="idx-esp" href="#/repaso/mixto"' + (VISTA.esp === 'mixto' ? ' aria-current="page"' : '') + '><span>Repaso mixto<small>10 preguntas al azar de lo ya visto</small></span></a>' +
       '<p class="idx-sep">Módulos</p>';
@@ -1408,6 +1490,8 @@
     const pct = total ? Math.round(100 * listos / total) : 0;
     document.getElementById('prog-barra').style.width = pct + '%';
     document.getElementById('prog-txt').textContent = listos + ' de ' + total + ' · ' + pct + ' %';
+    const rg = document.getElementById('rango-txt');
+    if (rg) rg.innerHTML = hNombreRango(rangoDe(S.pts)) + ' · ' + M.num(S.pts, 0) + ' pts';
   }
 
   // =====================================================================

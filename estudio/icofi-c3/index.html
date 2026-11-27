@@ -102,6 +102,36 @@
     .barra-prog small { display: flex; justify-content: space-between; gap: 8px; color: var(--dim); font-size: 0.72rem; margin-bottom: 3px; white-space: nowrap; }
     .prog { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
     .prog i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 999px; transition: width 0.3s; }
+    #rango-txt { overflow: hidden; text-overflow: ellipsis; }
+    .idx-rango {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: baseline; margin: 0 0 8px; padding: 10px 12px; border-radius: 10px;
+      border: 1px solid rgba(233, 213, 143, 0.4); background: var(--oro-bg); text-decoration: none; color: var(--heading);
+    }
+    .idx-rango .rot { grid-column: 1 / 3; color: var(--oro); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+    .idx-rango b { font-size: 1.05rem; }
+    .idx-rango .pts { color: var(--oro); font-size: 0.86rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .idx-rango .idx-mini { grid-column: 1 / 3; margin: 4px 0 2px; }
+    .idx-rango .idx-mini i { background: var(--oro); }
+    .idx-rango small { grid-column: 1 / 3; color: var(--dim); font-size: 0.74rem; }
+    .idx-rango:hover, .idx-rango:focus-visible { border-color: var(--oro); }
+    .aviso-pts {
+      position: fixed; z-index: 70; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 2px; max-width: calc(100vw - 32px); padding: 9px 18px; border-radius: 14px;
+      background: #15181b; border: 1px solid var(--metal-borde); color: var(--heading); font-size: 0.92rem; text-align: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); pointer-events: none;
+    }
+    .aviso-pts.sube { border-color: var(--ok); }
+    .aviso-pts.sube > b { color: var(--ok); }
+    .aviso-pts.baja { border-color: var(--mal-borde); }
+    .aviso-pts.baja > b { color: var(--mal); }
+    .aviso-pts.cambio { border-color: var(--oro); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), var(--metal-glow-fuerte); }
+    .aviso-pts span { color: var(--oro); font-size: 0.86rem; font-weight: 600; }
+    ol.escalera { list-style: none; margin: 0 0 18px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+    ol.escalera li { margin: 0; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--borde); background: var(--card); display: flex; flex-direction: column; }
+    ol.escalera li b { font-size: 0.92rem; font-weight: 700; }
+    ol.escalera li:not(.actual):not(.pasado) { opacity: 0.6; }
+    ol.escalera li span { color: var(--dim); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+    ol.escalera li.actual { border-color: var(--oro); background: var(--oro-bg); }
     .volver-sitio { color: var(--dim); font-size: 0.82rem; text-decoration: none; white-space: nowrap; padding: 8px 4px; }
     .volver-sitio:hover, .volver-sitio:focus-visible { color: var(--accent); }
 
@@ -520,9 +550,10 @@
       .t-comparar td::before { content: attr(data-l) ": "; color: var(--accent); font-weight: 600; }
       .t-comparar.dos td::before, .t-comparar td[data-l=""]::before { display: none; }
       .barra-tit span { display: none; }
-      .barra-prog { flex: 0 0 104px; min-width: 0; }
-      .barra-prog small span:first-child { display: none; }
+      .barra-prog { flex: 0 1 168px; min-width: 0; }
+      .barra-prog #prog-txt { display: none; }
       .barra-prog small { justify-content: flex-end; }
+      .barra-tit { flex: 1 1 0; }
       .barra-btn span { display: none; }
       .enunciado, .preg, .vf, .mc { padding: 14px; }
       .preg .campo { max-width: none; }
@@ -543,7 +574,7 @@
         --bg: #fff; --text: #222; --heading: #000; --dim: #444; --accent: #0f766e; --accent-bg: #eef7f6; --card: #fff; --borde: #bbb;
         --oro: #7a5c00; --oro-bg: #fbf6e3; --ok: #15803d; --mal: #b91c1c; --campo: #fff; --panel: #fff;
       }
-      .barra, .indice, .velo, .nav, #tip, .no-imprimir, .sim-barra { display: none !important; }
+      .barra, .indice, .velo, .nav, #tip, .aviso-pts, .no-imprimir, .sim-barra { display: none !important; }
       body, html { background: #fff; color: #222; }
       body::before { display: none; }
       .cred { background: none; border: 0; color: #444; }
@@ -573,7 +604,7 @@
       <span>Certamen 3 · Presupuestos, Costos y CVU</span>
     </div>
     <div class="barra-prog" aria-hidden="true">
-      <small><span>Tu avance</span><span id="prog-txt">0 %</span></small>
+      <small><span id="rango-txt"></span><span id="prog-txt">0 %</span></small>
       <div class="prog"><i id="prog-barra"></i></div>
     </div>
     <a class="volver-sitio" href="/#material">← Volver al sitio</a>
@@ -584,6 +615,7 @@
     <main id="app" tabindex="-1"><p>Cargando…</p></main>
   </div>
   <div id="tip" role="tooltip" hidden></div>
+  <div id="aviso-pts" class="aviso-pts" role="status" aria-live="polite" hidden></div>
   <noscript><p style="padding:16px">Esta guía necesita JavaScript para mostrar las lecciones y corregir los ejercicios.</p></noscript>
 
   <script defer src="motor.js?v=1"></script>
@@ -598,6 +630,6 @@
   <script defer src="datos/m7-simulacro.js?v=1"></script>
   <script defer src="datos/m8-formulas.js?v=1"></script>
   <script defer src="diagramas.js?v=1"></script>
-  <script defer src="app.js?v=6"></script>
+  <script defer src="app.js?v=7"></script>
 </body>
 </html>
