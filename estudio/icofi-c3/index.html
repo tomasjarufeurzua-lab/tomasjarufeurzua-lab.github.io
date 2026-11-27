@@ -629,6 +629,29 @@
   </style>
 </head>
 <body>
+  <!-- Mantención temporal: se muestra solo hasta la hora FIN y después la página vuelve sola a la normalidad. -->
+  <div id="mant" hidden style="position:fixed;inset:0;z-index:99999;background:#34383c;color:#f2f2f2;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:system-ui,-apple-system,'Segoe UI',sans-serif">
+    <div style="max-width:420px">
+      <div style="font-size:44px;line-height:1" aria-hidden="true">🛠️</div>
+      <h1 style="font-size:24px;margin:16px 0 8px">Estamos en mantención</h1>
+      <p style="font-size:16px;line-height:1.5;margin:0;color:#c9ced3">Estamos teniendo problemas. La página vuelve a la normalidad en unos minutos.</p>
+      <p style="font-size:15px;margin:18px 0 0;color:#5eead4">Volvemos en <b id="mant-t">5:00</b></p>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var FIN = 1795824164000; // hora fija de término (5 minutos desde la publicación)
+      var m = document.getElementById('mant');
+      function tic() {
+        var f = FIN - Date.now();
+        if (f <= 0) { m.hidden = true; m.style.display = 'none'; document.documentElement.style.overflow = ''; return; }
+        var s = Math.ceil(f / 1000);
+        document.getElementById('mant-t').textContent = Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
+        setTimeout(tic, 500);
+      }
+      if (Date.now() < FIN) { m.hidden = false; m.style.display = 'flex'; document.documentElement.style.overflow = 'hidden'; tic(); }
+    })();
+  </script>
   <p class="cred">Hecho por Tomás Jarufe · <a href="mailto:tjarufe@usm.cl">tjarufe@usm.cl</a> · <a href="https://tomasjarufe.site/">https://tomasjarufe.site/</a></p>
   <header class="barra">
     <button class="barra-btn" id="btn-indice" type="button" aria-controls="indice" aria-expanded="true" aria-label="Mostrar u ocultar el índice">
