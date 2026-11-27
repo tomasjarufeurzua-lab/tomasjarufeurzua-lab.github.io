@@ -182,7 +182,7 @@
     }
     if (VISTA.bloque && VISTA.bloque.tipo === 'portada') pintar(); else { pintarProgreso(); pintarIndice(); }
   }
-  const CORTES = [0, 0.06, 0.16, 0.30, 0.46, 0.64, 0.82]; // fracción del puntaje del camino principal
+  const CORTES = [0, 0.03, 0.09, 0.17, 0.27, 0.39, 0.55]; // fracción del puntaje del camino principal: el rango más alto se alcanza con poco más de la mitad
   const PENAL = 5;
   const valorItem = (it) => (it.k === 'tabla' ? 25 : it.k === 'preg' ? 15 : 10);
   let PTS_MAX = 0;
