@@ -119,6 +119,29 @@
   // ---------------------------------------------------------------------
   const RANGOS = ['Bronce', 'Plata', 'Oro', 'Platino', 'Diamante', 'Élite', 'Unreal'];
   const RANGO_COLOR = ['#d08a4e', '#cfd6dd', '#f0c84a', '#8fe3dc', '#7cc4ff', '#c79bff', '#ff7a8a'];
+  const RANGO_OSCURO = ['#7a4a22', '#7d8791', '#a8801c', '#3f9b95', '#2f73b8', '#7448c4', '#b3283c'];
+  // Insignia de cada rango (dibujo propio): un escudo del color del rango con una marca que crece con el nivel.
+  // Solo se muestra en pantallas anchas (ver CSS); en celular queda oculta para no recargar la barra.
+  function hInsignia(i, px) {
+    const estrella = (R, r) => { let d = ''; for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, q = k % 2 ? r : R; d += (k ? 'L' : 'M') + (16 + q * Math.cos(a)).toFixed(2) + ' ' + (16.4 + q * Math.sin(a)).toFixed(2); } return d + 'Z'; };
+    const galon = (y) => '<path d="M10 ' + y + 'L16 ' + (y - 4.5) + 'L22 ' + y + 'V' + (y + 2.7) + 'L16 ' + (y - 1.8) + 'L10 ' + (y + 2.7) + 'Z"/>';
+    let marca;
+    if (i === 0) marca = galon(17.5);
+    else if (i === 1) marca = galon(15) + galon(20);
+    else if (i === 2) marca = galon(12.8) + galon(17.2) + galon(21.6);
+    else if (i === 3) marca = '<path d="M16 8.5L23.5 16L16 23.5L8.5 16Z"/>';
+    else if (i === 4) marca = '<path d="M10.5 9.5H21.5L25 14L16 24.5L7 14Z"/><path d="M7 14H25M12.5 14L16 24.5L19.5 14L16 9.5Z" fill="none" stroke="' + RANGO_OSCURO[i] + '" stroke-width="0.9"/>';
+    else if (i === 5) marca = '<path d="' + estrella(8.2, 3.5) + '"/>';
+    else {
+      let rayos = '';
+      for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4 + Math.PI / 8; rayos += 'M' + (16 + 8.6 * Math.cos(a)).toFixed(2) + ' ' + (16.4 + 8.6 * Math.sin(a)).toFixed(2) + 'L' + (16 + 10.8 * Math.cos(a)).toFixed(2) + ' ' + (16.4 + 10.8 * Math.sin(a)).toFixed(2); }
+      marca = '<path d="' + estrella(7, 3) + '"/><path d="' + rayos + '" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>';
+    }
+    return '<svg class="insignia" viewBox="0 0 32 32" width="' + px + '" height="' + px + '" aria-hidden="true"><defs><linearGradient id="ins' + i + '" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="' + RANGO_COLOR[i] + '"/><stop offset="1" stop-color="' + RANGO_OSCURO[i] + '"/></linearGradient></defs>' +
+      '<path d="M16 1.8L28.5 8.3V21.2L16 30.4L3.5 21.2V8.3Z" fill="url(#ins' + i + ')" stroke="rgba(255,255,255,0.6)" stroke-width="1.1"/>' +
+      '<path d="M16 5.2L25.4 10.2V19.8L16 26.7L6.6 19.8V10.2Z" fill="rgba(0,0,0,0.3)"/><g fill="#fff" fill-opacity="0.95">' + marca + '</g></svg>';
+  }
   const hNombreRango = (i) => '<b class="rango-n" style="color:' + RANGO_COLOR[i] + '">' + RANGOS[i] + '</b>';
   const CORTES = [0, 0.06, 0.16, 0.30, 0.46, 0.64, 0.82]; // fracción del puntaje del camino principal
   const PENAL = 5;
@@ -157,7 +180,7 @@
     const ahora = rangoDe(S.pts);
     const cambio = rangoAntes !== null && ahora !== rangoAntes;
     let h = '<b>' + (ptsPend > 0 ? '+' : ptsPend < 0 ? '−' : '') + Math.abs(ptsPend) + ' puntos</b>';
-    if (cambio && ahora > rangoAntes) h += '<span>Subiste de rango: <b style="color:' + RANGO_COLOR[ahora] + '">' + RANGOS[ahora] + '</b></span>';
+    if (cambio && ahora > rangoAntes) h += '<span class="con-ins">' + hInsignia(ahora, 26) + '<span>Subiste de rango: <b style="color:' + RANGO_COLOR[ahora] + '">' + RANGOS[ahora] + '</b></span></span>';
     else if (cambio) h += '<span>Bajaste a <b style="color:' + RANGO_COLOR[ahora] + '">' + RANGOS[ahora] + '</b>. Con las próximas correctas lo recuperas.</span>';
     if (el && (ptsPend !== 0 || cambio)) {
       el.innerHTML = h;
@@ -980,7 +1003,7 @@
       '<ul><li><b>Aciertas al primer intento:</b> +10 en verdadero o falso y alternativas, +15 en una pregunta de ejercicio y +25 en una tabla completa.</li>' +
       '<li><b>Fallas, o miras la solución sin intentar:</b> −5. Intentar siempre conviene: un acierto vale más que lo que cuesta un error.</li>' +
       '<li>Cada pregunta suma una sola vez por día, así que repetir la misma no sube el puntaje; repasarla otro día, sí.</li></ul>' +
-      '<ol class="escalera">' + RANGOS.map((r, i) => '<li class="' + (i === rangoDe(S.pts) ? 'actual' : i < rangoDe(S.pts) ? 'pasado' : '') + '" style="border-left: 4px solid ' + RANGO_COLOR[i] + '"><b style="color:' + RANGO_COLOR[i] + '">' + r + '</b><span>' + M.num(UMBRAL[i], 0) + ' pts</span></li>').join('') + '</ol>' +
+      '<ol class="escalera">' + RANGOS.map((r, i) => '<li class="' + (i === rangoDe(S.pts) ? 'actual' : i < rangoDe(S.pts) ? 'pasado' : '') + '" style="border-left: 4px solid ' + RANGO_COLOR[i] + '">' + hInsignia(i, 34) + '<b style="color:' + RANGO_COLOR[i] + '">' + r + '</b><span>' + M.num(UMBRAL[i], 0) + ' pts</span></li>').join('') + '</ol>' +
       '<h2>Cómo usar esta guía</h2><ul>' +
       '<li>Sigue el orden del índice, o salta al tema que quieras: no hay bloqueos.</li>' +
       '<li>Responde antes de mirar la solución. Equivocarse intentando enseña más que leer la respuesta.</li>' +
@@ -1449,7 +1472,7 @@
     const e = nErrores();
     const rg = hRango();
     let h = '<div class="idx-cab"><b>Índice</b><button type="button" class="barra-btn" data-a="cerrar-idx" aria-label="Cerrar el índice">✕</button></div>' +
-      '<a class="idx-rango" href="#/inicio/portada"><span class="rot">Tu rango</span>' + hNombreRango(rg.i) + '<span class="pts">' + M.num(S.pts, 0) + ' pts</span>' +
+      '<a class="idx-rango" href="#/inicio/portada"><span class="rot">Tu rango</span><span class="con-ins">' + hInsignia(rg.i, 30) + hNombreRango(rg.i) + '</span><span class="pts">' + M.num(S.pts, 0) + ' pts</span>' +
       '<span class="idx-mini"><i style="width:' + rg.pct + '%"></i></span>' +
       '<small>' + (rg.sig ? 'Te faltan ' + M.num(rg.falta, 0) + ' pts para ' + rg.sig : 'Llegaste al rango más alto') + '</small></a>' +
       '<a class="idx-esp" href="#/repaso/errores"' + (VISTA.esp === 'errores' ? ' aria-current="page"' : '') + '><span>Mis errores para repasar<small>Salen al acertarlos 2 veces en días distintos</small></span><span class="cuenta' + (e ? '' : ' cero') + '">' + e + '</span></a>' +
@@ -1491,7 +1514,7 @@
     document.getElementById('prog-barra').style.width = pct + '%';
     document.getElementById('prog-txt').textContent = listos + ' de ' + total + ' · ' + pct + ' %';
     const rg = document.getElementById('rango-txt');
-    if (rg) rg.innerHTML = hNombreRango(rangoDe(S.pts)) + ' · ' + M.num(S.pts, 0) + ' pts';
+    if (rg) rg.innerHTML = hInsignia(rangoDe(S.pts), 20) + hNombreRango(rangoDe(S.pts)) + ' · ' + M.num(S.pts, 0) + ' pts';
   }
 
   // =====================================================================
